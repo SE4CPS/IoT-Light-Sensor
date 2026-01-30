@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UOP Light Sensor</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0d0d0f;
+            --bg-sidebar: #141416;
+            --bg-card: #1c1c20;
+            --bg-card-hover: #242428;
+            --accent: #f5a623;
+            --accent-glow: rgba(245, 166, 35, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #8a8a8f;
+            --text-muted: #4a4a4f;
+            --border: rgba(255, 255, 255, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+        }
+
+
+        .sidebar {
+            width: 240px;
+            background: var(--bg-sidebar);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+
+        .mode-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .mode-icon {
+            font-size: 16px;
+        }
+
+        .time-display {
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: -3px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .date-display {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Mini Calendar */
+        .mini-calendar {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .calendar-month {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-nav-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .calendar-nav-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+
+        .calendar-weekday {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 4px 0;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .calendar-day.other-month {
+            color: var(--text-muted);
+            opacity: 0.4;
+        }
+
+        .calendar-day.today {
+            background: var(--accent);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .calendar-day.today:hover {
+            background: var(--accent);
+        }
+
+        .calendar-day.selected {
+            border: 2px solid var(--accent);
+            background: rgba(245, 166, 35, 0.2);
+        }
+
+        .calendar-day.selected.today {
+            background: var(--accent);
+        }
+
+        /* Donut Chart */
+        .donut-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .donut-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .donut-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .donut-track {
+            fill: none;
+            stroke: var(--bg-card);
+            stroke-width: 10;
+        }
+
+        .donut-fill {
+            fill: none;
+            stroke: url(#donutGradient);
+            stroke-width: 10;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+            filter: drop-shadow(0 0 6px rgba(245, 166, 35, 0.5));
+        }
+
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .donut-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .donut-unit {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .usage-warning {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: rgba(255, 87, 51, 0.15);
+            border: 1px solid rgba(255, 87, 51, 0.4);
+            border-radius: 8px;
+            animation: warningPulse 2s ease-in-out infinite;
+        }
+
+        .usage-warning.show {
+            display: flex;
+        }
+
+        .warning-icon {
+            font-size: 16px;
+        }
+
+        .warning-text {
+            font-size: 12px;
+            color: #ff5733;
+            font-weight: 500;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .donut-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Sunlight Detection Popup */
+        .sunlight-popup {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            background: linear-gradient(135deg, #f5a623 0%, #f7b733 50%, #fc4a1a 100%);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(245, 166, 35, 0.4), 0 0 40px rgba(245, 166, 35, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 100;
+            white-space: nowrap;
+        }
+
+        .sunlight-popup.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .sunlight-popup::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #f7b733;
+        }
+
+        .sunlight-icon {
+            font-size: 20px;
+            animation: pulse-sun 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-sun {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .sensor-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-icon {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+
+        .brightness-section {
+            margin-top: auto;
+        }
+
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .brightness-value {
+            margin-left: auto;
+            color: var(--text-muted);
+        }
+
+        .brightness-bar {
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 32px;
+        }
+
+        .brightness-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+
+        .scenes-section {
+            margin-top: 24px;
+        }
+
+        .scene-dots {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .scene-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .scene-dot:hover {
+            transform: scale(1.15);
+        }
+
+        .scene-dot.active {
+            border-color: white;
+            box-shadow: 0 0 12px currentColor;
+        }
+
+        .scene-dot.green { background: #22c55e; }
+        .scene-dot.red { background: #ef4444; }
+        .scene-dot.gold { background: #f5a623; }
+        .scene-dot.white { background: #f5f5f5; }
+        .scene-dot.purple { background: #a855f7; }
+        .scene-dot.blue { background: #3b82f6; }
+
+        .scene-labels {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .scene-label {
+            width: 20px;
+            font-size: 9px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+
+        .main-content {
+            flex: 1;
+            padding: 32px 48px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .uop-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .header-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+
+        .gauge-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            gap: 48px;
+        }
+
+
+        .roller-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            height: 280px;
+            margin-top: 40px;
+        }
+
+        .roller-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .roller-track {
+            position: relative;
+            width: 8px;
+            height: 200px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .roller-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, var(--accent), #f5a623cc);
+            border-radius: 4px;
+            transition: height 0.1s ease;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .roller-thumb {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 0 16px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
+        }
+
+        .roller-thumb:hover {
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        .roller-thumb:active {
+            cursor: grabbing;
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        .roller-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .roller-ticks {
+            position: absolute;
+            right: -24px;
+            top: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 420px;
+            height: 280px;
+        }
+
+        .gauge-bg {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 380px;
+            height: 220px;
+            background: linear-gradient(to bottom, var(--bg-card) 0%, var(--bg-card) 60%, transparent 100%);
+            border-radius: 200px 200px 20px 20px;
+        }
+
+        .gauge-svg {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 240px;
+        }
+
+        .gauge-track {
+            fill: none;
+            stroke: #2a2a30;
+            stroke-width: 20;
+            stroke-linecap: round;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: url(#gaugeGradient);
+            stroke-width: 20;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -20%);
+            text-align: center;
+        }
+
+        .lux-number {
+            font-size: 80px;
+            font-weight: 700;
+            letter-spacing: -4px;
+            line-height: 1;
+        }
+
+        .lux-unit {
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        .gauge-range {
+            position: absolute;
+            bottom: 60px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px;
+        }
+
+        .range-value {
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+ 
+        .gauge-controls {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .control-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .control-btn.range-btn {
+            font-weight: 600;
+            font-size: 22px;
+            letter-spacing: -0.5px;
+        }
+
+        .power-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: transparent;
+            border: 2px solid var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .power-btn svg {
+            width: 44px;
+            height: 44px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2;
+            transition: all 0.3s;
+        }
+
+        .power-btn:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .power-btn:hover svg {
+            stroke: var(--text-secondary);
+        }
+
+        .power-btn.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .power-btn.active svg {
+            stroke: var(--accent);
+            filter: drop-shadow(0 0 6px var(--accent-glow));
+        }
+
+ 
+        .mode-cards {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .mode-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            min-width: 220px;
+        }
+
+        .mode-card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .mode-card.active {
+            border-color: var(--accent);
+            background: rgba(245, 166, 35, 0.08);
+        }
+
+        .mode-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .mode-card-content {
+            flex: 1;
+        }
+
+        .mode-card-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .mode-card-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .mode-toggle {
+            width: 44px;
+            height: 26px;
+            border-radius: 13px;
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .mode-toggle.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .mode-toggle.active::after {
+            left: 21px;
+            background: #000;
+        }
+
+ 
+        /* Room Cards - Like Mode Cards */
+        .room-cards {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px 24px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .room-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            min-width: 160px;
+        }
+
+        .room-card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .room-card.active {
+            border-color: var(--accent);
+            background: rgba(245, 166, 35, 0.08);
+        }
+
+        .room-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .room-card-content {
+            flex: 1;
+        }
+
+        .room-card-title {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .room-card-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .room-toggle {
+            width: 40px;
+            height: 24px;
+            border-radius: 12px;
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .room-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .room-card.active .room-toggle {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .room-card.active .room-toggle::after {
+            left: 19px;
+            background: white;
+        }
+
+        .stats-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stats-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stats-icon {
+            font-size: 20px;
+        }
+
+        .stats-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .stats-cards {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px 28px;
+            min-width: 200px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(255, 183, 3, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .stat-period {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-duration {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .stat-bar {
+            height: 6px;
+            background: var(--bg-main);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .stat-bar-fill.daily {
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+        }
+
+        .stat-bar-fill.weekly {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .stat-bar-fill.monthly {
+            background: linear-gradient(90deg, #a855f7, #c084fc);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+  
+        .usage-graph {
+            margin-top: 32px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .graph-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .graph-legend {
+            display: flex;
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.on { background: var(--accent); }
+        .legend-dot.off { background: #9ca3af; }
+
+        .graph-container {
+            position: relative;
+            height: 180px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .graph-y-axis {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: calc(100% - 24px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            padding-right: 8px;
+        }
+
+        .graph-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            flex: 1;
+            height: 100%;
+            padding-left: 32px;
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            height: 100%;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .bar {
+            width: 14px;
+            border-radius: 4px 4px 2px 2px;
+            transition: height 0.5s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .bar:hover {
+            filter: brightness(1.2);
+        }
+
+        .bar:hover::after {
+            content: attr(data-hours);
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-main);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        .bar.on {
+            background: linear-gradient(to top, var(--accent), #f5c842);
+        }
+
+        .bar.on.today {
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .bar.off {
+            background: linear-gradient(to top, #6b7280, #9ca3af);
+        }
+
+        .bar-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .bar-label.today {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+
+    
+        @media (max-width: 1200px) {
+            .mode-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 20px;
+                gap: 24px;
+            }
+            .time-display {
+                font-size: 48px;
+            }
+            .brightness-section, .scenes-section {
+                margin-top: 0;
+            }
+            .gauge-wrapper {
+                width: 320px;
+                height: 220px;
+            }
+            .gauge-svg {
+                width: 300px;
+                height: 180px;
+            }
+            .lux-number {
+                font-size: 56px;
+            }
+        }
+    </style>
+</head>
+<body>
+  
+    <aside class="sidebar">
+        <div class="mode-badge">
+            <span class="mode-icon" id="modeIcon">🌙</span>
+            <span id="timeMode">Night</span>
+        </div>
+        
+        <div class="time-display" id="currentTime">21:00</div>
+        <div class="date-display" id="currentDate">Monday 2026/01/26</div>
+        
+        <!-- Mini Calendar -->
+        <div class="mini-calendar">
+            <div class="calendar-header">
+                <span class="calendar-month" id="calendarMonth">January 2026</span>
+                <div class="calendar-nav">
+                    <button class="calendar-nav-btn" id="prevMonth">‹</button>
+                    <button class="calendar-nav-btn" id="nextMonth">›</button>
+                </div>
+            </div>
+            <div class="calendar-weekdays">
+                <div class="calendar-weekday">M</div>
+                <div class="calendar-weekday">T</div>
+                <div class="calendar-weekday">W</div>
+                <div class="calendar-weekday">T</div>
+                <div class="calendar-weekday">F</div>
+                <div class="calendar-weekday">S</div>
+                <div class="calendar-weekday">S</div>
+            </div>
+            <div class="calendar-days" id="calendarDays">
+                <!-- Days will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Donut Chart - Lights On Hours -->
+        <div class="donut-section">
+            <div class="donut-container">
+                <svg class="donut-svg" viewBox="0 0 100 100">
+                    <defs>
+                        <linearGradient id="donutGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#f5a623"/>
+                            <stop offset="50%" stop-color="#f5a623"/>
+                            <stop offset="100%" stop-color="#f5a623"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="donut-track" cx="50" cy="50" r="40"/>
+                    <circle class="donut-fill" id="donutFill" cx="50" cy="50" r="40"
+                            stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                </svg>
+                <div class="donut-center">
+                    <div class="donut-value" id="donutValue">0h</div>
+                    <div class="donut-unit" id="donutUnit">today</div>
+                </div>
+            </div>
+            
+            <!-- Usage Warning -->
+            <div class="usage-warning" id="usageWarning">
+                <span class="warning-icon">⚠️</span>
+                <span class="warning-text">High usage! Lights on 8+ hours</span>
+            </div>
+        </div>
+        
+        <div class="brightness-section">
+            <div class="section-label">
+                <span>☀️</span>
+                <span>Light Brightness</span>
+                <span class="brightness-value" id="brightnessPercent">0%</span>
+            </div>
+            <div class="brightness-bar">
+                <div class="brightness-fill" id="brightnessFill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+    </aside>
+
+
+    <main class="main-content">
+        <header class="header">
+            <h1 class="title">UOP Light Sensor</h1>
+        </header>
+
+        <!-- Room Light Buttons -->
+        <div class="room-cards">
+            <div class="room-card" id="room-living">
+                <div class="room-card-icon">🛋️</div>
+                <div class="room-card-content">
+                    <div class="room-card-title">Living Room</div>
+                    <div class="room-card-subtitle">Main area</div>
+                </div>
+                <div class="room-toggle"></div>
+            </div>
+            <div class="room-card" id="room-bedroom">
+                <div class="room-card-icon">🛏️</div>
+                <div class="room-card-content">
+                    <div class="room-card-title">Bedroom</div>
+                    <div class="room-card-subtitle">Rest area</div>
+                </div>
+                <div class="room-toggle"></div>
+            </div>
+            <div class="room-card" id="room-kitchen">
+                <div class="room-card-icon">🍳</div>
+                <div class="room-card-content">
+                    <div class="room-card-title">Kitchen</div>
+                    <div class="room-card-subtitle">Cooking area</div>
+                </div>
+                <div class="room-toggle"></div>
+            </div>
+            <div class="room-card" id="room-bathroom">
+                <div class="room-card-icon">🚿</div>
+                <div class="room-card-content">
+                    <div class="room-card-title">Bathroom</div>
+                    <div class="room-card-subtitle">Washroom</div>
+                </div>
+                <div class="room-toggle"></div>
+            </div>
+            <div class="room-card" id="room-office">
+                <div class="room-card-icon">💼</div>
+                <div class="room-card-content">
+                    <div class="room-card-title">Office</div>
+                    <div class="room-card-subtitle">Work area</div>
+                </div>
+                <div class="room-toggle"></div>
+            </div>
+            <div class="room-card" id="room-garage">
+                <div class="room-card-icon">🚗</div>
+                <div class="room-card-content">
+                    <div class="room-card-title">Garage</div>
+                    <div class="room-card-subtitle">Parking</div>
+                </div>
+                <div class="room-toggle"></div>
+            </div>
+        </div>
+
+        <div class="gauge-container">
+            <div class="gauge-wrapper">
+                <!-- Sunlight Detection Popup -->
+                <div class="sunlight-popup" id="sunlightPopup">
+                    <span class="sunlight-icon">☀️</span>
+                    <span>Sunlight Detected</span>
+                </div>
+                
+                <div class="gauge-bg"></div>
+                
+                <svg class="gauge-svg" viewBox="0 0 400 240">
+                    <defs>
+                        <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#f5a623"/>
+                            <stop offset="50%" stop-color="#f5a623"/>
+                            <stop offset="100%" stop-color="#2a2a30"/>
+                        </linearGradient>
+                    </defs>
+           
+                    <path class="gauge-track" d="M 50 200 A 150 150 0 0 1 350 200"/>
+      
+                    <path class="gauge-fill" id="gaugeFill" d="M 50 200 A 150 150 0 0 1 350 200"
+                          stroke-dasharray="471" stroke-dashoffset="471"/>
+                </svg>
+                
+                <div class="gauge-value">
+                    <span class="lux-number" id="luxValue">0</span><span class="lux-unit">lux</span>
+                </div>
+                
+                <div class="gauge-range">
+                    <span class="range-value">0</span>
+                    <span class="range-value">50</span>
+                </div>
+                
+                <div class="gauge-controls">
+                    <button class="control-btn range-btn">L</button>
+                    <button class="power-btn" id="powerBtn">
+                        <svg viewBox="0 0 24 24">
+                   
+                            <circle cx="12" cy="12" r="4" />
+              
+                            <line x1="12" y1="2" x2="12" y2="5" />
+                            <line x1="12" y1="19" x2="12" y2="22" />
+                            <line x1="2" y1="12" x2="5" y2="12" />
+                            <line x1="19" y1="12" x2="22" y2="12" />
+                            <line x1="4.93" y1="4.93" x2="7.05" y2="7.05" />
+                            <line x1="16.95" y1="16.95" x2="19.07" y2="19.07" />
+                            <line x1="4.93" y1="19.07" x2="7.05" y2="16.95" />
+                            <line x1="16.95" y1="7.05" x2="19.07" y2="4.93" />
+                        </svg>
+                    </button>
+                    <button class="control-btn range-btn">H</button>
+                </div>
+            </div>
+
+   
+            <div class="roller-container">
+                <div class="roller-track" id="rollerTrack">
+                    <div class="roller-fill" id="rollerFill"></div>
+                    <div class="roller-thumb" id="rollerThumb"></div>
+                    <div class="roller-ticks">
+                        <span>50</span>
+                        <span>37</span>
+                        <span>25</span>
+                        <span>12</span>
+                        <span>0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mode-cards">
+            <div class="mode-card" data-mode="eco">
+                <div class="mode-card-icon">🌿</div>
+                <div class="mode-card-content">
+                    <div class="mode-card-title">Eco Mode</div>
+                    <div class="mode-card-subtitle">Power saving</div>
+                </div>
+                <div class="mode-toggle" id="toggleEco"></div>
+            </div>
+            
+            <div class="mode-card" data-mode="sleep">
+                <div class="mode-card-icon">🌙</div>
+                <div class="mode-card-content">
+                    <div class="mode-card-title">Sleep Mode</div>
+                    <div class="mode-card-subtitle">Dimmed lights</div>
+                </div>
+                <div class="mode-toggle" id="toggleSleep"></div>
+            </div>
+        </div>
+        <div class="stats-section">
+            <div class="stats-header">
+                <span class="stats-icon">📊</span>
+                <span class="stats-title">Usage Statistics</span>
+            </div>
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-period">Today</div>
+                    <div class="stat-duration" id="dailyDuration">0h 0m</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill daily" id="dailyBar" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-label">of 24 hours</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-period">This Week</div>
+                    <div class="stat-duration" id="weeklyDuration">0h 0m</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill weekly" id="weeklyBar" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-label">of 168 hours</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-period">This Month</div>
+                    <div class="stat-duration" id="monthlyDuration">0h 0m</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill monthly" id="monthlyBar" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-label">of 720 hours</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+
+        function updateTime() {
+            const now = new Date();
+            const pstOptions = { timeZone: 'America/Los_Angeles' };
+            
+            // Get PST time components
+            const pstTime = now.toLocaleString('en-US', { ...pstOptions, hour: '2-digit', minute: '2-digit', hour12: false });
+            const [hours, minutes] = pstTime.split(':');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+            
+            // Get PST date components
+            const pstDate = new Date(now.toLocaleString('en-US', pstOptions));
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const day = days[pstDate.getDay()];
+            const year = pstDate.getFullYear();
+            const month = String(pstDate.getMonth() + 1).padStart(2, '0');
+            const date = String(pstDate.getDate()).padStart(2, '0');
+            document.getElementById('currentDate').textContent = `${day} ${year}/${month}/${date}`;
+            
+            // Get PST hour for mode
+            const hour = parseInt(hours);
+            const modeEl = document.getElementById('timeMode');
+            const iconEl = document.getElementById('modeIcon');
+            
+            if (hour >= 6 && hour < 12) {
+                modeEl.textContent = 'Morning';
+                iconEl.textContent = '🌅';
+            } else if (hour >= 12 && hour < 18) {
+                modeEl.textContent = 'Afternoon';
+                iconEl.textContent = '☀️';
+            } else if (hour >= 18 && hour < 21) {
+                modeEl.textContent = 'Evening';
+                iconEl.textContent = '🌆';
+            } else {
+                modeEl.textContent = 'Night';
+                iconEl.textContent = '🌙';
+            }
+        }
+
+
+        let currentLux = 500;
+        let sunlightDetected = false;
+
+      
+        function updateGauge(lux) {
+            currentLux = lux;
+            const maxLux = 50;
+            const percentage = Math.min(lux / maxLux, 1);
+            const arcLength = 471;
+            const offset = arcLength * (1 - percentage);
+            
+            document.getElementById('gaugeFill').style.strokeDashoffset = offset;
+            document.getElementById('luxValue').textContent = Math.round(lux);
+            
+     
+            const brightnessPercent = Math.round(percentage * 100);
+            document.getElementById('brightnessFill').style.width = `${brightnessPercent}%`;
+            document.getElementById('brightnessPercent').textContent = `${brightnessPercent}%`;
+            
+            updateRollerPosition(lux);
+        }
+
+        // Simulated window sensor (independent from gauge)
+        function simulateWindowSunlight() {
+            const hour = new Date().getHours();
+            const popup = document.getElementById('sunlightPopup');
+            
+            // Sunlight only possible during daytime (7 AM - 6 PM)
+            const isDaytime = hour >= 7 && hour <= 18;
+            
+            if (isDaytime && !sunlightDetected) {
+                // Random chance of sunlight detection
+                const peakHours = hour >= 10 && hour <= 15;
+                const chance = peakHours ? 0.4 : 0.7;
+                
+                if (Math.random() > chance) {
+                    sunlightDetected = true;
+                    popup.classList.add('show');
+                    
+                    // Auto-hide after 5-8 seconds
+                    setTimeout(() => {
+                        sunlightDetected = false;
+                        popup.classList.remove('show');
+                    }, 5000 + Math.random() * 3000);
+                }
+            }
+        }
+
+        // Check for window sunlight every 10-15 seconds
+        function startWindowSensor() {
+            setInterval(simulateWindowSunlight, 10000 + Math.random() * 5000);
+            // First check after 3 seconds
+            setTimeout(simulateWindowSunlight, 3000);
+        }
+
+
+
+        const rollerTrack = document.getElementById('rollerTrack');
+        const rollerThumb = document.getElementById('rollerThumb');
+        const rollerFill = document.getElementById('rollerFill');
+        let isDragging = false;
+
+        function updateRollerPosition(lux) {
+            const percentage = lux / 50;
+            const trackHeight = rollerTrack.offsetHeight;
+            const thumbPosition = trackHeight - (percentage * trackHeight);
+            
+            rollerThumb.style.top = `${thumbPosition - 12}px`;
+            rollerFill.style.height = `${percentage * 100}%`;
+        }
+
+        function handleRollerInteraction(e) {
+            if (!isPowerOn) return; 
+            
+            const rect = rollerTrack.getBoundingClientRect();
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            const relativeY = y - rect.top;
+            const percentage = 1 - Math.max(0, Math.min(1, relativeY / rect.height));
+            const lux = Math.round(percentage * 50);
+            
+            updateGauge(lux);
+        }
+
+        rollerTrack.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            handleRollerInteraction(e);
+        });
+
+        rollerThumb.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            e.stopPropagation();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                handleRollerInteraction(e);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+
+        rollerTrack.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            handleRollerInteraction(e);
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                handleRollerInteraction(e);
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+
+        function handleModeToggle(card, toggle) {
+            const mode = card.dataset.mode;
+            const isActive = toggle.classList.toggle('active');
+            card.classList.toggle('active');
+            
+            if (mode === 'eco') {
+                if (isActive) {
+                    if (isSleepMode) {
+                        stopSleepMode();
+                        document.querySelector('[data-mode="sleep"] .mode-toggle')?.classList.remove('active');
+                        document.querySelector('[data-mode="sleep"]')?.classList.remove('active');
+                    }
+                    startEcoMode();
+                } else {
+                    stopEcoMode();
+                }
+            } else if (mode === 'sleep') {
+                if (isActive) {
+                    startSleepMode();
+                } else {
+                    stopSleepMode();
+                }
+            }
+        }
+
+        document.querySelectorAll('.mode-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const card = toggle.closest('.mode-card');
+                handleModeToggle(card, toggle);
+            });
+        });
+
+        document.querySelectorAll('.mode-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('mode-toggle')) {
+                    const toggle = card.querySelector('.mode-toggle');
+                    handleModeToggle(card, toggle);
+                }
+            });
+        });
+
+
+        let isPowerOn = false;  // Start with light OFF
+        let savedLux = 25;      // Default brightness when turned on
+        
+
+        let isEcoMode = false;
+        let ecoInterval = null;
+        
+        function simulateAmbientLight() {
+            if (!isPowerOn || !isEcoMode) return;
+            
+            // Fluctuate between 10-40 lux in Eco Mode
+            const minLux = 10;
+            const maxLux = 40;
+            const lux = Math.round(minLux + Math.random() * (maxLux - minLux));
+            
+            updateGauge(lux);
+        }
+        
+        function startEcoMode() {
+            isEcoMode = true;
+            simulateAmbientLight(); 
+            ecoInterval = setInterval(simulateAmbientLight, 5000); 
+            
+ 
+            rollerTrack.style.opacity = '0.3';
+            rollerTrack.style.pointerEvents = 'none';
+        }
+        
+        function stopEcoMode() {
+            isEcoMode = false;
+            if (ecoInterval) {
+                clearInterval(ecoInterval);
+                ecoInterval = null;
+            }
+            
+   
+            if (isPowerOn && !isSleepMode) {
+                rollerTrack.style.opacity = '1';
+                rollerTrack.style.pointerEvents = 'auto';
+            }
+        }
+
+  
+        let isSleepMode = false;
+        let preSleepLux = 25;
+        const SLEEP_LUX = 5; 
+
+        function startSleepMode() {
+            isSleepMode = true;
+            
+
+            if (isEcoMode) {
+                stopEcoMode();
+                document.getElementById('toggleEco')?.classList.remove('active');
+                document.querySelector('[data-mode="eco"]')?.classList.remove('active');
+            }
+            
+ 
+            preSleepLux = currentLux > SLEEP_LUX ? currentLux : 25;
+            updateGauge(SLEEP_LUX);
+            
+
+            rollerTrack.style.opacity = '0.3';
+            rollerTrack.style.pointerEvents = 'none';
+        }
+
+        function stopSleepMode() {
+            isSleepMode = false;
+            
+
+            updateGauge(preSleepLux);
+            
+
+            if (isPowerOn) {
+                rollerTrack.style.opacity = '1';
+                rollerTrack.style.pointerEvents = 'auto';
+            }
+        }
+
+        document.getElementById('powerBtn').addEventListener('click', function() {
+            isPowerOn = !isPowerOn;
+            this.classList.toggle('active');
+            
+            if (!isPowerOn) {
+       
+                savedLux = currentLux;
+                if (ecoInterval) {
+                    clearInterval(ecoInterval);
+                    ecoInterval = null;
+                }
+                updateGauge(0);
+                rollerTrack.style.opacity = '0.3';
+                rollerTrack.style.pointerEvents = 'none';
+            } else {
+    
+                if (isEcoMode) {
+                    ecoInterval = setInterval(simulateAmbientLight, 5000);
+                    simulateAmbientLight();
+                } else if (isSleepMode) {
+                    updateGauge(SLEEP_LUX);
+                    rollerTrack.style.opacity = '0.3';
+                    rollerTrack.style.pointerEvents = 'none';
+                } else {
+                    updateGauge(savedLux);
+                    rollerTrack.style.opacity = '1';
+                    rollerTrack.style.pointerEvents = 'auto';
+                }
+            }
+        });
+
+
+        // Live usage tracking - starts fresh from today
+        let dailySeconds = 0;
+        let weeklySeconds = 0;
+        let monthlySeconds = 0;
+        let statsInterval = null;
+
+
+        function loadStats() {
+            const saved = localStorage.getItem('lightStats');
+            const todayPST = getPSTDate();
+            
+            if (saved) {
+                const data = JSON.parse(saved);
+                const savedDatePST = data.datePST || '';
+                
+                // Only load if it's the same day (PST)
+                if (savedDatePST === todayPST) {
+                    dailySeconds = data.daily || 0;
+                    weeklySeconds = data.weekly || 0;
+                    monthlySeconds = data.monthly || 0;
+                } else {
+                    // Different day - start fresh, old data is in MongoDB
+                    dailySeconds = 0;
+                    weeklySeconds = 0;
+                    monthlySeconds = 0;
+                    localStorage.removeItem('lightStats');
+                }
+            }
+            
+            updateStatsDisplay();
+            updateDonutChart();
+        }
+
+        // Helper function to get current date in PST
+        function getPSTDate() {
+            const now = new Date();
+            const pstString = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+            return pstString; // Returns YYYY-MM-DD format
+        }
+
+        async function saveStats() {
+            const today = getPSTDate();
+            
+            // Save to localStorage for statistics (with PST date for day comparison)
+            localStorage.setItem('lightStats', JSON.stringify({
+                date: new Date().toISOString(),
+                datePST: today,
+                daily: dailySeconds,
+                weekly: weeklySeconds,
+                monthly: monthlySeconds
+            }));
+            
+            // Save to MongoDB for donut chart (calendar date selection)
+            try {
+                await fetch('/api/usage/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: today,
+                        onSeconds: dailySeconds
+                    })
+                });
+            } catch (error) {
+                console.error('Failed to save to MongoDB:', error);
+            }
+        }
+
+        function updateStatsDisplay() {
+ 
+            const formatDuration = (seconds) => {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                return `${hours}h ${minutes}m`;
+            };
+            
+            document.getElementById('dailyDuration').textContent = formatDuration(dailySeconds);
+            document.getElementById('weeklyDuration').textContent = formatDuration(weeklySeconds);
+            document.getElementById('monthlyDuration').textContent = formatDuration(monthlySeconds);
+            
+ 
+            const dailyPercent = Math.min((dailySeconds / (24 * 3600)) * 100, 100);
+            const weeklyPercent = Math.min((weeklySeconds / (168 * 3600)) * 100, 100);
+            const monthlyPercent = Math.min((monthlySeconds / (720 * 3600)) * 100, 100);
+            
+            document.getElementById('dailyBar').style.width = `${dailyPercent}%`;
+            document.getElementById('weeklyBar').style.width = `${weeklyPercent}%`;
+            document.getElementById('monthlyBar').style.width = `${monthlyPercent}%`;
+            
+            // Update donut chart
+            if (typeof updateDonutChart === 'function') {
+                updateDonutChart();
+            }
+        }
+
+        // Fetch statistics from MongoDB (only real tracked data)
+        function loadStatisticsFromStorage() {
+            // Already loaded via loadStats()
+            updateStatsDisplay();
+            updateDonutChart();
+        }
+
+        function startStatsTracking() {
+            if (statsInterval) return;
+            statsInterval = setInterval(() => {
+                if (isPowerOn) {
+                    dailySeconds++;
+                    weeklySeconds++;
+                    monthlySeconds++;
+                    updateStatsDisplay();
+                    
+                    // Save to localStorage every 30 seconds
+                    if (dailySeconds % 30 === 0) {
+                        saveStats();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Mini Calendar
+        let calendarDate = new Date();
+        let selectedDate = new Date(); // Currently selected date for donut chart
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // Store daily usage data by date string - Live tracking
+        let dailyUsageHistory = {};
+
+        function loadDailyUsageHistory() {
+            // Data loaded from MongoDB on demand
+            dailyUsageHistory = {};
+        }
+
+        async function saveDailyUsageHistory() {
+            // Already saved via saveStats()
+        }
+
+        async function getUsageForDate(date) {
+            const dateStr = date.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+            const todayStr = getPSTDate();
+            
+            // If today (PST), return current session data
+            if (dateStr === todayStr) {
+                return dailySeconds;
+            }
+            
+            // Check mock historical data first
+            if (dailyUsageHistory[dateStr] !== undefined) {
+                return dailyUsageHistory[dateStr];
+            }
+            
+            // Fetch from MongoDB
+            try {
+                const response = await fetch(`/api/usage/${dateStr}`);
+                const data = await response.json();
+                return data.onSeconds || 0;
+            } catch (error) {
+                console.error('Failed to fetch usage:', error);
+                return 0;
+            }
+        }
+
+        function renderCalendar() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            document.getElementById('calendarMonth').textContent = `${monthNames[month]} ${year}`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const daysInMonth = lastDay.getDate();
+            
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            
+            const container = document.getElementById('calendarDays');
+            container.innerHTML = '';
+            
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+            const isSelectedMonth = selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
+            
+            // Previous month days
+            for (let i = startDay - 1; i >= 0; i--) {
+                const dayNum = prevMonthLastDay - i;
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day other-month';
+                dayEl.textContent = dayNum;
+                
+                const prevMonth = month === 0 ? 11 : month - 1;
+                const prevYear = month === 0 ? year - 1 : year;
+                dayEl.addEventListener('click', () => selectDate(prevYear, prevMonth, dayNum));
+                
+                container.appendChild(dayEl);
+            }
+            
+            // Current month days
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                
+                if (isCurrentMonth && i === today.getDate()) {
+                    dayEl.classList.add('today');
+                }
+                if (isSelectedMonth && i === selectedDate.getDate()) {
+                    dayEl.classList.add('selected');
+                }
+                
+                dayEl.textContent = i;
+                dayEl.addEventListener('click', () => selectDate(year, month, i));
+                container.appendChild(dayEl);
+            }
+            
+            // Next month days
+            const totalCells = startDay + daysInMonth;
+            const remainingCells = totalCells <= 35 ? 35 - totalCells : 42 - totalCells;
+            for (let i = 1; i <= remainingCells; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day other-month';
+                dayEl.textContent = i;
+                
+                const nextMonth = month === 11 ? 0 : month + 1;
+                const nextYear = month === 11 ? year + 1 : year;
+                dayEl.addEventListener('click', () => selectDate(nextYear, nextMonth, i));
+                
+                container.appendChild(dayEl);
+            }
+        }
+
+        function selectDate(year, month, day) {
+            selectedDate = new Date(year, month, day);
+            
+            // Navigate to that month if different
+            if (calendarDate.getMonth() !== month || calendarDate.getFullYear() !== year) {
+                calendarDate = new Date(year, month, 1);
+            }
+            
+            renderCalendar();
+            updateDonutChart();
+        }
+
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            calendarDate.setMonth(calendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            calendarDate.setMonth(calendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // Donut Chart
+        async function updateDonutChart() {
+            const usageSeconds = await getUsageForDate(selectedDate);
+            const hours = usageSeconds / 3600;
+            const maxHours = 24;
+            const percentage = Math.min(hours / maxHours, 1);
+            const circumference = 251.2; // 2 * PI * 40
+            const offset = circumference * (1 - percentage);
+            
+            document.getElementById('donutFill').style.strokeDashoffset = offset;
+            
+            // Format display
+            const displayHours = Math.floor(hours);
+            const displayMinutes = Math.floor((hours - displayHours) * 60);
+            
+            if (displayHours > 0) {
+                document.getElementById('donutValue').textContent = `${displayHours}h ${displayMinutes}m`;
+            } else {
+                document.getElementById('donutValue').textContent = `${displayMinutes}m`;
+            }
+            
+            // Update the unit label based on selected date
+            const today = new Date();
+            const donutUnit = document.getElementById('donutUnit');
+            
+            if (selectedDate.toDateString() === today.toDateString()) {
+                donutUnit.textContent = 'today';
+            } else {
+                const month = selectedDate.getMonth() + 1;
+                const day = selectedDate.getDate();
+                donutUnit.textContent = `${month}/${day}`;
+            }
+            
+            // Show/hide warning if usage >= 8 hours
+            const warningEl = document.getElementById('usageWarning');
+            if (hours >= 8) {
+                warningEl.classList.add('show');
+            } else {
+                warningEl.classList.remove('show');
+            }
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        loadDailyUsageHistory();
+        renderCalendar();
+
+
+        // Initialize from localStorage
+        loadStats();
+        loadDailyUsageHistory();
+        startStatsTracking();
+
+        // Start window sunlight sensor (independent from gauge)
+        startWindowSensor();
+        
+        // Set initial gauge value (light is off initially)
+        updateGauge(0);
+        
+        // ONE-TIME RESET: Clear old data to start fresh from Jan 29
+        // Remove this block after first load
+        localStorage.removeItem('lightStats');
+        dailySeconds = 0;
+        weeklySeconds = 0;
+        monthlySeconds = 0;
+        
+        // Display initial statistics
+        updateStatsDisplay();
+        updateDonutChart();
+
+        // Room Light Status Management - All start OFF
+        const roomStates = {
+            'room-living': false,
+            'room-bedroom': false,
+            'room-kitchen': false,
+            'room-bathroom': false,
+            'room-office': false,
+            'room-garage': false
+        };
+
+        function updateRoomUI(roomId, isOn) {
+            const card = document.getElementById(roomId);
+            if (!card) return;
+            
+            if (isOn) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        }
+
+        // Add click handlers to room cards - each room is independent
+        document.querySelectorAll('.room-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const roomId = this.id;
+                roomStates[roomId] = !roomStates[roomId];
+                updateRoomUI(roomId, roomStates[roomId]);
+            });
+        });
+
+        // Initialize room status display with mock data
+        function initializeRoomStatus() {
+            Object.keys(roomStates).forEach(roomId => {
+                updateRoomUI(roomId, roomStates[roomId]);
+            });
+        }
+        initializeRoomStatus();
+
+
+        setInterval(() => {
+            saveStats();
+            saveDailyUsageHistory();
+            
+            // Update donut if viewing today
+            const today = new Date();
+            if (selectedDate.toDateString() === today.toDateString()) {
+                updateDonutChart();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
