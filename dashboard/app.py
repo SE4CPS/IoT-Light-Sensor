@@ -9,8 +9,8 @@ import pytz
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # MongoDB Atlas Connection
-MONGO_URI = "mongodb+srv://SEI4-0:uopsensor@cluster0.oryfr44.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-DB_NAME = "light_sensor_db"
+MONGO_URI = ""
+DB_NAME = ""
 
 try:
     client = MongoClient(
