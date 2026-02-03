@@ -4,6 +4,7 @@ import certifi
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+import pytz
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
@@ -146,8 +147,10 @@ def get_usage(date):
 
 @app.route('/api/usage/statistics')
 def get_usage_statistics():
-    """Get daily, weekly, and monthly statistics"""
-    today = datetime.now()
+    """Get weekly and monthly statistics EXCLUDING today (today is tracked live in frontend)"""
+    # Use PST timezone to match frontend
+    pst = pytz.timezone('America/Los_Angeles')
+    today = datetime.now(pst)
     today_str = today.strftime('%Y-%m-%d')
     
     weekday = today.weekday()
@@ -155,30 +158,24 @@ def get_usage_statistics():
     week_start_str = week_start.strftime('%Y-%m-%d')
     month_start_str = today.strftime('%Y-%m-01')
     
-    daily_seconds = 0
     weekly_seconds = 0
     monthly_seconds = 0
     
     if usage_collection is not None:
-        # Today
-        today_record = usage_collection.find_one({"date": today_str})
-        if today_record:
-            daily_seconds = today_record.get('onSeconds', 0)
-        
-        # This week
+        # This week EXCLUDING today (frontend adds live dailySeconds)
         week_records = list(usage_collection.find({
-            "date": {"$gte": week_start_str, "$lte": today_str}
+            "date": {"$gte": week_start_str, "$lt": today_str}
         }))
         weekly_seconds = sum(r.get('onSeconds', 0) for r in week_records)
         
-        # This month
+        # This month EXCLUDING today (frontend adds live dailySeconds)
         month_records = list(usage_collection.find({
-            "date": {"$gte": month_start_str, "$lte": today_str}
+            "date": {"$gte": month_start_str, "$lt": today_str}
         }))
         monthly_seconds = sum(r.get('onSeconds', 0) for r in month_records)
     
     return jsonify({
-        "daily": daily_seconds,
+        "daily": 0,  # Not used - frontend tracks today live
         "weekly": weekly_seconds,
         "monthly": monthly_seconds
     })
