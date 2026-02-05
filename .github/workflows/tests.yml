@@ -9,5 +9,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          
       - name: test-case
         run: echo "Hello World"
+      - name: Install deps
+        run: |
+          pip install pytest pymongo python-dotenv
+
+      - name: Run tests
+        run: pytest twin/test_twin_sim.py
+
