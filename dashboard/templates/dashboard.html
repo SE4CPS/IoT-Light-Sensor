@@ -270,7 +270,8 @@
             padding: 16px;
             background: var(--bg-card);
             border-radius: 12px;
-            margin-top: 60px;
+            margin-top: 20px;
+            margin-bottom: 30px;
         }
 
         .room-bars-title {
@@ -577,6 +578,111 @@
             margin-top: 40px;
         }
 
+        /* Weekly Line Graph */
+        .weekly-graph-container {
+            background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-left: 30px;
+            width: 350px;
+            height: 280px;
+            position: relative;
+        }
+
+        .weekly-graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .weekly-graph-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a0aec0;
+        }
+
+        .weekly-graph-value {
+            text-align: right;
+        }
+
+        .weekly-graph-value .date {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-bottom: 2px;
+        }
+
+        .weekly-graph-value .hours {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .weekly-graph {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            padding-left: 35px;
+            padding-bottom: 25px;
+        }
+
+        .graph-y-axis {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 135px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #f5a623 !important;
+            font-weight: 600;
+        }
+
+        .graph-y-axis span {
+            text-align: right;
+            width: 30px;
+        }
+
+        .graph-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 135px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .graph-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .graph-x-axis {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 8px;
+            font-size: 10px;
+            color: #718096;
+        }
+
+        .graph-x-axis span {
+            text-align: center;
+            width: 35px;
+        }
+
+        .graph-x-axis span.today {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .graph-grid-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #4a5568;
+            opacity: 0.3;
+        }
+
         .roller-label {
             font-size: 12px;
             color: var(--text-muted);
@@ -640,8 +746,9 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            font-size: 10px;
-            color: var(--text-muted);
+            font-size: 11px;
+            color: #f5a623;
+            font-weight: 600;
         }
 
         .gauge-wrapper {
@@ -1263,11 +1370,12 @@
             right: 24px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 20px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
             z-index: 100;
@@ -1276,16 +1384,11 @@
         .customize-btn:hover {
             background: var(--bg-card-hover);
             border-color: var(--accent);
+            transform: rotate(90deg);
         }
 
         .customize-btn .icon {
-            font-size: 18px;
-        }
-
-        .customize-btn .label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-primary);
+            font-size: 22px;
         }
 
         /* Wallpaper Modal */
@@ -1353,6 +1456,412 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
+        }
+
+        .wallpaper-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .info-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .info-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* Info Modal */
+        .info-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .info-modal.show {
+            display: flex;
+        }
+
+        .info-modal-content {
+            background: var(--bg-sidebar);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .info-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .info-close-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .info-close-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .info-section {
+            margin-bottom: 28px;
+        }
+
+        .info-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .info-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .info-card-content {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 20px 0;
+        }
+
+        .info-flow-node {
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .info-flow-arrow {
+            color: var(--text-muted);
+            font-size: 20px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .info-table th {
+            background: var(--bg-card);
+            padding: 10px;
+            text-align: left;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .info-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .info-table .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .info-table .method.get {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .info-table .method.post {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .info-table .endpoint {
+            font-family: monospace;
+            color: var(--accent);
+        }
+
+        .mongodb-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #00684A, #00ED64);
+            padding: 14px 20px;
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 237, 100, 0.3);
+        }
+
+        .mongodb-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 237, 100, 0.4);
+        }
+
+        .mongodb-icon {
+            font-size: 20px;
+        }
+
+        .external-icon {
+            margin-left: auto;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .readonly-notice {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #fbbf24;
+        }
+
+        .lock-icon {
+            font-size: 14px;
+        }
+
+        .db-collection {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .db-collection-header {
+            background: linear-gradient(135deg, var(--accent), #d4890a);
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .db-collection-header.room {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .db-collection-body {
+            padding: 10px;
+            font-size: 11px;
+        }
+
+        .db-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .db-field:last-child {
+            border-bottom: none;
+        }
+
+        .db-field-name {
+            color: #22c55e;
+            font-family: monospace;
+        }
+
+        .db-field-type {
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+
+        /* Password Modal */
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-modal.show {
+            display: flex;
+        }
+
+        .password-modal-content {
+            background: var(--bg-sidebar);
+            border-radius: 16px;
+            padding: 32px;
+            width: 320px;
+            text-align: center;
+        }
+
+        .password-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .password-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .password-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .password-input:focus {
+            border-color: var(--accent);
+        }
+
+        .password-input.error {
+            border-color: #ef4444;
+        }
+
+        .password-error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .password-error.show {
+            display: block;
+        }
+
+        .password-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .password-submit:hover {
+            background: #ffc107;
+            transform: scale(1.02);
+        }
+
+        .password-cancel {
+            margin-top: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .password-cancel:hover {
+            color: var(--text-primary);
         }
 
         .wallpaper-option {
@@ -1695,7 +2204,6 @@
     <!-- Customize Button -->
     <button class="customize-btn" id="customizeBtn">
         <span class="icon">⚙️</span>
-        <span class="label">Customize</span>
     </button>
 
     <!-- Wallpaper Selection Modal -->
@@ -1707,6 +2215,212 @@
             </div>
             <div class="wallpaper-grid" id="wallpaperGrid">
                 <!-- Wallpaper options rendered by JS -->
+            </div>
+            <div class="wallpaper-modal-footer">
+                <button class="info-btn" id="infoBtn" title="View Data Structure Diagram">
+                    ℹ️
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div class="password-modal" id="passwordModal">
+        <div class="password-modal-content">
+            <div class="password-icon">🔐</div>
+            <div class="password-title">Admin Access</div>
+            <div class="password-subtitle">Enter 5-digit passkey to view data structure</div>
+            <div class="password-input-wrapper">
+                <input type="password" class="password-input" id="passwordInput" maxlength="5" placeholder="•••••" autocomplete="off">
+            </div>
+            <div class="password-error" id="passwordError">❌ Invalid passkey. Try again.</div>
+            <button class="password-submit" id="passwordSubmit">Verify</button>
+            <button class="password-cancel" id="passwordCancel">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="info-modal" id="infoModal">
+        <div class="info-modal-content">
+            <div class="info-modal-header">
+                <h2 class="info-modal-title">🔆 Data Structure Display Scheme</h2>
+                <button class="info-close-btn" id="infoCloseBtn">×</button>
+            </div>
+
+            <!-- Screen Layout Overview -->
+            <div class="info-section">
+                <div class="info-section-title">📊 Screen Layout Overview</div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-card-title">📅 Sidebar (Left)</div>
+                        <div class="info-card-content">
+                            • Time & Date (PST)<br>
+                            • Calendar (Sun-Sat)<br>
+                            • Donut Chart<br>
+                            • Warning Notification<br>
+                            • Room Usage Bars<br>
+                            • Brightness %
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">🎛️ Main Area</div>
+                        <div class="info-card-content">
+                            • 6 Room Controls<br>
+                            • Gauge (0-50 lux)<br>
+                            • Brightness Slider<br>
+                            • Weekly Line Graph<br>
+                            • Eco/Sleep Modes
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">📈 Statistics</div>
+                        <div class="info-card-content">
+                            • Today's Usage<br>
+                            • Monthly Usage<br>
+                            • Progress Bars<br>
+                            • Live Updates
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MongoDB Collections -->
+            <div class="info-section">
+                <div class="info-section-title">📦 Data Structure (MongoDB Collections)</div>
+                <div class="info-grid">
+                    <div class="db-collection">
+                        <div class="db-collection-header">📊 daily_usage</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">offSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">updatedAt</span><span class="db-field-type">DateTime</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🛋️ room_living</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🛏️ room_bedroom</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🍳 room_kitchen</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🚿 room_bathroom</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">💼 room_office</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🚗 room_garage</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Flow -->
+            <div class="info-section">
+                <div class="info-section-title">🔄 Data Flow</div>
+                <div class="info-flow">
+                    <div class="info-flow-node">👤 User<br><small>Actions</small></div>
+                    <div class="info-flow-arrow">→</div>
+                    <div class="info-flow-node">🖥️ Frontend<br><small>JS/HTML</small></div>
+                    <div class="info-flow-arrow">→</div>
+                    <div class="info-flow-node">⚙️ Backend<br><small>Flask API</small></div>
+                    <div class="info-flow-arrow">→</div>
+                    <div class="info-flow-node">🗄️ MongoDB<br><small>Atlas Cloud</small></div>
+                </div>
+            </div>
+
+            <!-- API Endpoints -->
+            <div class="info-section">
+                <div class="info-section-title">📡 API Endpoints</div>
+                <table class="info-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/usage/save</td>
+                            <td>Save daily usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/usage/{date}</td>
+                            <td>Get usage for date</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/usage/statistics</td>
+                            <td>Get monthly stats</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/room/{room}/save</td>
+                            <td>Save room usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/room/{room}/{date}</td>
+                            <td>Get room data</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/rooms/all/{date}</td>
+                            <td>Get all rooms</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- MongoDB Atlas Link -->
+            <div class="info-section">
+                <div class="info-section-title">🍃 MongoDB Atlas Database</div>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px;">Access the cloud database to view stored data and collections.</p>
+                <a href="https://cloud.mongodb.com/v2/67952f1d9f8cb73e7b8ce3bb#/clusters" target="_blank" class="mongodb-link">
+                    <span class="mongodb-icon">🍃</span>
+                    <span>Open MongoDB Atlas Dashboard</span>
+                    <span class="external-icon">↗</span>
+                </a>
+                <div class="readonly-notice">
+                    <span class="lock-icon">🔒</span>
+                    <span>Read-Only Access - Data viewing only, modifications are restricted</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1730,12 +2444,12 @@
                 </div>
             </div>
             <div class="calendar-weekdays">
+                <div class="calendar-weekday">S</div>
                 <div class="calendar-weekday">M</div>
                 <div class="calendar-weekday">T</div>
                 <div class="calendar-weekday">W</div>
                 <div class="calendar-weekday">T</div>
                 <div class="calendar-weekday">F</div>
-                <div class="calendar-weekday">S</div>
                 <div class="calendar-weekday">S</div>
             </div>
             <div class="calendar-days" id="calendarDays">
@@ -1958,6 +2672,44 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Weekly Line Graph -->
+            <div class="weekly-graph-container">
+                <div class="weekly-graph-header">
+                    <div class="weekly-graph-title">Weekly Usage</div>
+                    <div class="weekly-graph-value">
+                        <div class="date" id="graphDateLabel">Today</div>
+                        <div class="hours" id="graphHoursLabel">0h 0m</div>
+                    </div>
+                </div>
+                <div class="weekly-graph">
+                    <div class="graph-y-axis">
+                        <span>24h</span>
+                        <span>18h</span>
+                        <span>12h</span>
+                        <span>6h</span>
+                        <span>0h</span>
+                    </div>
+                    <div class="graph-canvas-wrapper">
+                        <div class="graph-grid-line" style="top: 0%"></div>
+                        <div class="graph-grid-line" style="top: 25%"></div>
+                        <div class="graph-grid-line" style="top: 50%"></div>
+                        <div class="graph-grid-line" style="top: 75%"></div>
+                        <svg class="graph-canvas" id="weeklyGraphCanvas" viewBox="0 0 280 135" preserveAspectRatio="none">
+                            <!-- Line and dots rendered by JS -->
+                        </svg>
+                    </div>
+                    <div class="graph-x-axis" id="graphXAxis">
+                        <span>Sun</span>
+                        <span>Mon</span>
+                        <span>Tue</span>
+                        <span>Wed</span>
+                        <span>Thu</span>
+                        <span>Fri</span>
+                        <span>Sat</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="mode-cards">
@@ -1992,14 +2744,6 @@
                         <div class="stat-bar-fill daily" id="dailyBar" style="width: 0%"></div>
                     </div>
                     <div class="stat-label">of 24 hours</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-period">This Week</div>
-                    <div class="stat-duration" id="weeklyDuration">0h 0m</div>
-                    <div class="stat-bar">
-                        <div class="stat-bar-fill weekly" id="weeklyBar" style="width: 0%"></div>
-                    </div>
-                    <div class="stat-label">of 168 hours</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-period">This Month</div>
@@ -2217,7 +2961,7 @@
             });
         });
 
-
+        
         let isPowerOn = false;  // Start with light OFF
         let savedLux = 25;      // Default brightness when turned on
         
@@ -2433,16 +3177,13 @@
             };
             
             document.getElementById('dailyDuration').textContent = formatDuration(dailySeconds);
-            document.getElementById('weeklyDuration').textContent = formatDuration(weeklySeconds);
             document.getElementById('monthlyDuration').textContent = formatDuration(monthlySeconds);
             
  
             const dailyPercent = Math.min((dailySeconds / (24 * 3600)) * 100, 100);
-            const weeklyPercent = Math.min((weeklySeconds / (168 * 3600)) * 100, 100);
             const monthlyPercent = Math.min((monthlySeconds / (720 * 3600)) * 100, 100);
             
             document.getElementById('dailyBar').style.width = `${dailyPercent}%`;
-            document.getElementById('weeklyBar').style.width = `${weeklyPercent}%`;
             document.getElementById('monthlyBar').style.width = `${monthlyPercent}%`;
             
             // Update donut chart
@@ -2526,7 +3267,7 @@
             
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const startDay = firstDay.getDay(); // Sunday = 0, no adjustment needed
             const daysInMonth = lastDay.getDate();
             
             const prevMonthLastDay = new Date(year, month, 0).getDate();
@@ -2596,6 +3337,7 @@
             
             renderCalendar();
             updateDonutChart();
+            loadWeeklyGraphData(selectedDate);
         }
 
         document.getElementById('prevMonth').addEventListener('click', () => {
@@ -2675,6 +3417,149 @@
         updateStatsDisplay();
         updateDonutChart();
 
+        // ==================== WEEKLY LINE GRAPH ====================
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        
+        async function loadWeeklyGraphData(targetDate = null) {
+            const graphCanvas = document.getElementById('weeklyGraphCanvas');
+            const graphXAxis = document.getElementById('graphXAxis');
+            if (!graphCanvas) return;
+            
+            const today = new Date();
+            const todayPST = getPSTDate();
+            
+            // Use target date if provided, otherwise use today
+            const baseDate = targetDate ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 12, 0, 0) : today;
+            const baseDayIndex = baseDate.getDay(); // 0 = Sunday
+            
+            // Get dates for the week containing baseDate (Sunday to Saturday)
+            const weekDates = [];
+            
+            // Find Sunday of this week
+            const sunday = new Date(baseDate);
+            sunday.setDate(baseDate.getDate() - baseDayIndex);
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(sunday);
+                date.setDate(sunday.getDate() + i);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+                // Check if date is in the future compared to actual today
+                const thisDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const isFuture = thisDate > actualToday;
+                
+                weekDates.push({
+                    dateStr: dateStr,
+                    dayName: dayNames[i],
+                    isToday: dateStr === todayPST,
+                    isFuture: isFuture
+                });
+            }
+            
+            // Fetch data for each day
+            const weekData = [];
+            for (const dateInfo of weekDates) {
+                if (dateInfo.isFuture) {
+                    weekData.push({ ...dateInfo, onHours: null });
+                } else {
+                    try {
+                        const response = await fetch(`/api/usage/${dateInfo.dateStr}`);
+                        const data = await response.json();
+                        const onHours = (data.onSeconds || 0) / 3600;
+                        weekData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : onHours
+                        });
+                    } catch (e) {
+                        weekData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : 0
+                        });
+                    }
+                }
+            }
+            
+            // Update X-axis labels
+            graphXAxis.innerHTML = weekData.map(day => 
+                `<span class="${day.isToday ? 'today' : ''}">${day.dayName}</span>`
+            ).join('');
+            
+            // Update header with week range and total hours
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const firstParts = weekDates[0].dateStr.split('-');
+            const lastParts = weekDates[6].dateStr.split('-');
+            const firstMonth = parseInt(firstParts[1]) - 1;
+            const firstDay = parseInt(firstParts[2]);
+            const lastDay = parseInt(lastParts[2]);
+            const weekRange = `${monthNames[firstMonth]} ${firstDay} - ${lastDay}`;
+            
+            // Calculate total hours for the week
+            const totalHours = weekData.reduce((sum, d) => sum + (d.onHours || 0), 0);
+            const displayHours = Math.floor(totalHours);
+            const displayMins = Math.floor((totalHours - displayHours) * 60);
+            
+            document.getElementById('graphDateLabel').textContent = weekRange;
+            document.getElementById('graphHoursLabel').textContent = `${displayHours}h ${displayMins}m`;
+            
+            // Draw line graph
+            const width = 280;
+            const height = 135;
+            const maxHours = 24;
+            const padding = 10;
+            
+            // Calculate points (only for non-future days)
+            const validData = weekData.filter(d => d.onHours !== null);
+            const points = validData.map((day, i) => {
+                const x = padding + (i * (width - padding * 2) / (validData.length - 1 || 1));
+                const y = height - padding - ((day.onHours / maxHours) * (height - padding * 2));
+                return { x, y, hours: day.onHours, isToday: day.isToday };
+            });
+            
+            // Create smooth curve path
+            let pathD = '';
+            if (points.length > 0) {
+                pathD = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 1; i < points.length; i++) {
+                    const prev = points[i - 1];
+                    const curr = points[i];
+                    const cpx = (prev.x + curr.x) / 2;
+                    pathD += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`;
+                }
+            }
+            
+            // Create area fill path
+            let areaD = pathD;
+            if (points.length > 0) {
+                areaD += ` L ${points[points.length - 1].x} ${height - padding}`;
+                areaD += ` L ${points[0].x} ${height - padding} Z`;
+            }
+            
+            // Render SVG (using amber/orange color to match gauge)
+            const accentColor = '#f5a623';
+            graphCanvas.innerHTML = `
+                <defs>
+                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.4"/>
+                        <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.05"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaD}" fill="url(#lineGradient)" />
+                <path d="${pathD}" fill="none" stroke="${accentColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                ${points.map(p => `
+                    <circle cx="${p.x}" cy="${p.y}" r="${p.isToday ? 5 : 3}" fill="${p.isToday ? accentColor : '#fff'}" stroke="${accentColor}" stroke-width="2"/>
+                `).join('')}
+            `;
+        }
+        
+        // Load weekly graph on page load
+        loadWeeklyGraphData();
+        
+        // Update weekly graph every 10 seconds for live updates
+        setInterval(loadWeeklyGraphData, 10000);
+
         // Room Light Status Management - Each room has 0-50 lux range and tracks duration
         const roomConfig = {
             'room-living': { on: false, brightness: 45, name: 'Living Room', duration: 0 },
@@ -2717,6 +3602,44 @@
             }));
         }
 
+        // Room ID to API name mapping
+        const roomApiNames = {
+            'room-living': 'living',
+            'room-bedroom': 'bedroom',
+            'room-kitchen': 'kitchen',
+            'room-bathroom': 'bathroom',
+            'room-office': 'office',
+            'room-garage': 'garage'
+        };
+
+        // Save room data to MongoDB
+        function saveRoomToMongoDB(roomId) {
+            const apiName = roomApiNames[roomId];
+            if (!apiName) return;
+            
+            const todayPST = getPSTDate();
+            const room = roomConfig[roomId];
+            
+            fetch(`/api/room/${apiName}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: todayPST,
+                    onSeconds: room.duration,
+                    avgLux: room.brightness
+                })
+            }).catch(err => console.log('Room save error:', err));
+        }
+
+        // Save all rooms to MongoDB
+        function saveAllRoomsToMongoDB() {
+            for (const roomId in roomConfig) {
+                if (roomConfig[roomId].duration > 0) {
+                    saveRoomToMongoDB(roomId);
+                }
+            }
+        }
+
         // Track room durations - called every second
         function trackRoomDurations() {
             for (const roomId in roomConfig) {
@@ -2725,10 +3648,20 @@
                 }
             }
             updateRoomBars();
+            
+            // Save to MongoDB every 1 second
+            saveRoomDurations();
+            saveAllRoomsToMongoDB();
         }
 
         // Start room duration tracking interval
         setInterval(trackRoomDurations, 1000);
+        
+        // Save rooms on page unload
+        window.addEventListener('beforeunload', () => {
+            saveRoomDurations();
+            saveAllRoomsToMongoDB();
+        });
 
         // Calculate total brightness - average of all active rooms (0-50 range)
         function calculateTotalBrightness() {
@@ -2989,11 +3922,62 @@
             }
         });
 
+        // Password protection for info modal
+        const ADMIN_PASSKEY = '95204';
+        
+        document.getElementById('infoBtn').addEventListener('click', () => {
+            document.getElementById('wallpaperModal').classList.remove('show');
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').classList.remove('error');
+            document.getElementById('passwordError').classList.remove('show');
+            document.getElementById('passwordInput').focus();
+        });
+
+        document.getElementById('passwordSubmit').addEventListener('click', () => {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('passwordError');
+            
+            if (input.value === ADMIN_PASSKEY) {
+                document.getElementById('passwordModal').classList.remove('show');
+                document.getElementById('infoModal').classList.add('show');
+                input.value = '';
+                input.classList.remove('error');
+                error.classList.remove('show');
+            } else {
+                input.classList.add('error');
+                error.classList.add('show');
+                input.value = '';
+                input.focus();
+            }
+        });
+
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('passwordSubmit').click();
+            }
+        });
+
+        document.getElementById('passwordCancel').addEventListener('click', () => {
+            document.getElementById('passwordModal').classList.remove('show');
+            document.getElementById('passwordInput').value = '';
+        });
+
+        document.getElementById('infoCloseBtn').addEventListener('click', () => {
+            document.getElementById('infoModal').classList.remove('show');
+        });
+
+        document.getElementById('infoModal').addEventListener('click', (e) => {
+            if (e.target.id === 'infoModal') {
+                document.getElementById('infoModal').classList.remove('show');
+            }
+        });
+
         // Apply saved wallpaper on load
         applyWallpaper(currentWallpaper);
 
         // ==================== SCREENSAVER FEATURE ====================
-        const SCREENSAVER_TIMEOUT = 15000; // 15 seconds of inactivity
+        const SCREENSAVER_TIMEOUT = 30000; // 30 seconds of inactivity
         let screensaverTimer = null;
         let isScreensaverActive = false;
         const screensaverOverlay = document.getElementById('screensaverOverlay');
@@ -3068,7 +4052,7 @@
 
         // Initialize screensaver timer on page load
         resetScreensaverTimer();
-        console.log('⏰ Screensaver will activate after 15 seconds of inactivity');
+        console.log('⏰ Screensaver will activate after 30 seconds of inactivity');
     </script>
 </body>
 </html>
