@@ -19,7 +19,7 @@ jobs:
         run: echo "Hello World"
       - name: Install deps
         run: |
-          pip install pytest pymongo python-dotenv
+          pip install pytest pymongo python-dotenv flask pymongo certifi pytz
 
       #- name: Run tests on twin file
         #run: pytest twin/test_twin_sim.py
