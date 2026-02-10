@@ -25,5 +25,5 @@ jobs:
         #run: pytest twin/test_twin_sim.py
         
       - name: Run tests on app.py
-        run: pytest dashboard/tests/app_tests.py
+        run: pytest dashboard/tests/app_test.py
 
