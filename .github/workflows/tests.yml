@@ -21,6 +21,9 @@ jobs:
         run: |
           pip install pytest pymongo python-dotenv
 
-      - name: Run tests
+      - name: Run tests on twin file
         run: pytest twin/test_twin_sim.py
+        
+      - name: Run tests on app.py
+        run: pytest dashboard/tests/app_tests.py
 
