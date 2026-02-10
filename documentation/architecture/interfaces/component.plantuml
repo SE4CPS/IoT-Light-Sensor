@@ -1,0 +1,32 @@
+@startuml
+title Architecture Diagram
+
+left to right direction
+
+package "Sensors" as Sensors
+package "Embedded\n(Raspberry Pi)" as Embedded
+package "Frontend" as Frontend
+package "Admin Frontend" as Admin
+package "Backend API\n(/api/v1)" as Backend {
+  [/telemetry]
+  [/logs]
+  [/devices]
+  [/rooms]
+  [/sensors]
+  [/users]
+}
+package "Database\n(MongoDB)" as DB
+
+Sensors  -right[hidden]-> Embedded
+Embedded -right[hidden]-> Frontend
+Frontend -right[hidden]-> Admin
+Admin    -right[hidden]-> Backend
+Backend  -right[hidden]-> DB
+
+Sensors  --> Embedded : POST (readings), PUT (device, sensor)
+Embedded --> Backend  : POST (telemetry), PUT (device, sensor)
+Frontend --> Backend  : GET (room)
+Admin    --> Backend  : GET/PUT/POST/DELETE
+Backend  --> DB       : GET/PUT/POST/DELETE
+
+@enduml
