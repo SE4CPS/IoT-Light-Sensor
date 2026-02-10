@@ -1,3 +1,4 @@
+import os
 from app import get_sensor_status, generate_sensor_reading
 
 def test_sensor_status_dark():
