@@ -1,0 +1,108 @@
+
+@startuml
+title IoT Light Sensor - High-Level Component Architecture
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+
+' Color scheme
+!define DEVICE_COLOR #FFE6E6
+!define APP_COLOR #E6F3FF
+!define DATA_COLOR #E6FFE6
+!define PRESENT_COLOR #FFF9E6
+!define TEST_COLOR #F0E6FF
+!define INFRA_COLOR #FFE6F0
+
+package "Device Layer" DEVICE_COLOR {
+    [ESP32 Thing Plus] as ESP32
+    [VEML7700 Sensor] as VEML
+    [INA260 Power] as INA
+    [PIR Motion] as PIR
+    [MOSFET Control] as MOSFET
+    
+    ESP32 --> VEML : I²C (0x10)
+    ESP32 --> INA : I²C (0x40)
+    ESP32 --> PIR : Digital
+    ESP32 --> MOSFET : PWM
+}
+
+package "Application Layer" APP_COLOR {
+    [Flask API] as API
+    [Event Bus] as Bus
+    [Event Handlers] as Handlers
+    [Validation] as Valid
+    
+    API --> Valid : validate
+    API --> Bus : publish
+    Bus --> Handlers : route
+}
+
+package "Data Layer" DATA_COLOR {
+    database "MongoDB Atlas" as DB {
+        [event]
+        [room_state]
+        [daily_usage]
+        [device]
+        [room]
+        [alert]
+    }
+}
+
+package "Presentation Layer" PRESENT_COLOR {
+    [Dashboard] as Dash
+    [REST API Client] as Client
+    
+    Dash --> Client : HTTP
+}
+
+package "Testing Layer" TEST_COLOR {
+    [Digital Twin] as Twin
+    [Test Generator] as TestGen
+    
+    Twin --> TestGen : simulate
+}
+
+package "Infrastructure Layer" INFRA_COLOR {
+    [Render.com] as Render
+    [GitHub Actions] as GHA
+    [UptimeRobot] as Monitor
+    
+    GHA --> Render : deploy
+    Monitor --> Render : health check
+}
+
+' Connections between layers
+ESP32 -down-> API : HTTPS POST\n/api/events
+API -down-> DB : write
+Client -up-> API : HTTPS GET\n/api/sensor
+Handlers -down-> DB : persist
+Twin -down-> API : simulated events
+Render -up-> API : host
+
+note right of Bus
+  Event Types:
+  - light.measurement
+  - light.state.changed
+  - sensor.anomaly_detected
+  - alert.duration_exceeded
+end note
+
+note bottom of DB
+  6 Collections:
+  - Immutable: event, alert
+  - Mutable: room_state, daily_usage
+  - Reference: device, room
+end note
+
+legend right
+  |= Layer |= Purpose |
+  | Device | Hardware sensors & control |
+  | Application | Event processing & API |
+  | Data | Persistence & state |
+  | Presentation | User interface |
+  | Testing | Simulation & validation |
+  | Infrastructure | Deployment & monitoring |
+endlegend
+
+@enduml
