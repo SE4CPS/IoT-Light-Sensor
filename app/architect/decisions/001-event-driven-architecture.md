@@ -1,12 +1,4 @@
-cat > app/architect/decisions/001-event-driven-architecture.md << 'EOF'
 # ADR-001: Event-Driven Architecture
-
-**Status:** Accepted  
-**Date:** February 10, 2026  
-**Deciders:** Architecture Team, Product Owner  
-**Issue:** #47, #54
-
----
 
 ## Context
 
@@ -167,12 +159,4 @@ We will use **Event-Driven Architecture** with an in-memory event bus.
 
 **Diagram:** `03_component_event_driven.puml`
 
-## References
 
-- Issue #47: System Architecture Design
-- Issue #54: Review Architectural Decisions
-- MongoDB Event Sourcing Pattern: https://www.mongodb.com/blog/post/event-sourcing-with-mongodb
-- Martin Fowler - Event Sourcing: https://martinfowler.com/eaaDev/EventSourcing.html
-
-
-EOF
