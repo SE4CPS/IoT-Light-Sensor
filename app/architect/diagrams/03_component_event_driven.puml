@@ -1,0 +1,180 @@
+@startuml
+title IoT Light Sensor - Event-Driven Architecture
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+
+!define EVENT_COLOR #FFE6E6
+!define BUS_COLOR #E6F3FF
+!define HANDLER_COLOR #E6FFE6
+!define STORE_COLOR #FFF9E6
+
+package "Event Sources" EVENT_COLOR {
+    component "ESP32 Sensor" as Sensor
+    component "Digital Twin" as Twin
+    component "Manual Trigger" as Manual
+}
+
+package "Event Bus" BUS_COLOR {
+    queue "Event Queue" as Queue
+    component "Event Router" as Router
+}
+
+package "Event Handlers" HANDLER_COLOR {
+    component "Database Handler" as DB_Handler
+    component "Twin Validator" as Twin_Handler
+    component "Notifier" as Notify_Handler
+    component "Observer" as Log_Handler
+}
+
+package "Data Stores" STORE_COLOR {
+    database "Event Store" as EventStore
+    database "State Store" as StateStore
+    database "Alert Store" as AlertStore
+}
+
+' Event flow
+Sensor -down-> Queue : publish
+Twin -down-> Queue : publish
+Manual -down-> Queue : publish
+
+Queue -down-> Router : dequeue
+
+Router -down-> DB_Handler : dispatch
+Router -down-> Twin_Handler : dispatch
+Router -down-> Notify_Handler : dispatch
+Router -down-> Log_Handler : dispatch
+
+DB_Handler -down-> EventStore : write
+DB_Handler -down-> StateStore : upsert
+Twin_Handler -down-> AlertStore : write (if anomaly)
+Notify_Handler -down-> AlertStore : write (if alert)
+
+note right of Sensor
+  **ESP32 Sensor**
+  
+  Methods:
+  + measure_lux()
+  + detect_state()
+  + create_event()
+end note
+
+note right of Twin
+  **Digital Twin**
+  
+  Methods:
+  + simulate_lux()
+  + inject_anomaly()
+  + create_event()
+end note
+
+note right of Queue
+  **Event Types:**
+  
+  1. light.measurement
+     - Periodic lux readings
+     - Published every 3 seconds
+  
+  2. light.state.changed
+     - ON → OFF or OFF → ON
+     - Published on transitions
+  
+  3. sensor.anomaly_detected
+     - Digital twin validation failure
+     - |observed - predicted| > 100
+  
+  4. alert.duration_exceeded
+     - Light ON > 12 hours
+     - Triggers notification
+end note
+
+note right of Router
+  **Event Router**
+  
+  Methods:
+  + route(event_type)
+  + dispatch(handlers)
+  + retry(failed_event)
+end note
+
+note right of DB_Handler
+  **Database Handler**
+  
+  Subscribes to:
+  - light.measurement
+  
+  Methods:
+  + store_event()
+  + update_state()
+end note
+
+note right of Twin_Handler
+  **Twin Validator**
+  
+  Subscribes to:
+  - light.measurement
+  
+  Methods:
+  + validate_reading()
+  + detect_anomaly()
+end note
+
+note right of Notify_Handler
+  **Notifier**
+  
+  Subscribes to:
+  - light.state.changed
+  - alert.duration_exceeded
+  
+  Methods:
+  + evaluate_rules()
+  + send_notification()
+end note
+
+note right of Log_Handler
+  **Observer**
+  
+  Subscribes to:
+  - * (all events)
+  
+  Methods:
+  + log_event()
+  + track_metrics()
+end note
+
+note bottom of EventStore
+  **Event Store**
+  
+  - Append-only
+  - 90-day TTL
+  - Immutable events
+end note
+
+note bottom of StateStore
+  **State Store**
+  
+  - Mutable
+  - Latest values
+  - Fast queries
+end note
+
+note bottom of Router
+  **Why Event-Driven?**
+  
+  ✅ Battery: 30 days vs 2 days (polling)
+  ✅ Scalable: 1000+ devices
+  ✅ Loose coupling: Easy to add handlers
+  ✅ Testable: Digital twin = event source
+  
+  Professor's favorite for IoT! ⭐
+end note
+
+legend right
+  |= Pattern |= Implementation |
+  | Publish-Subscribe | Event Bus |
+  | At-least-once delivery | Retry on failure |
+  | Parallel processing | 4 handlers |
+  | Event sourcing | Immutable log |
+endlegend
+
+@enduml
