@@ -1,0 +1,154 @@
+@startuml
+title IoT Light Sensor - Production Deployment Architecture
+
+skinparam nodeStyle rectangle
+skinparam backgroundColor #FEFEFE
+
+node "Edge Device (Room)" {
+    artifact "ESP32 Thing Plus" as ESP32
+    artifact "VEML7700" as VEML
+    artifact "INA260" as INA
+    artifact "PIR Sensor" as PIR
+    artifact "MOSFET IRL520" as MOSFET
+    
+    ESP32 --> VEML : I2C
+    ESP32 --> INA : I2C
+    ESP32 --> PIR : Digital
+    ESP32 --> MOSFET : PWM
+}
+
+cloud "Internet" {
+    interface "HTTPS" as HTTPS
+    interface "TLS 1.3" as TLS
+}
+
+node "Render.com (Oregon)" {
+    node "Load Balancer" {
+        component "TLS Termination" as LB_TLS
+        component "Health Checks" as LB_Health
+    }
+    
+    node "Web Service 1" {
+        artifact "Gunicorn" as Gunicorn1
+        component "Flask App" as Flask1
+        Gunicorn1 --> Flask1
+    }
+    
+    node "Web Service 2" {
+        artifact "Gunicorn" as Gunicorn2
+        component "Flask App" as Flask2
+        Gunicorn2 --> Flask2
+    }
+    
+    LB_TLS --> Gunicorn1
+    LB_TLS --> Gunicorn2
+}
+
+cloud "MongoDB Atlas (AWS)" {
+    node "Replica Set" {
+        database "Primary" as Primary
+        database "Secondary 1" as Secondary1
+        database "Secondary 2" as Secondary2
+        
+        Primary --> Secondary1 : replicate
+        Primary --> Secondary2 : replicate
+    }
+}
+
+node "GitHub Pages" {
+    component "Dashboard" as Dashboard
+}
+
+node "GitHub Actions" {
+    component "CI/CD Pipeline" as CICD
+}
+
+node "UptimeRobot" {
+    component "Health Monitor" as Monitor
+}
+
+' Connections
+ESP32 --> HTTPS : WiFi POST
+HTTPS --> TLS
+TLS --> LB_TLS
+
+Flask1 --> Primary : MongoDB Wire
+Flask2 --> Primary : MongoDB Wire
+
+Dashboard --> HTTPS : GET /api/sensor
+
+CICD --> Gunicorn1 : Deploy
+Monitor --> LB_Health : /health
+
+note right of ESP32
+  **ESP32 Thing Plus**
+  - WiFi 802.11n
+  - 240MHz dual-core
+  - Deep sleep mode
+  
+  **VEML7700**
+  - I2C address: 0x10
+  - Range: 0-120k lux
+  
+  **INA260**
+  - I2C address: 0x40
+  - Power monitoring
+  
+  **Power:**
+  - Battery: 2000mAh
+  - Deep sleep: 10μA
+  - Active: 80mA
+  - Life: 30 days
+end note
+
+note bottom of "Render.com (Oregon)"
+  **Scaling Strategy:**
+  
+  MVP (1 device):
+  - Free tier, 512MB RAM
+  - 1 instance
+  
+  Phase 1 (10 devices):
+  - Starter $7/mo
+  - 2 instances
+  
+  Phase 2 (100 devices):
+  - Pro $25/mo
+  - 4 instances, 2GB RAM
+  - Redis caching
+  
+  Phase 3 (1000+ devices):
+  - Kubernetes
+  - 10+ instances
+  - Kafka event bus
+end note
+
+note right of Primary
+  **MongoDB Atlas**
+  - Version: 7.0+
+  - 3-node replica set
+  - M10 Cluster
+  - Storage: 10GB → 100GB
+  - Backups: Daily
+  - TTL: 90 days
+end note
+
+note right of Gunicorn1
+  **Gunicorn Config**
+  - 4 workers
+  - Sync mode
+  - 30s timeout
+end note
+
+legend bottom
+  |= Component |= Technology |= Version |
+  | Edge MCU | ESP32 Thing Plus | - |
+  | Light Sensor | VEML7700 | - |
+  | Backend | Python + Flask | 3.11 / 3.0 |
+  | WSGI | Gunicorn | 21.0+ |
+  | Database | MongoDB Atlas | 7.0+ |
+  | Hosting | Render.com | - |
+  | CI/CD | GitHub Actions | - |
+endlegend
+
+@enduml
