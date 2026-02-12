@@ -1,13 +1,4 @@
-cat > app/architect/api/endpoints.md << 'EOF'
 # API Endpoints Documentation
-
-**Version:** 1.0  
-**Base URL:** `https://iot-light-sensor.onrender.com`  
-**Protocol:** HTTPS (TLS 1.3)  
-**Format:** JSON  
-**Sprint:** 3  
-
----
 
 ## Overview
 
@@ -478,8 +469,3 @@ curl "https://iot-light-sensor.onrender.com/api/history?room_id=room-101&limit=1
 
 ---
 
-**Status:** Complete  
-**Sprint:** 3  
-**Last Updated:** February 10, 2026  
-**Maintainer:** Backend Team
-EOF
