@@ -1,0 +1,125 @@
+@startuml
+title IoT Light Sensor - Detailed Component Interfaces
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+
+component "ESP32 Device" as Device {
+    portin "I2C Bus" as I2C
+    portout "HTTPS" as HTTPS_OUT
+    portout "PWM" as PWM_OUT
+    
+    component "Sensor Reader" as Reader
+    component "Event Publisher" as Publisher
+    component "Light Controller" as Controller
+    
+    I2C --> Reader
+    Reader --> Publisher : create_event()
+    Publisher --> HTTPS_OUT : post()
+    Controller --> PWM_OUT : set_brightness()
+}
+
+component "Flask Backend" as Backend {
+    portin "HTTP" as HTTP_IN
+    portout "MongoDB Wire" as MONGO_OUT
+    
+    component "API Router" as Router
+    component "Event Bus" as EventBus
+    component "Validator" as Validator
+}
+
+component "Event Handlers" as Handlers {
+    component "Database Handler" as DBHandler
+    component "Digital Twin Validator" as TwinValidator
+    component "Notification Handler" as NotifyHandler
+    component "Logger" as Logger
+}
+
+database "MongoDB" as MongoDB {
+    collections event
+    collections room_state
+    collections daily_usage
+    collections device
+    collections room
+    collections alert
+}
+
+component "Dashboard" as Dashboard {
+    portin "Browser" as Browser
+    portout "HTTPS" as HTTPS_DASH
+    
+    component "UI Components" as UI
+    
+    Browser --> UI
+    UI --> HTTPS_DASH : fetch()
+}
+
+' Connections
+HTTPS_OUT --> HTTP_IN : POST /api/events
+HTTP_IN --> Router
+Router --> Validator : validate()
+Router --> EventBus : publish()
+
+EventBus --> DBHandler : on(light.measurement)
+EventBus --> TwinValidator : on(light.measurement)
+EventBus --> NotifyHandler : on(light.state.changed)
+EventBus --> Logger : on(*)
+
+DBHandler --> MONGO_OUT : insert_one()
+Backend --> MONGO_OUT : query
+
+HTTPS_DASH --> HTTP_IN : GET /api/sensor
+
+note right of Router
+  **API Endpoints:**
+  + POST /api/events
+  + GET /api/sensor/current
+  + GET /api/history
+  + GET /api/stats
+  + GET /api/usage/{date}
+  + POST /api/usage/save
+  + GET /api/usage/statistics
+end note
+
+note right of EventBus
+  **Event Bus Methods:**
+  + publish(event_type, data)
+  + subscribe(event_type, handler)
+  + route(event)
+  
+  Pattern: Publish-Subscribe
+  Delivery: At-least-once
+end note
+
+note right of Validator
+  **Validation Methods:**
+  + validate_schema(event)
+  + validate_range(lux)
+  + validate_timestamp(ts)
+  + validate_device(device_id)
+end note
+
+note bottom of MongoDB
+  **Collections:**
+  - event (immutable, 90-day TTL)
+  - room_state (mutable, current)
+  - daily_usage (aggregated)
+  - device (registry)
+  - room (registry)
+  - alert (90-day TTL)
+  
+  **Indexes:**
+  - event: {device_id: 1, ts: -1}
+  - room_state: {room_id: 1} unique
+end note
+
+legend right
+  |= Component |= Responsibility |
+  | ESP32 | Measure & publish events |
+  | Flask Backend | API & event routing |
+  | Event Handlers | Process events (parallel) |
+  | MongoDB | Persist data |
+  | Dashboard | Display current status |
+endlegend
+
+@enduml
