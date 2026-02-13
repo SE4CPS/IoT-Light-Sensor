@@ -1,0 +1,17 @@
+@startuml
+title Sprint 3 - Event-Driven Architecture View
+
+component "ESP32 Node\n(VEML7700 Sensor)" as ESP
+component "Digital Twin Module" as DT
+component "Flask Backend\nREST API" as API
+database "MongoDB\n(readings collection)" as DB
+component "Dashboard\n(Web App)" as UI
+
+ESP --> API : POST /sensor-data\n(lux event)
+DT --> API : Simulated lux event
+
+API --> DB : insert reading
+UI --> API : GET /latest
+API --> UI : JSON response
+
+@enduml
