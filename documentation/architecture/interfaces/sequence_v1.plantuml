@@ -1,0 +1,17 @@
+@startuml
+title Sprint 3 - Sensor Event Flow
+
+participant ESP32
+participant Flask
+database MongoDB
+participant Dashboard
+
+ESP32 -> Flask : POST /sensor-data (lux)
+Flask -> MongoDB : insert(reading)
+
+Dashboard -> Flask : GET /latest
+Flask -> MongoDB : query latest
+MongoDB --> Flask : return reading
+Flask --> Dashboard : JSON response
+
+@enduml
