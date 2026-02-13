@@ -1,0 +1,21 @@
+@startuml
+title Sprint 3 - Deployment Diagram
+
+node "Room Node" {
+  component "ESP32"
+  component "VEML7700"
+}
+
+node "Server" {
+  component "Flask REST API"
+  database "MongoDB"
+}
+
+node "Client" {
+  component "Web Dashboard"
+}
+
+"Room Node" --> "Server" : WiFi (HTTP POST)
+"Client" --> "Server" : Internet (REST API)
+
+@enduml
