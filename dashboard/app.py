@@ -7,6 +7,7 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import pytz
 from dotenv import load_dotenv
+import uuid
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,6 +23,9 @@ if not MONGO_URI:
     db = None
     usage_collection = None
     room_collections = {}
+    admin_collection = None
+    alert_collection = None
+    device_collection = None
 else:
     try:
         client = MongoClient(
@@ -43,19 +47,34 @@ else:
             'office': db['room_office'],
             'garage': db['room_garage']
         }
+
+        # Admin access/log collection
+        admin_collection = db['admin_access']
+        # Alert collection for long-on durations / warnings
+        alert_collection = db['alerts']
+        # Device collection for logging device details when lights are turned on
+        device_collection = db['devices']
         
         print("✅ Connected to MongoDB Atlas")
         print("📦 Room collections: living, bedroom, kitchen, bathroom, office, garage")
+        print("📦 Admin collection: admin_access")
+        print("📦 Device collection: devices")
     except ConnectionFailure as e:
         print(f"⚠️ MongoDB not available. Error: {e}")
         db = None
         usage_collection = None
         room_collections = {}
+        admin_collection = None
+        alert_collection = None
+        device_collection = None
     except Exception as e:
         print(f"⚠️ MongoDB connection error: {e}")
         db = None
         usage_collection = None
         room_collections = {}
+        admin_collection = None
+        alert_collection = None
+        device_collection = None
 
 # Simulated sensor data storage
 sensor_history = []
@@ -320,6 +339,107 @@ def reset_all_rooms():
         if room_name in room_collections and room_collections[room_name] is not None:
             room_collections[room_name].delete_many({})
     return jsonify({"success": True, "message": "All room data cleared"})
+
+# ===== Admin Access Logging =====
+
+@app.route('/api/admin/access', methods=['POST'])
+def log_admin_access():
+    """Log admin access details (username, time, metadata)"""
+    if admin_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+
+    data = request.json or {}
+    username = (data.get('username') or '').strip() or 'unknown'
+
+    doc = {
+        "username": username,
+        "accessedAt": datetime.now().isoformat(),
+        "ip": request.remote_addr,
+        "userAgent": request.headers.get('User-Agent', ''),
+        "path": "/info",
+    }
+    try:
+        admin_collection.insert_one(doc)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"⚠️ Failed to log admin access: {e}")
+        return jsonify({"success": False, "message": "Failed to log admin access"}), 500
+
+
+# ===== Alert Logging (Lights on > 40 minutes) =====
+
+@app.route('/api/alerts', methods=['POST'])
+def create_alert():
+    """Create an alert when lights are on for longer than threshold (e.g., 40+ minutes)."""
+    if alert_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+
+    data = request.json or {}
+    room_id = (data.get('room_id') or 'unknown').strip()
+    duration_seconds = int(data.get('durationSeconds') or 0)
+    alert_type = data.get('type', 'duration_over_40min')
+    date = data.get('date') or datetime.now(pytz.timezone('America/Los_Angeles')).strftime('%Y-%m-%d')
+
+    # Avoid duplicate alerts for the same room/day/type
+    existing = alert_collection.find_one({
+        "room_id": room_id,
+        "date": date,
+        "type": alert_type
+    })
+    if existing:
+        return jsonify({"success": True, "skipped": True})
+
+    doc = {
+        "alert_id": str(uuid.uuid4()),
+        "room_id": room_id,
+        "date": date,
+        "durationSeconds": duration_seconds,
+        "type": alert_type,
+        "createdAt": datetime.now().isoformat(),
+    }
+    try:
+        alert_collection.insert_one(doc)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"⚠️ Failed to create alert: {e}")
+        return jsonify({"success": False, "message": "Failed to create alert"}), 500
+
+
+# ===== Device Logging (When Lights Are Turned On) =====
+
+@app.route('/api/device/log', methods=['POST'])
+def log_device():
+    """Log device details when room lights or gauge lights are turned on."""
+    if device_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+
+    data = request.json or {}
+    action_type = data.get('action_type', 'unknown')  # 'room_light_on' or 'gauge_light_on'
+    room_id = data.get('room_id', '')  # Only present for room lights
+    room_name = data.get('room_name', '')  # Human-readable room name
+    
+    # Use PST timezone to match frontend
+    pst = pytz.timezone('America/Los_Angeles')
+    now_pst = datetime.now(pst)
+    
+    doc = {
+        "action_type": action_type,
+        "room_id": room_id if action_type == 'room_light_on' else None,
+        "room_name": room_name if action_type == 'room_light_on' else None,
+        "date": now_pst.strftime('%Y-%m-%d'),
+        "time": now_pst.strftime('%H:%M:%S'),
+        "timestamp": now_pst.isoformat(),
+        "ip": request.remote_addr,
+        "userAgent": request.headers.get('User-Agent', ''),
+        "createdAt": datetime.now().isoformat(),
+    }
+    
+    try:
+        device_collection.insert_one(doc)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"⚠️ Failed to log device: {e}")
+        return jsonify({"success": False, "message": "Failed to log device"}), 500
 
 if __name__ == '__main__':
     for i in range(20):

@@ -1486,6 +1486,96 @@
             transform: scale(1.1);
         }
 
+        .clock-btn {
+            margin-right: 10px;
+        }
+
+        .clock-icon-outline {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(148, 163, 184, 0.9);
+            box-sizing: border-box;
+            display: inline-block;
+        }
+
+        .clock-icon-outline::before,
+        .clock-icon-outline::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            background: rgba(248, 250, 252, 0.9);
+            transform-origin: bottom center;
+        }
+
+        /* Hour hand */
+        .clock-icon-outline::before {
+            width: 2px;
+            height: 6px;
+            transform: translate(-50%, -100%) rotate(-60deg);
+        }
+
+        /* Minute hand */
+        .clock-icon-outline::after {
+            width: 2px;
+            height: 8px;
+            transform: translate(-50%, -100%) rotate(0deg);
+        }
+
+        .wallpaper-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            position: relative;
+            margin-top: 12px;
+        }
+
+        .timezone-panel {
+            position: absolute;
+            right: 52px;
+            bottom: 56px;
+            min-width: 220px;
+            background: #1a202c;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            padding: 10px 12px;
+            display: none;
+            z-index: 10;
+        }
+
+        .timezone-panel.show {
+            display: block;
+        }
+
+        .timezone-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .timezone-options {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timezone-option {
+            font-size: 11px;
+            color: #cbd5f5;
+            padding: 4px 6px;
+            border-radius: 6px;
+        }
+
+        .timezone-option:hover {
+            background: rgba(148, 163, 184, 0.15);
+        }
+
         /* Info Modal */
         .info-modal {
             position: fixed;
@@ -1707,6 +1797,128 @@
             font-size: 14px;
         }
 
+        /* Admin Graph Styles */
+        .admin-graph-selectors {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .admin-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .admin-select:hover {
+            border-color: var(--accent);
+        }
+
+        .admin-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+        }
+
+        .admin-graph-container {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .admin-graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .admin-graph-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .admin-graph-value {
+            text-align: right;
+        }
+
+        .admin-graph-date {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .admin-graph-hours {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .admin-graph {
+            position: relative;
+            width: 100%;
+            height: 140px;
+            padding-left: 32px;
+            padding-bottom: 22px;
+        }
+
+        .admin-graph-y-axis {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #e53e3e !important;
+            font-weight: 600;
+        }
+
+        .admin-graph-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .admin-graph-grid-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-graph-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .admin-graph-x-axis {
+            position: absolute;
+            bottom: 0;
+            left: 32px;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .admin-graph-x-axis span.today {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
         .db-collection {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -1723,6 +1935,15 @@
 
         .db-collection-header.room {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        .db-collection-header.device {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        .db-collection-header.admin {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+        }
+        .db-collection-header.alert {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
         }
 
         .db-collection-body {
@@ -1812,6 +2033,12 @@
             letter-spacing: 8px;
             outline: none;
             transition: border-color 0.3s;
+        }
+
+        .username-input {
+            font-size: 14px;
+            text-align: left;
+            letter-spacing: 0;
         }
 
         .password-input:focus {
@@ -2217,9 +2444,25 @@
                 <!-- Wallpaper options rendered by JS -->
             </div>
             <div class="wallpaper-modal-footer">
+                <button class="info-btn clock-btn" id="clockBtn" title="Time Zone Options">
+                    <span class="clock-icon-outline"></span>
+                </button>
                 <button class="info-btn" id="infoBtn" title="View Data Structure Diagram">
                     ℹ️
                 </button>
+                <div class="timezone-panel" id="timezonePanel">
+                    <div class="timezone-title">Time Zones</div>
+                    <div class="timezone-options">
+                        <div class="timezone-option">PST – Pacific Standard Time</div>
+                        <div class="timezone-option">EST – Eastern Standard Time</div>
+                        <div class="timezone-option">CST – Central Standard Time</div>
+                        <div class="timezone-option">MST – Mountain Standard Time</div>
+                        <div class="timezone-option">AST – Alaska Standard Time</div>
+                        <div class="timezone-option">UTC – Coordinated Universal Time</div>
+                        <div class="timezone-option">CET – Central European Time</div>
+                        <div class="timezone-option">IST – India Standard Time</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2230,6 +2473,9 @@
             <div class="password-icon">🔐</div>
             <div class="password-title">Admin Access</div>
             <div class="password-subtitle">Enter 5-digit passkey to view data structure</div>
+            <div class="password-input-wrapper">
+                <input type="text" class="password-input username-input" id="usernameInput" placeholder="Admin username" autocomplete="off">
+            </div>
             <div class="password-input-wrapper">
                 <input type="password" class="password-input" id="passwordInput" maxlength="5" placeholder="•••••" autocomplete="off">
             </div>
@@ -2266,7 +2512,7 @@
                         <div class="info-card-title">🎛️ Main Area</div>
                         <div class="info-card-content">
                             • 6 Room Controls<br>
-                            • Gauge (0-50 lux)<br>
+                            • Gauge (0-800 lux)<br>
                             • Brightness Slider<br>
                             • Weekly Line Graph<br>
                             • Eco/Sleep Modes
@@ -2345,6 +2591,40 @@
                             <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
                         </div>
                     </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header device">📱 devices</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">action_type</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">room_id</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">room_name</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">time</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">ip</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">userAgent</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">createdAt</span><span class="db-field-type">DateTime</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header admin">👤 admin_access</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">username</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">accessedAt</span><span class="db-field-type">DateTime</span></div>
+                            <div class="db-field"><span class="db-field-name">ip</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">userAgent</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">path</span><span class="db-field-type">String</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header alert">⚠️ alerts</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">alert_id</span><span class="db-field-type">String (UUID)</span></div>
+                            <div class="db-field"><span class="db-field-name">room_id</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">durationSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">type</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">createdAt</span><span class="db-field-type">DateTime</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2406,6 +2686,60 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Admin Monthly Usage Graph -->
+            <div class="info-section">
+                <div class="info-section-title">📈 Monthly Usage Analytics (Live)</div>
+                <div class="admin-graph-selectors">
+                    <select id="adminMonthSelect" class="admin-select">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                    <select id="adminYearSelect" class="admin-select">
+                        <!-- Years will be populated by JS, minimum 2026 -->
+                    </select>
+                </div>
+                <div class="admin-graph-container">
+                    <div class="admin-graph-header">
+                        <div class="admin-graph-title">Light Usage Trend</div>
+                        <div class="admin-graph-value">
+                            <div class="admin-graph-date" id="adminGraphDateLabel">Loading...</div>
+                            <div class="admin-graph-hours" id="adminGraphHoursLabel">--</div>
+                        </div>
+                    </div>
+                    <div class="admin-graph">
+                        <div class="admin-graph-y-axis">
+                            <span>24h</span>
+                            <span>18h</span>
+                            <span>12h</span>
+                            <span>6h</span>
+                            <span>0h</span>
+                        </div>
+                        <div class="admin-graph-canvas-wrapper">
+                            <div class="admin-graph-grid-line" style="top: 0%"></div>
+                            <div class="admin-graph-grid-line" style="top: 25%"></div>
+                            <div class="admin-graph-grid-line" style="top: 50%"></div>
+                            <div class="admin-graph-grid-line" style="top: 75%"></div>
+                            <svg class="admin-graph-canvas" id="adminGraphCanvas" viewBox="0 0 320 120" preserveAspectRatio="none">
+                                <!-- Line and dots rendered by JS -->
+                            </svg>
+                        </div>
+                        <div class="admin-graph-x-axis" id="adminGraphXAxis">
+                            <!-- Days will be rendered by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- MongoDB Atlas Link -->
@@ -2634,7 +2968,7 @@
                 
                 <div class="gauge-range">
                     <span class="range-value">0</span>
-                    <span class="range-value">50</span>
+                    <span class="range-value">800</span>
                 </div>
                 
                 <div class="gauge-controls">
@@ -2664,10 +2998,10 @@
                     <div class="roller-fill" id="rollerFill"></div>
                     <div class="roller-thumb" id="rollerThumb"></div>
                     <div class="roller-ticks">
-                        <span>50</span>
-                        <span>37</span>
-                        <span>25</span>
-                        <span>12</span>
+                        <span>800</span>
+                        <span>600</span>
+                        <span>400</span>
+                        <span>200</span>
                         <span>0</span>
                     </div>
                 </div>
@@ -2805,7 +3139,7 @@
       
         function updateGauge(lux) {
             currentLux = lux;
-            const maxLux = 50;
+            const maxLux = 800;
             const percentage = Math.min(lux / maxLux, 1);
             const arcLength = 471;
             const offset = arcLength * (1 - percentage);
@@ -2862,7 +3196,7 @@
         let isDragging = false;
 
         function updateRollerPosition(lux) {
-            const percentage = lux / 50;
+            const percentage = lux / 800;
             const trackHeight = rollerTrack.offsetHeight;
             const thumbPosition = trackHeight - (percentage * trackHeight);
             
@@ -2877,7 +3211,7 @@
             const y = e.clientY || (e.touches && e.touches[0].clientY);
             const relativeY = y - rect.top;
             const percentage = 1 - Math.max(0, Math.min(1, relativeY / rect.height));
-            const lux = Math.round(percentage * 50);
+            const lux = Math.round(percentage * 800);
             
             updateGauge(lux);
         }
@@ -2972,9 +3306,9 @@
         function simulateAmbientLight() {
             if (!isPowerOn || !isEcoMode) return;
             
-            // Fluctuate between 10-40 lux in Eco Mode
-            const minLux = 10;
-            const maxLux = 40;
+            // Fluctuate between 100-400 lux in Eco Mode
+            const minLux = 100;
+            const maxLux = 400;
             const lux = Math.round(minLux + Math.random() * (maxLux - minLux));
             
             updateGauge(lux);
@@ -3007,7 +3341,7 @@
   
         let isSleepMode = false;
         let preSleepLux = 25;
-        const SLEEP_LUX = 5; 
+        const SLEEP_LUX = 50; 
 
         function startSleepMode() {
             isSleepMode = true;
@@ -3020,7 +3354,7 @@
             }
             
  
-            preSleepLux = currentLux > SLEEP_LUX ? currentLux : 25;
+            preSleepLux = currentLux > SLEEP_LUX ? currentLux : 400;
             updateGauge(SLEEP_LUX);
             
 
@@ -3042,6 +3376,7 @@
         }
 
         document.getElementById('powerBtn').addEventListener('click', function() {
+            const wasPowerOn = isPowerOn;
             isPowerOn = !isPowerOn;
             this.classList.toggle('active');
             
@@ -3063,6 +3398,11 @@
                 rollerTrack.style.opacity = '0.3';
                 rollerTrack.style.pointerEvents = 'none';
             } else {
+                // Log device details when gauge/power is turned ON
+                if (!wasPowerOn) {
+                    logDeviceDetails('gauge_light_on');
+                }
+                
                 // Turn on - check modes and rooms
                 if (isEcoMode) {
                     ecoInterval = setInterval(simulateAmbientLight, 5000);
@@ -3330,6 +3670,9 @@
             // Set time to noon to avoid timezone shifting issues
             selectedDate = new Date(year, month, day, 12, 0, 0);
             
+            // Also update the selected week date for the graph
+            selectedWeekDate = selectedDate;
+            
             // Navigate to that month if different
             if (calendarDate.getMonth() !== month || calendarDate.getFullYear() !== year) {
                 calendarDate = new Date(year, month, 1, 12, 0, 0);
@@ -3554,21 +3897,232 @@
             `;
         }
         
+        // Track the selected week date for the graph
+        let selectedWeekDate = null;
+        
         // Load weekly graph on page load
         loadWeeklyGraphData();
         
-        // Update weekly graph every 10 seconds for live updates
-        setInterval(loadWeeklyGraphData, 10000);
+        // Update weekly graph every 10 seconds for live updates (use selected date if set)
+        setInterval(() => {
+            loadWeeklyGraphData(selectedWeekDate);
+        }, 10000);
 
-        // Room Light Status Management - Each room has 0-50 lux range and tracks duration
+        // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
+        // Populate year dropdown (minimum 2026 to current year)
+        function initAdminGraphSelectors() {
+            const yearSelect = document.getElementById('adminYearSelect');
+            const monthSelect = document.getElementById('adminMonthSelect');
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            
+            // Populate years from 2026 to current year
+            yearSelect.innerHTML = '';
+            for (let year = 2026; year <= currentYear; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            
+            // Set current month and year as selected
+            monthSelect.value = currentMonth;
+            yearSelect.value = currentYear;
+            
+            // Add event listeners
+            monthSelect.addEventListener('change', loadAdminGraphData);
+            yearSelect.addEventListener('change', loadAdminGraphData);
+        }
+        
+        async function loadAdminGraphData() {
+            const graphCanvas = document.getElementById('adminGraphCanvas');
+            const graphXAxis = document.getElementById('adminGraphXAxis');
+            if (!graphCanvas) return;
+            
+            const today = new Date();
+            const todayPST = getPSTDate();
+            
+            // Get selected month and year from dropdowns
+            const selectedMonth = parseInt(document.getElementById('adminMonthSelect').value);
+            const selectedYear = parseInt(document.getElementById('adminYearSelect').value);
+            const currentYear = selectedYear;
+            const currentMonth = selectedMonth;
+            
+            // Get all days in current month
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            const monthDates = [];
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const dayStr = String(day).padStart(2, '0');
+                const dateStr = `${year}-${month}-${dayStr}`;
+                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const thisDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const isFuture = thisDate > actualToday;
+                
+                monthDates.push({
+                    dateStr: dateStr,
+                    day: day,
+                    isToday: dateStr === todayPST,
+                    isFuture: isFuture
+                });
+            }
+            
+            // Fetch data for each day from MongoDB
+            const monthData = [];
+            for (const dateInfo of monthDates) {
+                if (dateInfo.isFuture) {
+                    monthData.push({ ...dateInfo, onHours: null });
+                } else {
+                    try {
+                        const response = await fetch(`/api/usage/${dateInfo.dateStr}`);
+                        const data = await response.json();
+                        const onHours = (data.onSeconds || 0) / 3600;
+                        monthData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : onHours
+                        });
+                    } catch (e) {
+                        monthData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : 0
+                        });
+                    }
+                }
+            }
+            
+            // Update X-axis labels (show select days: 1, 7, 14, 21, 28/last)
+            const xAxisDays = [1, 7, 14, 21, daysInMonth];
+            graphXAxis.innerHTML = xAxisDays.map(d => {
+                const isToday = monthData.find(md => md.day === d)?.isToday;
+                return `<span class="${isToday ? 'today' : ''}">${d}</span>`;
+            }).join('');
+            
+            // Calculate total hours for the month
+            const totalHours = monthData.reduce((sum, d) => sum + (d.onHours || 0), 0);
+            const displayHours = Math.floor(totalHours);
+            const displayMins = Math.floor((totalHours - displayHours) * 60);
+            
+            document.getElementById('adminGraphDateLabel').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            document.getElementById('adminGraphHoursLabel').textContent = `${displayHours}h ${displayMins}m`;
+            
+            // Draw line graph
+            const width = 320;
+            const height = 120;
+            const maxHours = 24;
+            const padding = 8;
+            
+            // Calculate points (only for non-future days)
+            const validData = monthData.filter(d => d.onHours !== null);
+            const points = validData.map((day, i) => {
+                const x = padding + (i * (width - padding * 2) / (validData.length - 1 || 1));
+                const y = height - padding - ((day.onHours / maxHours) * (height - padding * 2));
+                return { x, y, hours: day.onHours, isToday: day.isToday, day: day.day };
+            });
+            
+            // Create sharp line path
+            let pathD = '';
+            if (points.length > 0) {
+                pathD = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 1; i < points.length; i++) {
+                    pathD += ` L ${points[i].x} ${points[i].y}`;
+                }
+            }
+            
+            // Create area fill path
+            let areaD = pathD;
+            if (points.length > 0) {
+                areaD += ` L ${points[points.length - 1].x} ${height - padding}`;
+                areaD += ` L ${points[0].x} ${height - padding} Z`;
+            }
+            
+            // Render SVG (using amber/orange color to match theme)
+            const accentColor = '#f5a623';
+            graphCanvas.innerHTML = `
+                <defs>
+                    <linearGradient id="adminLineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.5"/>
+                        <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.05"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaD}" fill="url(#adminLineGradient)" />
+                <path d="${pathD}" fill="none" stroke="${accentColor}" stroke-width="2" stroke-linejoin="miter"/>
+                ${points.filter(p => p.isToday).map(p => `
+                    <circle cx="${p.x}" cy="${p.y}" r="4" fill="${accentColor}" stroke="${accentColor}" stroke-width="1.5"/>
+                `).join('')}
+            `;
+        }
+        
+        // Initialize selectors on page load
+        let adminGraphInitialized = false;
+        
+        // Load admin graph when info modal opens
+        document.getElementById('infoModal').addEventListener('transitionend', function(e) {
+            if (this.classList.contains('show')) {
+                if (!adminGraphInitialized) {
+                    initAdminGraphSelectors();
+                    adminGraphInitialized = true;
+                }
+                loadAdminGraphData();
+            }
+        });
+        
+        // Also try loading immediately when modal shows
+        const infoModalObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const infoModal = document.getElementById('infoModal');
+                    if (infoModal && infoModal.classList.contains('show')) {
+                        if (!adminGraphInitialized) {
+                            initAdminGraphSelectors();
+                            adminGraphInitialized = true;
+                        }
+                        loadAdminGraphData();
+                    }
+                }
+            });
+        });
+        infoModalObserver.observe(document.getElementById('infoModal'), { attributes: true });
+        
+        // Update admin graph every 5 seconds when modal is open
+        setInterval(() => {
+            const infoModal = document.getElementById('infoModal');
+            if (infoModal && infoModal.classList.contains('show')) {
+                loadAdminGraphData();
+            }
+        }, 5000);
+
+        // Room Light Status Management - Each room has 0-800 lux range and tracks duration
         const roomConfig = {
-            'room-living': { on: false, brightness: 45, name: 'Living Room', duration: 0 },
-            'room-bedroom': { on: false, brightness: 25, name: 'Bedroom', duration: 0 },
-            'room-kitchen': { on: false, brightness: 40, name: 'Kitchen', duration: 0 },
-            'room-bathroom': { on: false, brightness: 30, name: 'Bathroom', duration: 0 },
-            'room-office': { on: false, brightness: 50, name: 'Office', duration: 0 },
-            'room-garage': { on: false, brightness: 35, name: 'Garage', duration: 0 }
+            'room-living': { on: false, brightness: 720, name: 'Living Room', duration: 0, alertSent: false },
+            'room-bedroom': { on: false, brightness: 400, name: 'Bedroom', duration: 0, alertSent: false },
+            'room-kitchen': { on: false, brightness: 640, name: 'Kitchen', duration: 0, alertSent: false },
+            'room-bathroom': { on: false, brightness: 480, name: 'Bathroom', duration: 0, alertSent: false },
+            'room-office': { on: false, brightness: 800, name: 'Office', duration: 0, alertSent: false },
+            'room-garage': { on: false, brightness: 560, name: 'Garage', duration: 0, alertSent: false }
         };
+
+        // Log device details when lights are turned on
+        function logDeviceDetails(actionType, roomId = null, roomName = null) {
+            const payload = {
+                action_type: actionType,
+                room_id: roomId,
+                room_name: roomName
+            };
+            
+            fetch('/api/device/log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            }).catch(err => console.log('Device log error:', err));
+        }
 
         // Load saved room durations from localStorage
         function loadRoomDurations() {
@@ -3642,9 +4196,31 @@
 
         // Track room durations - called every second
         function trackRoomDurations() {
+            const ALERT_THRESHOLD_SECONDS = 40 * 60; // 40 minutes
+            
             for (const roomId in roomConfig) {
-                if (roomConfig[roomId].on) {
-                    roomConfig[roomId].duration++;
+                const room = roomConfig[roomId];
+                if (room.on) {
+                    room.duration++;
+                    
+                    // If duration crosses threshold and alert not yet sent, log alert
+                    if (!room.alertSent && room.duration >= ALERT_THRESHOLD_SECONDS) {
+                        room.alertSent = true;
+                        try {
+                            fetch('/api/alerts', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    room_id: roomId,
+                                    durationSeconds: room.duration,
+                                    type: 'duration_over_40min',
+                                    date: getPSTDate()
+                                })
+                            }).catch(err => console.log('Alert log error:', err));
+                        } catch (e) {
+                            console.log('Alert log exception:', e);
+                        }
+                    }
                 }
             }
             updateRoomBars();
@@ -3663,7 +4239,7 @@
             saveAllRoomsToMongoDB();
         });
 
-        // Calculate total brightness - average of all active rooms (0-50 range)
+        // Calculate total brightness - average of all active rooms (0-800 range)
         function calculateTotalBrightness() {
             let total = 0;
             let activeCount = 0;
@@ -3677,7 +4253,7 @@
             
             if (activeCount === 0) return 0;
             
-            // Average the brightness of active rooms (stays in 0-50 range)
+            // Average the brightness of active rooms (stays in 0-800 range)
             return Math.round(total / activeCount);
         }
 
@@ -3775,8 +4351,14 @@
         document.querySelectorAll('.room-card').forEach(card => {
             card.addEventListener('click', function() {
                 const roomId = this.id;
+                const wasOn = roomConfig[roomId].on;
                 roomConfig[roomId].on = !roomConfig[roomId].on;
                 updateRoomUI(roomId, roomConfig[roomId].on);
+                
+                // Log device details when room light is turned ON
+                if (!wasOn && roomConfig[roomId].on) {
+                    logDeviceDetails('room_light_on', roomId, roomConfig[roomId].name);
+                }
                 
                 // Check if any room is on - this turns on main power
                 const anyRoomOn = Object.values(roomConfig).some(r => r.on);
@@ -3787,6 +4369,8 @@
                     document.getElementById('powerBtn').classList.add('active');
                     rollerTrack.style.opacity = '1';
                     rollerTrack.style.pointerEvents = 'auto';
+                    // Log device details when gauge/power is turned on via room
+                    logDeviceDetails('gauge_light_on');
                 }
                 
                 // Update gauge based on rooms
@@ -3937,8 +4521,16 @@
         document.getElementById('passwordSubmit').addEventListener('click', () => {
             const input = document.getElementById('passwordInput');
             const error = document.getElementById('passwordError');
+            const username = (document.getElementById('usernameInput')?.value || '').trim();
             
             if (input.value === ADMIN_PASSKEY) {
+                // Log admin access to backend
+                fetch('/api/admin/access', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                }).catch(err => console.log('Admin log error:', err));
+
                 document.getElementById('passwordModal').classList.remove('show');
                 document.getElementById('infoModal').classList.add('show');
                 input.value = '';
@@ -3966,12 +4558,34 @@
         document.getElementById('infoCloseBtn').addEventListener('click', () => {
             document.getElementById('infoModal').classList.remove('show');
         });
-
+        
         document.getElementById('infoModal').addEventListener('click', (e) => {
             if (e.target.id === 'infoModal') {
                 document.getElementById('infoModal').classList.remove('show');
             }
         });
+
+        // ============ CLOCK ICON / TIMEZONE PANEL ============
+        const clockBtn = document.getElementById('clockBtn');
+        const timezonePanel = document.getElementById('timezonePanel');
+        const wallpaperModal = document.getElementById('wallpaperModal');
+
+        if (clockBtn && timezonePanel && wallpaperModal) {
+            clockBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                timezonePanel.classList.toggle('show');
+            });
+
+            // Close when clicking anywhere inside modal but outside the panel and button
+            wallpaperModal.addEventListener('click', (e) => {
+                const target = e.target;
+                if (timezonePanel.classList.contains('show')) {
+                    if (!timezonePanel.contains(target) && target !== clockBtn) {
+                        timezonePanel.classList.remove('show');
+                    }
+                }
+            });
+        }
 
         // Apply saved wallpaper on load
         applyWallpaper(currentWallpaper);
