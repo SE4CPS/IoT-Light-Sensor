@@ -26,6 +26,7 @@ if not MONGO_URI:
     admin_collection = None
     alert_collection = None
     device_collection = None
+    user_data_collection = None
 else:
     try:
         client = MongoClient(
@@ -54,11 +55,14 @@ else:
         alert_collection = db['alerts']
         # Device collection for logging device details when lights are turned on
         device_collection = db['devices']
+        # User login / user data collection (email, login time, etc.)
+        user_data_collection = db['user_data']
         
         print("✅ Connected to MongoDB Atlas")
         print("📦 Room collections: living, bedroom, kitchen, bathroom, office, garage")
         print("📦 Admin collection: admin_access")
         print("📦 Device collection: devices")
+        print("📦 User data collection: user_data")
     except ConnectionFailure as e:
         print(f"⚠️ MongoDB not available. Error: {e}")
         db = None
@@ -67,6 +71,7 @@ else:
         admin_collection = None
         alert_collection = None
         device_collection = None
+        user_data_collection = None
     except Exception as e:
         print(f"⚠️ MongoDB connection error: {e}")
         db = None
@@ -75,6 +80,7 @@ else:
         admin_collection = None
         alert_collection = None
         device_collection = None
+        user_data_collection = None
 
 # Simulated sensor data storage
 sensor_history = []
@@ -403,6 +409,34 @@ def create_alert():
     except Exception as e:
         print(f"⚠️ Failed to create alert: {e}")
         return jsonify({"success": False, "message": "Failed to create alert"}), 500
+
+
+# ===== User Login / User Data (Dashboard access) =====
+
+@app.route('/api/user/login', methods=['POST'])
+def user_login():
+    """Save user login to user_data collection (email + metadata). Password is not stored."""
+    if user_data_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+
+    data = request.json or {}
+    email = (data.get('email') or '').strip()
+    # We do not store the password in the database for security
+    if not email:
+        return jsonify({"success": False, "message": "Email is required"}), 400
+
+    doc = {
+        "email": email,
+        "loggedInAt": datetime.now().isoformat(),
+        "ip": request.remote_addr,
+        "userAgent": request.headers.get('User-Agent', ''),
+    }
+    try:
+        user_data_collection.insert_one(doc)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"⚠️ Failed to save user login: {e}")
+        return jsonify({"success": False, "message": "Failed to save login"}), 500
 
 
 # ===== Device Logging (When Lights Are Turned On) =====

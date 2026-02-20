@@ -118,8 +118,12 @@
 
         .room-controls {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(6, 1fr) auto;
             gap: 10px;
+        }
+        
+        .room-controls .preview-box:last-child {
+            margin-left: 30px;
         }
 
         .gauge-area {
@@ -131,8 +135,9 @@
 
         .stats-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr auto;
             gap: 20px;
+            align-items: center;
         }
 
         /* Database Schema */
@@ -324,7 +329,7 @@
             <div class="section-title">Screen Layout Design</div>
             <div class="screen-layout">
                 <div class="sidebar-preview">
-                    <div class="preview-box accent">🕐 Time & Date<br>(PST)</div>
+                    <div class="preview-box accent">🕐 Time & Date<br>(Configurable, Default: UTC)</div>
                     <div class="preview-box blue">📅 Calendar<br>(Sun-Sat)</div>
                     <div class="preview-box green">🍩 Donut Chart<br>(Daily Usage)</div>
                     <div class="preview-box" style="border-color: #ef4444; color: #ef4444;">⚠️ Warning<br>(40+ min)</div>
@@ -339,16 +344,17 @@
                         <div class="preview-box accent">🚿 Bathroom</div>
                         <div class="preview-box accent">💼 Office</div>
                         <div class="preview-box accent">🚗 Garage</div>
+                        <div class="preview-box" style="border-color: #a855f7; color: #a855f7;">👤 Profile<br>(Login / Logout)</div>
                     </div>
                     <div class="gauge-area">
                         <div class="preview-box green" style="height: 180px; display: flex; align-items: center; justify-content: center;">
                             <div>
                                 <div style="font-size: 40px;">◠</div>
                                 <div style="font-size: 24px; font-weight: bold;">0 lux</div>
-                                <div>GAUGE (0-50)</div>
+                                <div>GAUGE (0-800)</div>
                             </div>
                         </div>
-                        <div class="preview-box" style="height: 180px; width: 60px;">SLIDER<br>50<br>↕<br>0</div>
+                        <div class="preview-box" style="height: 180px; width: 60px;">SLIDER<br>800<br>↕<br>0</div>
                         <div class="preview-box blue" style="height: 180px; display: flex; align-items: center; justify-content: center;">
                             <div>
                                 <div>📈 LINE GRAPH</div>
@@ -372,6 +378,10 @@
                             <div>THIS MONTH</div>
                             <div style="font-size: 24px; font-weight: bold; margin: 10px 0;">4h 15m</div>
                             <div>of 720 hours</div>
+                        </div>
+                        <div class="preview-box" style="padding: 20px; border-color: #f5a623; color: #f5a623;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">⚙️</div>
+                            <div style="font-size: 12px; font-weight: 500;">Customize</div>
                         </div>
                     </div>
                 </div>
@@ -410,7 +420,7 @@
                 <div class="flow-node" style="display: inline-block; border-color: #ef4444;">
                     <div class="flow-node-icon">💾</div>
                     <div class="flow-node-title">localStorage</div>
-                    <div class="flow-node-desc">Browser storage<br>Session data</div>
+                    <div class="flow-node-desc">Browser storage<br>Login session, preferences</div>
                 </div>
             </div>
         </div>
@@ -461,7 +471,7 @@
                         </div>
                         <div class="field">
                             <span class="field-name">avgLux</span>
-                            <span class="field-type">Number (0-50)</span>
+                            <span class="field-type">Number (0-800)</span>
                         </div>
                         <div class="field">
                             <span class="field-name">updatedAt</span>
@@ -524,7 +534,16 @@
                     </div>
                 </div>
                 <div class="collection">
-                    <div class="collection-header admin">👤 admin_access</div>
+                    <div class="collection-header" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);">👤 user_data</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">email</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">loggedInAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">ip</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">userAgent</span><span class="field-type">String</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header admin">🔐 admin_access</div>
                     <div class="collection-body">
                         <div class="field"><span class="field-name">username</span><span class="field-type">String</span></div>
                         <div class="field"><span class="field-name">accessedAt</span><span class="field-type">DateTime ISO</span></div>
@@ -594,6 +613,26 @@
                         <td class="endpoint">/api/rooms/reset</td>
                         <td>Reset all room data</td>
                     </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/user/login</td>
+                        <td>Save user login (email + metadata). Password not stored.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/admin/access</td>
+                        <td>Log admin access (username, time, metadata)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/device/log</td>
+                        <td>Log device details when room or gauge lights are turned on</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/alerts</td>
+                        <td>Create alert when lights on 40+ minutes</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -605,7 +644,7 @@
                 <div class="feature-card">
                     <div class="feature-icon">💡</div>
                     <div class="feature-title">6 Room Controls</div>
-                    <div class="feature-desc">Independent light controls for Living, Bedroom, Kitchen, Bathroom, Office, and Garage with individual lux levels (0-50).</div>
+                    <div class="feature-desc">Independent light controls for Living, Bedroom, Kitchen, Bathroom, Office, and Garage with individual lux levels (0-800).</div>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
@@ -625,12 +664,22 @@
                 <div class="feature-card">
                     <div class="feature-icon">🌿</div>
                     <div class="feature-title">Eco & Sleep Modes</div>
-                    <div class="feature-desc">Eco mode fluctuates lux 10-40 every 5s. Sleep mode dims lights for nighttime.</div>
+                    <div class="feature-desc">Eco mode fluctuates lux (e.g. 100-400) every 5s. Sleep mode dims lights for nighttime.</div>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">⚠️</div>
                     <div class="feature-title">Usage Warning</div>
                     <div class="feature-desc">Alert notification when lights are on for 40+ minutes to promote energy saving.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👤</div>
+                    <div class="feature-title">Profile Icon</div>
+                    <div class="feature-desc">Profile icon (top-right) shows logged-in email; click to open dropdown (logout). Login saves user data (email, IP, userAgent) to MongoDB user_data collection. Dashboard gated behind login modal.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🕐</div>
+                    <div class="feature-title">Timezone</div>
+                    <div class="feature-desc">Click clock icon to select from 8 timezones (PST, EST, CST, MST, AST, UTC, CET, IST). Defaults to UTC. Selected timezone updates time/date display and screensaver clock. Preference saved in localStorage.</div>
                 </div>
             </div>
         </div>
