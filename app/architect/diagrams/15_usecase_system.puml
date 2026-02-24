@@ -1,0 +1,117 @@
+@startuml
+title IoT Light Sensor - Use Case Diagram
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FEFEFE
+skinparam usecaseBackgroundColor #E6F3FF
+skinparam usecaseBorderColor #3399FF
+
+left to right direction
+
+' Actors
+actor "Light Sensor\nDevice" as Sensor
+actor "Building\nAdministrator" as Admin
+actor "Maintenance\nTeam" as Maintenance
+actor "System\nMonitor" as Monitor
+actor "Digital\nTwin" as Twin
+
+rectangle "IoT Light Sensor System" {
+    ' Primary use cases (core functionality)
+    usecase "UC-01\nPublish Light\nMeasurement" as UC01
+    usecase "UC-02\nValidate\nSensor Data" as UC02
+    usecase "UC-03\nStore\nEvent Data" as UC03
+    usecase "UC-04\nUpdate Room\nState" as UC04
+    usecase "UC-05\nView Current\nStatus" as UC05
+    usecase "UC-06\nView Historical\nData" as UC06
+    usecase "UC-07\nDetect\nAnomalies" as UC07
+    usecase "UC-08\nGenerate\nUsage Stats" as UC08
+    usecase "UC-09\nCreate Alert" as UC09
+    usecase "UC-10\nSend\nNotification" as UC10
+    
+    ' Secondary use cases (admin/maintenance)
+    usecase "UC-11\nRegister\nDevice" as UC11
+    usecase "UC-12\nDecommission\nDevice" as UC12
+    
+    ' Sensor interactions
+    Sensor --> UC01 : measures lux\nevery 3 seconds
+    
+    ' Admin interactions
+    Admin --> UC05 : monitors
+    Admin --> UC06 : analyzes
+    Admin --> UC08 : reviews
+    Admin --> UC11 : provisions
+    Admin --> UC12 : retires
+    
+    ' Maintenance interactions
+    Maintenance --> UC07 : investigates
+    Maintenance --> UC09 : reviews
+    
+    ' Monitor interactions
+    Monitor --> UC02 : validates
+    Monitor --> UC03 : tracks
+    Monitor --> UC04 : maintains
+    
+    ' Digital Twin interactions
+    Twin --> UC01 : simulates events\n(testing)
+    Twin --> UC07 : validates\nreadings
+    
+    ' Include relationships
+    UC01 ..> UC02 : <<include>>
+    UC02 ..> UC03 : <<include>>
+    UC03 ..> UC04 : <<include>>
+    
+    UC04 ..> UC09 : <<extend>>\n[duration > 12h]
+    UC09 ..> UC10 : <<include>>
+    
+    UC07 ..> UC09 : <<extend>>\n[anomaly detected]
+    
+    UC06 ..> UC08 : <<include>>
+}
+
+note right of UC01
+  **Frequency:** Every 3 seconds
+  **Data:** lux, state, battery, power
+  **Protocol:** HTTPS POST
+end note
+
+note right of UC02
+  **Validation Gates:**
+  1. Parse JSON
+  2. Schema validation
+  3. Data quality checks
+  4. Range validation (0-120k lux)
+end note
+
+note right of UC07
+  **Digital Twin Validation:**
+  - Compare observed vs predicted
+  - Threshold: |error| > 100 lux
+  - Anomaly types: stuck, deviation
+end note
+
+note right of UC09
+  **Alert Types:**
+  - LIGHT_STUCK_ON (>12h)
+  - SUDDEN_LUX_DROP
+  - DEVICE_OFFLINE
+  - SENSOR_ANOMALY
+end note
+
+note left of UC11
+  **Device Registration:**
+  1. Generate device_id
+  2. Assign to room
+  3. Configure firmware
+  4. Test connectivity
+end note
+
+legend bottom
+  |= Symbol |= Meaning |
+  | <<include>> | Mandatory relationship |
+  | <<extend>> | Conditional relationship |
+  
+  **Primary Actors:** Sensor, Admin, Twin
+  **Secondary Actors:** Maintenance, Monitor
+endlegend
+
+@enduml
