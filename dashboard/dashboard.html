@@ -43,6 +43,74 @@
             border-right: 1px solid var(--border);
         }
 
+        /* Mobile: hamburger button (hidden on desktop) */
+        .sidebar-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            margin-right: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .sidebar-menu-btn .menu-icon-bar {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 1px;
+        }
+
+        /* Sidebar close button (hidden on desktop) */
+        .sidebar-close-btn {
+            display: none;
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            font-size: 28px;
+            line-height: 1;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            z-index: 10;
+        }
+        .sidebar-close-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-card-hover);
+        }
+
+        /* Sidebar overlay (for closing panel on mobile) */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 400;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        body.sidebar-open .sidebar-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         .mode-badge {
             display: flex;
             align-items: center;
@@ -270,7 +338,8 @@
             padding: 16px;
             background: var(--bg-card);
             border-radius: 12px;
-            margin-top: 60px;
+            margin-top: 20px;
+            margin-bottom: 30px;
         }
 
         .room-bars-title {
@@ -344,54 +413,140 @@
             text-align: center;
         }
 
-        /* Sunlight Detection Popup */
-        .sunlight-popup {
-            position: absolute;
-            top: -60px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-10px);
-            background: linear-gradient(135deg, #f5a623 0%, #f7b733 50%, #fc4a1a 100%);
-            color: #000;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
+        /* Login modal (email + password) – opened via profile icon */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            display: none;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 20px rgba(245, 166, 35, 0.4), 0 0 40px rgba(245, 166, 35, 0.2);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s ease;
-            z-index: 100;
-            white-space: nowrap;
+            justify-content: center;
         }
 
-        .sunlight-popup.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
+        .login-modal.show {
+            display: flex;
         }
 
-        .sunlight-popup::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 10px solid #f7b733;
+        .login-modal.hidden {
+            display: none;
         }
 
-        .sunlight-icon {
-            font-size: 20px;
-            animation: pulse-sun 1.5s ease-in-out infinite;
+        .login-modal-content {
+            background: var(--bg-sidebar);
+            border-radius: 16px;
+            padding: 32px;
+            width: 340px;
+            text-align: center;
         }
 
-        @keyframes pulse-sun {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+        .login-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .login-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .login-input-wrapper {
+            margin-bottom: 16px;
+        }
+
+        .login-email-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: #1a1a1a;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .login-email-input::placeholder {
+            color: #6b7280;
+        }
+
+        .login-email-input:focus {
+            border-color: var(--accent);
+        }
+
+        .login-password-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .login-password-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .login-password-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .login-error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
+        .login-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        .login-submit:hover {
+            filter: brightness(1.1);
+        }
+
+        .login-cancel {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .dashboard-wrap {
+            display: flex;
+            min-height: 100vh;
         }
 
         .sensor-stats {
@@ -556,6 +711,116 @@
             color: var(--text-primary);
         }
 
+        /* Profile section - fixed top-right (email + profile button) */
+        .profile-section {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .profile-email {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: var(--text-primary);
+            display: none;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-email.show {
+            display: block;
+            }
+            
+            .profile-section {
+                top: 16px;
+                right: 16px;
+            }
+            
+            .profile-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .profile-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .profile-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* Profile dropdown menu (logout) - shown when logged in */
+        .profile-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 150px;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 101;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .profile-dropdown-item {
+            padding: 10px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-dropdown-item:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .profile-dropdown-item.logout {
+            color: #ef4444;
+        }
+
+        .profile-dropdown-item.logout:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
 
         .gauge-container {
             flex: 1;
@@ -574,7 +839,111 @@
             justify-content: center;
             gap: 12px;
             height: 280px;
-            margin-top: 40px;
+        }
+
+        /* Weekly Line Graph */
+        .weekly-graph-container {
+            background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-left: 30px;
+            width: 350px;
+            height: 280px;
+            position: relative;
+        }
+
+        .weekly-graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .weekly-graph-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a0aec0;
+        }
+
+        .weekly-graph-value {
+            text-align: right;
+        }
+
+        .weekly-graph-value .date {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-bottom: 2px;
+        }
+
+        .weekly-graph-value .hours {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .weekly-graph {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            padding-left: 35px;
+            padding-bottom: 25px;
+        }
+
+        .graph-y-axis {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 135px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #f5a623 !important;
+            font-weight: 600;
+        }
+
+        .graph-y-axis span {
+            text-align: right;
+            width: 30px;
+        }
+
+        .graph-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 135px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .graph-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .graph-x-axis {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 8px;
+            font-size: 10px;
+            color: #718096;
+        }
+
+        .graph-x-axis span {
+            text-align: center;
+            width: 35px;
+        }
+
+        .graph-x-axis span.today {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .graph-grid-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #4a5568;
+            opacity: 0.3;
         }
 
         .roller-label {
@@ -634,20 +1003,44 @@
 
         .roller-ticks {
             position: absolute;
-            right: -24px;
+            right: -36px;
             top: 0;
             height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            font-size: 10px;
-            color: var(--text-muted);
+            font-size: 11px;
+            color: #f5a623;
+            font-weight: 600;
+        }
+
+        /* Single ambient box containing gauge + lux slider */
+        .gauge-ambient-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            background: linear-gradient(to bottom, rgba(28, 28, 32, 0.85) 0%, rgba(28, 28, 32, 0.9) 65%, rgba(28, 28, 32, 0.92) 100%);
+            border-radius: 20px;
+            padding: 24px 44px 24px 24px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        body.has-wallpaper .gauge-ambient-box {
+            background: rgba(13, 13, 15, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-color: rgba(255, 255, 255, 0.08);
         }
 
         .gauge-wrapper {
             position: relative;
             width: 420px;
             height: 280px;
+            overflow: hidden;
+            flex-shrink: 0;
+            border-radius: 16px;
         }
 
         .gauge-bg {
@@ -1227,32 +1620,8 @@
         }
 
         @media (max-width: 900px) {
-            body {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                flex-direction: row;
-                flex-wrap: wrap;
-                padding: 20px;
-                gap: 24px;
-            }
-            .time-display {
-                font-size: 48px;
-            }
             .brightness-section, .scenes-section {
                 margin-top: 0;
-            }
-            .gauge-wrapper {
-                width: 320px;
-                height: 220px;
-            }
-            .gauge-svg {
-                width: 300px;
-                height: 180px;
-            }
-            .lux-number {
-                font-size: 56px;
             }
         }
 
@@ -1263,11 +1632,12 @@
             right: 24px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 20px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
             z-index: 100;
@@ -1276,16 +1646,11 @@
         .customize-btn:hover {
             background: var(--bg-card-hover);
             border-color: var(--accent);
+            transform: rotate(90deg);
         }
 
         .customize-btn .icon {
-            font-size: 18px;
-        }
-
-        .customize-btn .label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-primary);
+            font-size: 22px;
         }
 
         /* Wallpaper Modal */
@@ -1353,6 +1718,645 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
+        }
+
+        .wallpaper-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .info-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .info-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .clock-btn {
+            margin-right: 10px;
+        }
+
+        .clock-icon-outline {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(148, 163, 184, 0.9);
+            box-sizing: border-box;
+            display: inline-block;
+        }
+
+        .clock-icon-outline::before,
+        .clock-icon-outline::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            background: rgba(248, 250, 252, 0.9);
+            transform-origin: bottom center;
+        }
+
+        /* Hour hand */
+        .clock-icon-outline::before {
+            width: 2px;
+            height: 6px;
+            transform: translate(-50%, -100%) rotate(-60deg);
+        }
+
+        /* Minute hand */
+        .clock-icon-outline::after {
+            width: 2px;
+            height: 8px;
+            transform: translate(-50%, -100%) rotate(0deg);
+        }
+
+        .wallpaper-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            position: relative;
+            margin-top: 12px;
+            overflow: visible;
+        }
+
+        .timezone-panel {
+            position: absolute;
+            right: 52px;
+            bottom: 56px;
+            min-width: 220px;
+            background: #1a202c;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            padding: 10px 12px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .timezone-panel.show {
+            display: block;
+        }
+
+        .timezone-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .timezone-options {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timezone-option {
+            font-size: 11px;
+            color: #cbd5f5;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .timezone-option:hover {
+            background: rgba(148, 163, 184, 0.15);
+        }
+        .timezone-option.selected {
+            background: rgba(148, 163, 184, 0.25);
+            color: #f5a623;
+        }
+
+        /* Info Modal */
+        .info-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .info-modal.show {
+            display: flex;
+        }
+
+        .info-modal-content {
+            background: var(--bg-sidebar);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .info-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .info-close-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .info-close-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .info-section {
+            margin-bottom: 28px;
+        }
+
+        .info-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .info-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .info-card-content {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 20px 0;
+        }
+
+        .info-flow-node {
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .info-flow-arrow {
+            color: var(--text-muted);
+            font-size: 20px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .info-table th {
+            background: var(--bg-card);
+            padding: 10px;
+            text-align: left;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .info-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .info-table .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .info-table .method.get {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .info-table .method.post {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .info-table .endpoint {
+            font-family: monospace;
+            color: var(--accent);
+        }
+
+        .mongodb-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #00684A, #00ED64);
+            padding: 14px 20px;
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 237, 100, 0.3);
+        }
+
+        .mongodb-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 237, 100, 0.4);
+        }
+
+        .mongodb-icon {
+            font-size: 20px;
+        }
+
+        .external-icon {
+            margin-left: auto;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .readonly-notice {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #fbbf24;
+        }
+
+        .lock-icon {
+            font-size: 14px;
+        }
+
+        /* Admin Graph Styles */
+        .admin-graph-selectors {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .admin-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .admin-select:hover {
+            border-color: var(--accent);
+        }
+
+        .admin-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+        }
+
+        .admin-graph-container {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .admin-graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .admin-graph-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .admin-graph-value {
+            text-align: right;
+        }
+
+        .admin-graph-date {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .admin-graph-hours {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .admin-graph {
+            position: relative;
+            width: 100%;
+            height: 140px;
+            padding-left: 32px;
+            padding-bottom: 22px;
+        }
+
+        .admin-graph-y-axis {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #e53e3e !important;
+            font-weight: 600;
+        }
+
+        .admin-graph-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .admin-graph-grid-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-graph-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .admin-graph-x-axis {
+            position: absolute;
+            bottom: 0;
+            left: 32px;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .admin-graph-x-axis span.today {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .db-collection {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .db-collection-header {
+            background: linear-gradient(135deg, var(--accent), #d4890a);
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .db-collection-header.room {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        .db-collection-header.device {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        .db-collection-header.admin {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+        }
+        .db-collection-header.alert {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .db-collection-body {
+            padding: 10px;
+            font-size: 11px;
+        }
+
+        .db-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .db-field:last-child {
+            border-bottom: none;
+        }
+
+        .db-field-name {
+            color: #22c55e;
+            font-family: monospace;
+        }
+
+        .db-field-type {
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+
+        /* Password Modal */
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-modal.show {
+            display: flex;
+        }
+
+        .password-modal-content {
+            background: var(--bg-sidebar);
+            border-radius: 16px;
+            padding: 32px;
+            width: 320px;
+            text-align: center;
+        }
+
+        .password-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .password-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .password-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .username-input {
+            font-size: 14px;
+            text-align: left;
+            letter-spacing: 0;
+        }
+
+        .password-input:focus {
+            border-color: var(--accent);
+        }
+
+        .password-input.error {
+            border-color: #ef4444;
+        }
+
+        .password-error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .password-error.show {
+            display: block;
+        }
+
+        .password-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .password-submit:hover {
+            background: #ffc107;
+            transform: scale(1.02);
+        }
+
+        .password-cancel {
+            margin-top: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .password-cancel:hover {
+            color: var(--text-primary);
         }
 
         .wallpaper-option {
@@ -1443,7 +2447,9 @@
         body.has-wallpaper .stat-card,
         body.has-wallpaper .mode-card,
         body.has-wallpaper .room-card,
-        body.has-wallpaper .customize-btn {
+        body.has-wallpaper .customize-btn,
+        body.has-wallpaper .profile-btn,
+        body.has-wallpaper .profile-email {
             background: var(--bg-card);
             backdrop-filter: none;
         }
@@ -1488,6 +2494,643 @@
         @media (max-width: 600px) {
             .wallpaper-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ===== RESPONSIVE DESIGN FOR MOBILE & TABLET ===== */
+        
+        /* Tablet Styles (768px - 1024px) */
+        @media (max-width: 1024px) {
+            .main-content {
+                padding: 24px 32px;
+            }
+            
+            .gauge-wrapper {
+                width: 280px;
+                height: 200px;
+            }
+            
+            .gauge-svg {
+                width: 260px;
+                height: 160px;
+            }
+            
+            .room-cards {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .room-card {
+                flex: 1 1 calc(33.333% - 8px);
+                min-width: 120px;
+            }
+            
+            .weekly-graph-container {
+                margin-left: 0;
+                margin-top: 24px;
+            }
+        }
+
+        /* Mobile Styles (up to 767px) - Sidebar becomes slide-out panel */
+        @media (max-width: 767px) {
+            body {
+                flex-direction: column;
+                overflow-x: hidden;
+            }
+            
+            .sidebar-overlay {
+                display: block;
+            }
+            
+            .sidebar-menu-btn {
+                display: flex;
+            }
+            
+            .sidebar-close-btn {
+                display: flex;
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 280px;
+                max-width: 85vw;
+                z-index: 500;
+                flex-direction: column;
+                flex-wrap: nowrap;
+                padding: 16px 16px 24px;
+                padding-top: 56px;
+                gap: 16px;
+                border-right: 1px solid var(--border);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                box-shadow: none;
+            }
+            
+            body.sidebar-open .sidebar {
+                transform: translateX(0);
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+            }
+            
+            body.sidebar-open {
+                overflow: hidden;
+            }
+            
+            .time-display {
+                font-size: 48px;
+                margin-bottom: 4px;
+            }
+            
+            .date-display {
+                font-size: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .mini-calendar {
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+            
+            .calendar-days {
+                gap: 4px;
+            }
+            
+            .calendar-day {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            
+            .main-content {
+                padding: 16px;
+                width: 100%;
+            }
+            
+            .header {
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .header .title {
+                flex: 1;
+                text-align: center;
+                margin: 0;
+                font-size: 20px;
+            }
+            
+            
+            .profile-btn {
+                width: 44px;
+                height: 44px;
+            }
+            
+            .profile-email {
+                font-size: 12px;
+                padding: 6px 12px;
+                max-width: 150px;
+            }
+            
+            .profile-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 14px;
+            }
+            
+            .profile-dropdown {
+                min-width: 130px;
+            }
+            
+            .room-cards {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 12px 16px;
+            }
+            
+            .room-card {
+                min-width: 0;
+                padding: 12px;
+            }
+            
+            .room-card-title {
+                font-size: 12px;
+            }
+            
+            .room-card-subtitle {
+                font-size: 10px;
+            }
+            
+            /* Stack gauge, slider, then graph; center gauge and slider */
+            .gauge-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 24px;
+            }
+            
+            .gauge-ambient-box {
+                flex-direction: column;
+                width: 100%;
+                max-width: 340px;
+                padding: 16px 40px 16px 16px;
+                gap: 16px;
+            }
+            
+            .gauge-wrapper {
+                width: 100%;
+                max-width: 300px;
+                height: 200px;
+                margin: 0 auto;
+            }
+            
+            .gauge-svg {
+                width: 100%;
+                max-width: 280px;
+                height: 160px;
+            }
+            
+            .lux-number {
+                font-size: 48px;
+            }
+            
+            .gauge-range {
+                font-size: 11px;
+                padding: 0 20px 0 15px;
+            }
+            
+            .gauge-controls {
+                gap: 20px;
+            }
+            
+            .power-btn {
+                width: 52px;
+                height: 52px;
+            }
+            
+            .power-btn svg {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .control-btn {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .control-btn.range-btn {
+                font-size: 16px;
+            }
+            
+            .roller-container {
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+            
+            .roller-track {
+                height: 200px;
+            }
+            
+            /* Weekly graph below gauge and slider – slightly smaller for mobile */
+            .weekly-graph-container {
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                margin-top: 8px;
+                align-self: stretch;
+                padding: 14px;
+                border-radius: 12px;
+            }
+            
+            .weekly-graph-header {
+                margin-bottom: 6px;
+            }
+            
+            .weekly-graph-title {
+                font-size: 12px;
+            }
+            
+            .weekly-graph-value .date {
+                font-size: 11px;
+            }
+            
+            .weekly-graph-value .hours {
+                font-size: 13px;
+            }
+            
+            .weekly-graph {
+                height: 140px;
+                padding-left: 28px;
+                padding-bottom: 20px;
+            }
+            
+            .graph-y-axis {
+                height: 115px;
+                font-size: 10px;
+            }
+            
+            .graph-x-axis {
+                font-size: 10px;
+            }
+            
+            .room-bars-section {
+                margin-top: 16px;
+                margin-bottom: 20px;
+            }
+            
+            .room-bar-item {
+                padding: 8px 0;
+            }
+            
+            .room-bar-label {
+                font-size: 12px;
+            }
+            
+            .room-bar-value {
+                font-size: 11px;
+            }
+            
+            .stats-section {
+                gap: 16px;
+            }
+            
+            .stats-cards {
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 12px;
+            }
+            
+            .stat-card {
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 16px;
+            }
+            
+            .stat-value,
+            .stat-duration {
+                font-size: 28px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
+            
+            .stat-period {
+                font-size: 11px;
+            }
+            
+            .mode-cards {
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 12px;
+                margin-top: 24px;
+            }
+            
+            .mode-card {
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 16px;
+            }
+            
+            .customize-btn {
+                bottom: 16px;
+                right: 16px;
+                width: 44px;
+                height: 44px;
+            }
+            
+            .customize-btn .icon {
+                font-size: 20px;
+            }
+            
+            .clock-btn, .info-btn {
+                width: 40px;
+                height: 40px;
+                bottom: 16px;
+            }
+            
+            .clock-btn {
+                right: 70px;
+            }
+            
+            .info-btn {
+                right: 116px;
+            }
+            
+            .wallpaper-modal-content {
+                padding: 20px;
+                width: 95%;
+                max-height: 90vh;
+            }
+            
+            .wallpaper-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .bg-wallpaper {
+                background-size: cover;
+                background-position: center;
+            }
+            
+            .donut-section {
+                margin-bottom: 20px;
+            }
+            
+            .donut-container {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .brightness-section {
+                margin-top: 20px;
+            }
+            
+            .brightness-label {
+                font-size: 13px;
+            }
+            
+            .brightness-percent {
+                font-size: 20px;
+            }
+        }
+
+        /* Small Mobile Styles (up to 480px) */
+        @media (max-width: 480px) {
+            .sidebar {
+                padding: 12px;
+            }
+            
+            .time-display {
+                font-size: 40px;
+            }
+            
+            .main-content {
+                padding: 12px;
+            }
+            
+            /* Keep 2 room cards per row on small phones too */
+            .room-cards {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                padding: 10px 12px;
+            }
+            
+            .room-card {
+                padding: 10px;
+                min-width: 0;
+            }
+            
+            .room-card-title {
+                font-size: 11px;
+            }
+            
+            .room-card-subtitle {
+                font-size: 9px;
+            }
+            
+            .gauge-wrapper {
+                max-width: 280px;
+            }
+            
+            .power-btn {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .power-btn svg {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .control-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .control-btn.range-btn {
+                font-size: 14px;
+            }
+            
+            .gauge-controls {
+                gap: 16px;
+            }
+            
+            .weekly-graph-container {
+                padding: 12px;
+            }
+            
+            .weekly-graph {
+                height: 120px;
+                padding-left: 26px;
+                padding-bottom: 18px;
+            }
+            
+            .graph-y-axis {
+                height: 100px;
+                font-size: 9px;
+            }
+            
+            .graph-x-axis {
+                font-size: 9px;
+            }
+            
+            /* Eco + Sleep in one row on mobile */
+            .mode-cards {
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+            
+            .mode-card {
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 12px;
+            }
+            
+            .mode-card-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .mode-card-title {
+                font-size: 13px;
+            }
+            
+            .mode-card-subtitle {
+                font-size: 10px;
+            }
+            
+            .stats-section {
+                gap: 12px;
+            }
+            
+            .stats-cards {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+            
+            .stat-card {
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 12px;
+            }
+            
+            .stat-value,
+            .stat-duration {
+                font-size: 24px;
+            }
+            
+            .stat-period {
+                font-size: 10px;
+            }
+            
+            .stat-label {
+                font-size: 10px;
+            }
+            
+            .wallpaper-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-modal-content {
+                padding: 16px;
+                width: 98%;
+                max-height: 95vh;
+            }
+            
+            .password-modal-content {
+                padding: 20px;
+                width: 90%;
+            }
+        }
+
+        /* Touch-friendly improvements for mobile */
+        @media (max-width: 767px) {
+            /* Ensure touch targets are at least 44x44px */
+            .room-card,
+            .mode-card,
+            .calendar-day,
+            .calendar-nav-btn,
+            .control-btn,
+            .power-btn,
+            .customize-btn,
+            .profile-btn,
+            .clock-btn,
+            .info-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            /* Prevent text selection on interactive elements */
+            .room-card,
+            .mode-card,
+            .calendar-day,
+            .power-btn,
+            .control-btn {
+                -webkit-tap-highlight-color: rgba(245, 166, 35, 0.3);
+                -webkit-touch-callout: none;
+                user-select: none;
+            }
+            
+            /* Improve scrolling */
+            .main-content {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Fix background wallpaper scaling */
+            .bg-wallpaper {
+                background-attachment: scroll;
+                background-size: cover;
+                background-position: center center;
+            }
+            
+            /* Ensure modals are full screen on mobile */
+            .wallpaper-modal-content,
+            .info-modal-content,
+            .password-modal-content {
+                border-radius: 0;
+                max-height: 100vh;
+                height: 100vh;
+                overflow-y: auto;
+            }
+            
+            /* Adjust graph for mobile */
+            .weekly-graph-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .room-bar-track {
+                height: 20px;
+            }
+            
+            .room-bar-fill {
+                height: 20px;
+            }
+        }
+
+        /* Landscape Mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .sidebar {
+                flex-direction: row;
+                max-height: 120px;
+                overflow-y: auto;
+            }
+            
+            .time-display {
+                font-size: 36px;
+            }
+            
+            .gauge-wrapper {
+                width: 250px;
+                height: 180px;
             }
         }
 
@@ -1679,6 +3322,25 @@
     </style>
 </head>
 <body>
+    <!-- Login Modal (email + password) – opened via profile icon -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-modal-content">
+            <div class="login-icon">🔐</div>
+            <div class="login-title">Login to Dashboard</div>
+            <div class="login-subtitle">Enter your email and password to continue</div>
+            <div class="login-input-wrapper">
+                <input type="email" class="login-email-input" id="loginEmailInput" placeholder="Email address" autocomplete="email">
+            </div>
+            <div class="login-input-wrapper">
+                <input type="password" class="login-password-input" id="loginPasswordInput" placeholder="Password" autocomplete="current-password">
+            </div>
+            <div class="login-error" id="loginError">Please enter email and password.</div>
+            <button class="login-submit" id="loginSubmit">Verify</button>
+            <button class="login-cancel" id="loginCancel">Cancel</button>
+        </div>
+    </div>
+
+    <div class="dashboard-wrap" id="dashboardWrap">
     <!-- Screensaver Overlay -->
     <div class="screensaver-overlay" id="screensaverOverlay">
         <div class="screensaver-stars"></div>
@@ -1695,8 +3357,21 @@
     <!-- Customize Button -->
     <button class="customize-btn" id="customizeBtn">
         <span class="icon">⚙️</span>
-        <span class="label">Customize</span>
     </button>
+
+    <!-- Profile Section (top-right) -->
+    <div class="profile-section">
+        <div class="profile-email" id="profileEmail"></div>
+        <button class="profile-btn" id="profileBtn" type="button" aria-label="User profile" title="Profile">
+            <div class="profile-icon">👤</div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="profile-dropdown-item logout" id="logoutBtn">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </button>
+    </div>
 
     <!-- Wallpaper Selection Modal -->
     <div class="wallpaper-modal" id="wallpaperModal">
@@ -1708,10 +3383,335 @@
             <div class="wallpaper-grid" id="wallpaperGrid">
                 <!-- Wallpaper options rendered by JS -->
             </div>
+            <div class="wallpaper-modal-footer">
+                <button class="info-btn clock-btn" id="clockBtn" title="Time Zone Options">
+                    <span class="clock-icon-outline"></span>
+                </button>
+                <button class="info-btn" id="infoBtn" title="View Data Structure Diagram">
+                    ℹ️
+                </button>
+                <div class="timezone-panel" id="timezonePanel">
+                    <div class="timezone-title">Time Zones</div>
+                    <div class="timezone-options">
+                        <div class="timezone-option" data-tz="America/Los_Angeles">PST – Pacific Standard Time</div>
+                        <div class="timezone-option" data-tz="America/New_York">EST – Eastern Standard Time</div>
+                        <div class="timezone-option" data-tz="America/Chicago">CST – Central Standard Time</div>
+                        <div class="timezone-option" data-tz="America/Denver">MST – Mountain Standard Time</div>
+                        <div class="timezone-option" data-tz="America/Anchorage">AST – Alaska Standard Time</div>
+                        <div class="timezone-option" data-tz="UTC">UTC – Coordinated Universal Time</div>
+                        <div class="timezone-option" data-tz="Europe/Paris">CET – Central European Time</div>
+                        <div class="timezone-option" data-tz="Asia/Kolkata">IST – India Standard Time</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div class="password-modal" id="passwordModal">
+        <div class="password-modal-content">
+            <div class="password-icon">🔐</div>
+            <div class="password-title">Admin Access</div>
+            <div class="password-subtitle">Enter 5-digit passkey to view data structure</div>
+            <div class="password-input-wrapper">
+                <input type="text" class="password-input username-input" id="usernameInput" placeholder="Admin username" autocomplete="off">
+            </div>
+            <div class="password-input-wrapper">
+                <input type="password" class="password-input" id="passwordInput" maxlength="5" placeholder="•••••" autocomplete="off">
+            </div>
+            <div class="password-error" id="passwordError">❌ Invalid passkey. Try again.</div>
+            <button class="password-submit" id="passwordSubmit">Verify</button>
+            <button class="password-cancel" id="passwordCancel">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="info-modal" id="infoModal">
+        <div class="info-modal-content">
+            <div class="info-modal-header">
+                <h2 class="info-modal-title">🔆 Data Structure Display Scheme</h2>
+                <button class="info-close-btn" id="infoCloseBtn">×</button>
+            </div>
+
+            <!-- Diagram Link -->
+            <div style="margin-bottom: 20px; padding: 12px 16px; background: rgba(245, 166, 35, 0.1); border: 1px solid var(--accent); border-radius: 8px; text-align: center;">
+                <a href="/diagram" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 500; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    📐 View Full Architecture Diagram
+                    <span style="font-size: 12px;">↗</span>
+                </a>
+            </div>
+
+            <!-- Screen Layout Overview -->
+            <div class="info-section">
+                <div class="info-section-title">📊 Screen Layout Overview</div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-card-title">📅 Sidebar (Left)</div>
+                        <div class="info-card-content">
+                            • Time & Date (Configurable Timezone)<br>
+                            • Calendar (Sun-Sat)<br>
+                            • Donut Chart<br>
+                            • Warning Notification<br>
+                            • Room Usage Bars<br>
+                            • Brightness %
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">🎛️ Main Area</div>
+                        <div class="info-card-content">
+                            • 6 Room Controls<br>
+                            • Gauge (0-800 lux)<br>
+                            • Brightness Slider<br>
+                            • Weekly Line Graph<br>
+                            • Eco/Sleep Modes
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">📈 Statistics</div>
+                        <div class="info-card-content">
+                            • Today's Usage<br>
+                            • Monthly Usage<br>
+                            • Progress Bars<br>
+                            • Live Updates
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MongoDB Collections -->
+            <div class="info-section">
+                <div class="info-section-title">📦 Data Structure (MongoDB Collections)</div>
+                <div class="info-grid">
+                    <div class="db-collection">
+                        <div class="db-collection-header">📊 daily_usage</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">offSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">updatedAt</span><span class="db-field-type">DateTime</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🛋️ room_living</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🛏️ room_bedroom</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🍳 room_kitchen</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🚿 room_bathroom</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">💼 room_office</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header room">🚗 room_garage</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header device">📱 devices</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">action_type</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">room_id</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">room_name</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">time</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">ip</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">userAgent</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">createdAt</span><span class="db-field-type">DateTime</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header admin">👤 admin_access</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">username</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">accessedAt</span><span class="db-field-type">DateTime</span></div>
+                            <div class="db-field"><span class="db-field-name">ip</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">userAgent</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">path</span><span class="db-field-type">String</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header alert">⚠️ alerts</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">alert_id</span><span class="db-field-type">String (UUID)</span></div>
+                            <div class="db-field"><span class="db-field-name">room_id</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">durationSeconds</span><span class="db-field-type">Number</span></div>
+                            <div class="db-field"><span class="db-field-name">type</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">createdAt</span><span class="db-field-type">DateTime</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Flow -->
+            <div class="info-section">
+                <div class="info-section-title">🔄 Data Flow</div>
+                <div class="info-flow">
+                    <div class="info-flow-node">👤 User<br><small>Actions</small></div>
+                    <div class="info-flow-arrow">→</div>
+                    <div class="info-flow-node">🖥️ Frontend<br><small>JS/HTML</small></div>
+                    <div class="info-flow-arrow">→</div>
+                    <div class="info-flow-node">⚙️ Backend<br><small>Flask API</small></div>
+                    <div class="info-flow-arrow">→</div>
+                    <div class="info-flow-node">🗄️ MongoDB<br><small>Atlas Cloud</small></div>
+                </div>
+            </div>
+
+            <!-- API Endpoints -->
+            <div class="info-section">
+                <div class="info-section-title">📡 API Endpoints</div>
+                <table class="info-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/usage/save</td>
+                            <td>Save daily usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/usage/{date}</td>
+                            <td>Get usage for date</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/usage/statistics</td>
+                            <td>Get monthly stats</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/room/{room}/save</td>
+                            <td>Save room usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/room/{room}/{date}</td>
+                            <td>Get room data</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/rooms/all/{date}</td>
+                            <td>Get all rooms</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Admin Monthly Usage Graph -->
+            <div class="info-section">
+                <div class="info-section-title">📈 Monthly Usage Analytics (Live)</div>
+                <div class="admin-graph-selectors">
+                    <select id="adminMonthSelect" class="admin-select">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                    <select id="adminYearSelect" class="admin-select">
+                        <!-- Years will be populated by JS, minimum 2026 -->
+                    </select>
+                </div>
+                <div class="admin-graph-container">
+                    <div class="admin-graph-header">
+                        <div class="admin-graph-title">Light Usage Trend</div>
+                        <div class="admin-graph-value">
+                            <div class="admin-graph-date" id="adminGraphDateLabel">Loading...</div>
+                            <div class="admin-graph-hours" id="adminGraphHoursLabel">--</div>
+                        </div>
+                    </div>
+                    <div class="admin-graph">
+                        <div class="admin-graph-y-axis">
+                            <span>24h</span>
+                            <span>18h</span>
+                            <span>12h</span>
+                            <span>6h</span>
+                            <span>0h</span>
+                        </div>
+                        <div class="admin-graph-canvas-wrapper">
+                            <div class="admin-graph-grid-line" style="top: 0%"></div>
+                            <div class="admin-graph-grid-line" style="top: 25%"></div>
+                            <div class="admin-graph-grid-line" style="top: 50%"></div>
+                            <div class="admin-graph-grid-line" style="top: 75%"></div>
+                            <svg class="admin-graph-canvas" id="adminGraphCanvas" viewBox="0 0 320 120" preserveAspectRatio="none">
+                                <!-- Line and dots rendered by JS -->
+                            </svg>
+                        </div>
+                        <div class="admin-graph-x-axis" id="adminGraphXAxis">
+                            <!-- Days will be rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MongoDB Atlas Link -->
+            <div class="info-section">
+                <div class="info-section-title">🍃 MongoDB Atlas Database</div>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px;">Access the cloud database to view stored data and collections.</p>
+                <a href="https://cloud.mongodb.com/v2/67952f1d9f8cb73e7b8ce3bb#/clusters" target="_blank" class="mongodb-link">
+                    <span class="mongodb-icon">🍃</span>
+                    <span>Open MongoDB Atlas Dashboard</span>
+                    <span class="external-icon">↗</span>
+                </a>
+                <div class="readonly-notice">
+                    <span class="lock-icon">🔒</span>
+                    <span>Read-Only Access - Data viewing only, modifications are restricted</span>
+                </div>
+            </div>
         </div>
     </div>
   
-    <aside class="sidebar">
+    <!-- Mobile sidebar overlay (tap to close) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" type="button" aria-label="Close menu">×</button>
         <div class="mode-badge">
             <span class="mode-icon" id="modeIcon">🌙</span>
             <span id="timeMode">Night</span>
@@ -1730,12 +3730,12 @@
                 </div>
             </div>
             <div class="calendar-weekdays">
+                <div class="calendar-weekday">S</div>
                 <div class="calendar-weekday">M</div>
                 <div class="calendar-weekday">T</div>
                 <div class="calendar-weekday">W</div>
                 <div class="calendar-weekday">T</div>
                 <div class="calendar-weekday">F</div>
-                <div class="calendar-weekday">S</div>
                 <div class="calendar-weekday">S</div>
             </div>
             <div class="calendar-days" id="calendarDays">
@@ -1834,6 +3834,11 @@
 
     <main class="main-content">
         <header class="header">
+            <button class="sidebar-menu-btn" id="sidebarMenuBtn" type="button" aria-label="Open menu">
+                <span class="menu-icon-bar"></span>
+                <span class="menu-icon-bar"></span>
+                <span class="menu-icon-bar"></span>
+            </button>
             <h1 class="title">UOP Light Sensor</h1>
         </header>
 
@@ -1890,13 +3895,9 @@
         </div>
 
         <div class="gauge-container">
+            <div class="gauge-ambient-box">
             <div class="gauge-wrapper">
                 <!-- Sunlight Detection Popup -->
-                <div class="sunlight-popup" id="sunlightPopup">
-                    <span class="sunlight-icon">☀️</span>
-                    <span>Sunlight Detected</span>
-                </div>
-                
                 <div class="gauge-bg"></div>
                 
                 <svg class="gauge-svg" viewBox="0 0 400 240">
@@ -1920,7 +3921,7 @@
                 
                 <div class="gauge-range">
                     <span class="range-value">0</span>
-                    <span class="range-value">50</span>
+                    <span class="range-value">800</span>
                 </div>
                 
                 <div class="gauge-controls">
@@ -1944,17 +3945,55 @@
                 </div>
             </div>
 
-   
             <div class="roller-container">
                 <div class="roller-track" id="rollerTrack">
                     <div class="roller-fill" id="rollerFill"></div>
                     <div class="roller-thumb" id="rollerThumb"></div>
                     <div class="roller-ticks">
-                        <span>50</span>
-                        <span>37</span>
-                        <span>25</span>
-                        <span>12</span>
+                        <span>800</span>
+                        <span>600</span>
+                        <span>400</span>
+                        <span>200</span>
                         <span>0</span>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Weekly Line Graph -->
+            <div class="weekly-graph-container">
+                <div class="weekly-graph-header">
+                    <div class="weekly-graph-title">Weekly Usage</div>
+                    <div class="weekly-graph-value">
+                        <div class="date" id="graphDateLabel">Today</div>
+                        <div class="hours" id="graphHoursLabel">0h 0m</div>
+                    </div>
+                </div>
+                <div class="weekly-graph">
+                    <div class="graph-y-axis">
+                        <span>24h</span>
+                        <span>18h</span>
+                        <span>12h</span>
+                        <span>6h</span>
+                        <span>0h</span>
+                    </div>
+                    <div class="graph-canvas-wrapper">
+                        <div class="graph-grid-line" style="top: 0%"></div>
+                        <div class="graph-grid-line" style="top: 25%"></div>
+                        <div class="graph-grid-line" style="top: 50%"></div>
+                        <div class="graph-grid-line" style="top: 75%"></div>
+                        <svg class="graph-canvas" id="weeklyGraphCanvas" viewBox="0 0 280 135" preserveAspectRatio="none">
+                            <!-- Line and dots rendered by JS -->
+                        </svg>
+                    </div>
+                    <div class="graph-x-axis" id="graphXAxis">
+                        <span>Sun</span>
+                        <span>Mon</span>
+                        <span>Tue</span>
+                        <span>Wed</span>
+                        <span>Thu</span>
+                        <span>Fri</span>
+                        <span>Sat</span>
                     </div>
                 </div>
             </div>
@@ -1994,14 +4033,6 @@
                     <div class="stat-label">of 24 hours</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-period">This Week</div>
-                    <div class="stat-duration" id="weeklyDuration">0h 0m</div>
-                    <div class="stat-bar">
-                        <div class="stat-bar-fill weekly" id="weeklyBar" style="width: 0%"></div>
-                    </div>
-                    <div class="stat-label">of 168 hours</div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-period">This Month</div>
                     <div class="stat-duration" id="monthlyDuration">0h 0m</div>
                     <div class="stat-bar">
@@ -2013,28 +4044,202 @@
 
         </div>
     </main>
+    </div>
 
     <script>
+        // ========== Profile icon login (email + password → user_data in MongoDB) ==========
+        (function initProfileLogin() {
+            const loginModal = document.getElementById('loginModal');
+            const profileBtn = document.getElementById('profileBtn');
+            const profileEmail = document.getElementById('profileEmail');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginEmail = document.getElementById('loginEmailInput');
+            const loginPassword = document.getElementById('loginPasswordInput');
+            const loginError = document.getElementById('loginError');
+            const loginSubmit = document.getElementById('loginSubmit');
+            const loginCancel = document.getElementById('loginCancel');
+            const STORAGE_KEY = 'dashboardLoggedIn';
+            const EMAIL_KEY = 'userEmail';
+
+            function updateProfileDisplay() {
+                const email = sessionStorage.getItem(EMAIL_KEY);
+                const isLoggedIn = sessionStorage.getItem(STORAGE_KEY);
+                
+                if (isLoggedIn && email) {
+                    if (profileEmail) {
+                        profileEmail.textContent = email;
+                        profileEmail.classList.add('show');
+                    }
+                } else {
+                    if (profileEmail) {
+                        profileEmail.classList.remove('show');
+                    }
+                    if (profileDropdown) {
+                        profileDropdown.classList.remove('show');
+                    }
+                }
+            }
+
+            function openLoginModal() {
+                if (loginModal) {
+                    loginModal.classList.add('show');
+                    loginModal.classList.remove('hidden');
+                    if (loginEmail) loginEmail.focus();
+                }
+            }
+
+            function closeLoginModal() {
+                if (loginModal) {
+                    loginModal.classList.remove('show');
+                    loginModal.classList.add('hidden');
+                    if (loginError) loginError.classList.remove('show');
+                    if (loginEmail) loginEmail.value = '';
+                    if (loginPassword) loginPassword.value = '';
+                }
+            }
+
+            function toggleProfileDropdown() {
+                if (profileDropdown) {
+                    const isLoggedIn = sessionStorage.getItem(STORAGE_KEY);
+                    if (isLoggedIn) {
+                        profileDropdown.classList.toggle('show');
+                    } else {
+                        openLoginModal();
+                    }
+                }
+            }
+
+            function logout() {
+                sessionStorage.removeItem(STORAGE_KEY);
+                sessionStorage.removeItem(EMAIL_KEY);
+                updateProfileDisplay();
+                if (profileDropdown) {
+                    profileDropdown.classList.remove('show');
+                }
+            }
+
+            // Initialize: show email if logged in
+            updateProfileDisplay();
+
+            // Profile icon click: toggle dropdown if logged in, else open login modal
+            if (profileBtn) {
+                profileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleProfileDropdown();
+                });
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (profileDropdown && profileBtn && !profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                    profileDropdown.classList.remove('show');
+                }
+            });
+
+            // Logout button
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    logout();
+                });
+            }
+
+            // Close modal when clicking outside
+            if (loginModal) {
+                loginModal.addEventListener('click', function(e) {
+                    if (e.target === loginModal) {
+                        closeLoginModal();
+                    }
+                });
+            }
+
+            // Login submit
+            if (loginSubmit) {
+                loginSubmit.addEventListener('click', function() {
+                    const email = (loginEmail && loginEmail.value || '').trim();
+                    const password = loginPassword && loginPassword.value;
+                    if (loginError) loginError.classList.remove('show');
+                    if (!email) {
+                        if (loginError) {
+                            loginError.textContent = 'Please enter your email.';
+                            loginError.classList.add('show');
+                        }
+                        return;
+                    }
+                    if (!password) {
+                        if (loginError) {
+                            loginError.textContent = 'Please enter your password.';
+                            loginError.classList.add('show');
+                        }
+                        return;
+                    }
+                    fetch('/api/user/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, password: password })
+                    })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            sessionStorage.setItem(STORAGE_KEY, '1');
+                            sessionStorage.setItem(EMAIL_KEY, email);
+                            closeLoginModal();
+                            updateProfileDisplay();
+                        } else {
+                            if (loginError) {
+                                loginError.textContent = data.message || 'Login failed. Try again.';
+                                loginError.classList.add('show');
+                            }
+                        }
+                    })
+                    .catch(function() {
+                        if (loginError) {
+                            loginError.textContent = 'Connection error. Try again.';
+                            loginError.classList.add('show');
+                        }
+                    });
+                });
+            }
+
+            // Cancel button closes modal
+            if (loginCancel) {
+                loginCancel.addEventListener('click', closeLoginModal);
+            }
+
+            // Enter key submits
+            if (loginPassword) {
+                loginPassword.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') loginSubmit && loginSubmit.click();
+                });
+            }
+            if (loginEmail) {
+                loginEmail.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') loginPassword && loginPassword.focus();
+                });
+            }
+        })();
 
         function updateTime() {
             const now = new Date();
-            const pstOptions = { timeZone: 'America/Los_Angeles' };
+            const timezone = getSelectedTimezone();
+            const tzOptions = { timeZone: timezone };
             
-            // Get PST time components
-            const pstTime = now.toLocaleString('en-US', { ...pstOptions, hour: '2-digit', minute: '2-digit', hour12: false });
-            const [hours, minutes] = pstTime.split(':');
+            // Get time components for selected timezone
+            const tzTime = now.toLocaleString('en-US', { ...tzOptions, hour: '2-digit', minute: '2-digit', hour12: false });
+            const [hours, minutes] = tzTime.split(':');
             document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
             
-            // Get PST date components
-            const pstDate = new Date(now.toLocaleString('en-US', pstOptions));
+            // Get date components for selected timezone
+            const tzDate = new Date(now.toLocaleString('en-US', tzOptions));
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const day = days[pstDate.getDay()];
-            const year = pstDate.getFullYear();
-            const month = String(pstDate.getMonth() + 1).padStart(2, '0');
-            const date = String(pstDate.getDate()).padStart(2, '0');
+            const day = days[tzDate.getDay()];
+            const year = tzDate.getFullYear();
+            const month = String(tzDate.getMonth() + 1).padStart(2, '0');
+            const date = String(tzDate.getDate()).padStart(2, '0');
             document.getElementById('currentDate').textContent = `${day} ${year}/${month}/${date}`;
             
-            // Get PST hour for mode
+            // Get hour for mode
             const hour = parseInt(hours);
             const modeEl = document.getElementById('timeMode');
             const iconEl = document.getElementById('modeIcon');
@@ -2056,12 +4261,9 @@
 
 
         let currentLux = 500;
-        let sunlightDetected = false;
-
-      
         function updateGauge(lux) {
             currentLux = lux;
-            const maxLux = 50;
+            const maxLux = 800;
             const percentage = Math.min(lux / maxLux, 1);
             const arcLength = 471;
             const offset = arcLength * (1 - percentage);
@@ -2077,48 +4279,13 @@
             updateRollerPosition(lux);
         }
 
-        // Simulated window sensor (independent from gauge)
-        function simulateWindowSunlight() {
-            const hour = new Date().getHours();
-            const popup = document.getElementById('sunlightPopup');
-            
-            // Sunlight only possible during daytime (7 AM - 6 PM)
-            const isDaytime = hour >= 7 && hour <= 18;
-            
-            if (isDaytime && !sunlightDetected) {
-                // Random chance of sunlight detection
-                const peakHours = hour >= 10 && hour <= 15;
-                const chance = peakHours ? 0.4 : 0.7;
-                
-                if (Math.random() > chance) {
-                    sunlightDetected = true;
-                    popup.classList.add('show');
-                    
-                    // Auto-hide after 5-8 seconds
-                    setTimeout(() => {
-                        sunlightDetected = false;
-                        popup.classList.remove('show');
-                    }, 5000 + Math.random() * 3000);
-                }
-            }
-        }
-
-        // Check for window sunlight every 10-15 seconds
-        function startWindowSensor() {
-            setInterval(simulateWindowSunlight, 10000 + Math.random() * 5000);
-            // First check after 3 seconds
-            setTimeout(simulateWindowSunlight, 3000);
-        }
-
-
-
         const rollerTrack = document.getElementById('rollerTrack');
         const rollerThumb = document.getElementById('rollerThumb');
         const rollerFill = document.getElementById('rollerFill');
         let isDragging = false;
 
         function updateRollerPosition(lux) {
-            const percentage = lux / 50;
+            const percentage = lux / 800;
             const trackHeight = rollerTrack.offsetHeight;
             const thumbPosition = trackHeight - (percentage * trackHeight);
             
@@ -2133,7 +4300,7 @@
             const y = e.clientY || (e.touches && e.touches[0].clientY);
             const relativeY = y - rect.top;
             const percentage = 1 - Math.max(0, Math.min(1, relativeY / rect.height));
-            const lux = Math.round(percentage * 50);
+            const lux = Math.round(percentage * 800);
             
             updateGauge(lux);
         }
@@ -2217,7 +4384,7 @@
             });
         });
 
-
+        
         let isPowerOn = false;  // Start with light OFF
         let savedLux = 25;      // Default brightness when turned on
         
@@ -2228,9 +4395,9 @@
         function simulateAmbientLight() {
             if (!isPowerOn || !isEcoMode) return;
             
-            // Fluctuate between 10-40 lux in Eco Mode
-            const minLux = 10;
-            const maxLux = 40;
+            // Fluctuate between 100-400 lux in Eco Mode
+            const minLux = 100;
+            const maxLux = 400;
             const lux = Math.round(minLux + Math.random() * (maxLux - minLux));
             
             updateGauge(lux);
@@ -2263,7 +4430,7 @@
   
         let isSleepMode = false;
         let preSleepLux = 25;
-        const SLEEP_LUX = 5; 
+        const SLEEP_LUX = 50; 
 
         function startSleepMode() {
             isSleepMode = true;
@@ -2276,7 +4443,7 @@
             }
             
  
-            preSleepLux = currentLux > SLEEP_LUX ? currentLux : 25;
+            preSleepLux = currentLux > SLEEP_LUX ? currentLux : 400;
             updateGauge(SLEEP_LUX);
             
 
@@ -2298,6 +4465,7 @@
         }
 
         document.getElementById('powerBtn').addEventListener('click', function() {
+            const wasPowerOn = isPowerOn;
             isPowerOn = !isPowerOn;
             this.classList.toggle('active');
             
@@ -2319,6 +4487,11 @@
                 rollerTrack.style.opacity = '0.3';
                 rollerTrack.style.pointerEvents = 'none';
             } else {
+                // Log device details when gauge/power is turned ON
+                if (!wasPowerOn) {
+                    logDeviceDetails('gauge_light_on');
+                }
+                
                 // Turn on - check modes and rooms
                 if (isEcoMode) {
                     ecoInterval = setInterval(simulateAmbientLight, 5000);
@@ -2390,11 +4563,34 @@
             }
         }
 
-        // Helper function to get current date in PST
+        // Timezone management
+        const TIMEZONE_STORAGE_KEY = 'dashboard_timezone';
+        const TIMEZONE_MAP = {
+            'PST': 'America/Los_Angeles',
+            'EST': 'America/New_York',
+            'CST': 'America/Chicago',
+            'MST': 'America/Denver',
+            'AST': 'America/Anchorage',
+            'UTC': 'UTC',
+            'CET': 'Europe/Paris',
+            'IST': 'Asia/Kolkata'
+        };
+        
+        function getSelectedTimezone() {
+            const saved = localStorage.getItem(TIMEZONE_STORAGE_KEY);
+            return saved || 'UTC'; // Default to UTC
+        }
+        
+        function setSelectedTimezone(timezone) {
+            localStorage.setItem(TIMEZONE_STORAGE_KEY, timezone);
+        }
+        
+        // Helper function to get current date in selected timezone
         function getPSTDate() {
             const now = new Date();
-            const pstString = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-            return pstString; // Returns YYYY-MM-DD format
+            const timezone = getSelectedTimezone();
+            const dateString = now.toLocaleDateString('en-CA', { timeZone: timezone });
+            return dateString; // Returns YYYY-MM-DD format
         }
 
         async function saveStats() {
@@ -2433,16 +4629,13 @@
             };
             
             document.getElementById('dailyDuration').textContent = formatDuration(dailySeconds);
-            document.getElementById('weeklyDuration').textContent = formatDuration(weeklySeconds);
             document.getElementById('monthlyDuration').textContent = formatDuration(monthlySeconds);
             
  
             const dailyPercent = Math.min((dailySeconds / (24 * 3600)) * 100, 100);
-            const weeklyPercent = Math.min((weeklySeconds / (168 * 3600)) * 100, 100);
             const monthlyPercent = Math.min((monthlySeconds / (720 * 3600)) * 100, 100);
             
             document.getElementById('dailyBar').style.width = `${dailyPercent}%`;
-            document.getElementById('weeklyBar').style.width = `${weeklyPercent}%`;
             document.getElementById('monthlyBar').style.width = `${monthlyPercent}%`;
             
             // Update donut chart
@@ -2526,7 +4719,7 @@
             
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const startDay = firstDay.getDay(); // Sunday = 0, no adjustment needed
             const daysInMonth = lastDay.getDate();
             
             const prevMonthLastDay = new Date(year, month, 0).getDate();
@@ -2589,6 +4782,9 @@
             // Set time to noon to avoid timezone shifting issues
             selectedDate = new Date(year, month, day, 12, 0, 0);
             
+            // Also update the selected week date for the graph
+            selectedWeekDate = selectedDate;
+            
             // Navigate to that month if different
             if (calendarDate.getMonth() !== month || calendarDate.getFullYear() !== year) {
                 calendarDate = new Date(year, month, 1, 12, 0, 0);
@@ -2596,6 +4792,7 @@
             
             renderCalendar();
             updateDonutChart();
+            loadWeeklyGraphData(selectedDate);
         }
 
         document.getElementById('prevMonth').addEventListener('click', () => {
@@ -2665,9 +4862,6 @@
         loadDailyUsageHistory();
         startStatsTracking();
 
-        // Start window sunlight sensor (independent from gauge)
-        startWindowSensor();
-        
         // Set initial gauge value (light is off initially)
         updateGauge(0);
         
@@ -2675,15 +4869,369 @@
         updateStatsDisplay();
         updateDonutChart();
 
-        // Room Light Status Management - Each room has 0-50 lux range and tracks duration
+        // ==================== WEEKLY LINE GRAPH ====================
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        
+        async function loadWeeklyGraphData(targetDate = null) {
+            const graphCanvas = document.getElementById('weeklyGraphCanvas');
+            const graphXAxis = document.getElementById('graphXAxis');
+            if (!graphCanvas) return;
+            
+            const today = new Date();
+            const todayPST = getPSTDate();
+            
+            // Use target date if provided, otherwise use today
+            const baseDate = targetDate ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 12, 0, 0) : today;
+            const baseDayIndex = baseDate.getDay(); // 0 = Sunday
+            
+            // Get dates for the week containing baseDate (Sunday to Saturday)
+            const weekDates = [];
+            
+            // Find Sunday of this week
+            const sunday = new Date(baseDate);
+            sunday.setDate(baseDate.getDate() - baseDayIndex);
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(sunday);
+                date.setDate(sunday.getDate() + i);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+                // Check if date is in the future compared to actual today
+                const thisDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const isFuture = thisDate > actualToday;
+                
+                weekDates.push({
+                    dateStr: dateStr,
+                    dayName: dayNames[i],
+                    isToday: dateStr === todayPST,
+                    isFuture: isFuture
+                });
+            }
+            
+            // Fetch data for each day
+            const weekData = [];
+            for (const dateInfo of weekDates) {
+                if (dateInfo.isFuture) {
+                    weekData.push({ ...dateInfo, onHours: null });
+                } else {
+                    try {
+                        const response = await fetch(`/api/usage/${dateInfo.dateStr}`);
+                        const data = await response.json();
+                        const onHours = (data.onSeconds || 0) / 3600;
+                        weekData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : onHours
+                        });
+                    } catch (e) {
+                        weekData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : 0
+                        });
+                    }
+                }
+            }
+            
+            // Update X-axis labels
+            graphXAxis.innerHTML = weekData.map(day => 
+                `<span class="${day.isToday ? 'today' : ''}">${day.dayName}</span>`
+            ).join('');
+            
+            // Update header with week range and total hours
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const firstParts = weekDates[0].dateStr.split('-');
+            const lastParts = weekDates[6].dateStr.split('-');
+            const firstMonth = parseInt(firstParts[1]) - 1;
+            const firstDay = parseInt(firstParts[2]);
+            const lastDay = parseInt(lastParts[2]);
+            const weekRange = `${monthNames[firstMonth]} ${firstDay} - ${lastDay}`;
+            
+            // Calculate total hours for the week
+            const totalHours = weekData.reduce((sum, d) => sum + (d.onHours || 0), 0);
+            const displayHours = Math.floor(totalHours);
+            const displayMins = Math.floor((totalHours - displayHours) * 60);
+            
+            document.getElementById('graphDateLabel').textContent = weekRange;
+            document.getElementById('graphHoursLabel').textContent = `${displayHours}h ${displayMins}m`;
+            
+            // Draw line graph
+            const width = 280;
+            const height = 135;
+            const maxHours = 24;
+            const padding = 10;
+            
+            // Calculate points (only for non-future days)
+            const validData = weekData.filter(d => d.onHours !== null);
+            const points = validData.map((day, i) => {
+                const x = padding + (i * (width - padding * 2) / (validData.length - 1 || 1));
+                const y = height - padding - ((day.onHours / maxHours) * (height - padding * 2));
+                return { x, y, hours: day.onHours, isToday: day.isToday };
+            });
+            
+            // Create smooth curve path
+            let pathD = '';
+            if (points.length > 0) {
+                pathD = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 1; i < points.length; i++) {
+                    const prev = points[i - 1];
+                    const curr = points[i];
+                    const cpx = (prev.x + curr.x) / 2;
+                    pathD += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`;
+                }
+            }
+            
+            // Create area fill path
+            let areaD = pathD;
+            if (points.length > 0) {
+                areaD += ` L ${points[points.length - 1].x} ${height - padding}`;
+                areaD += ` L ${points[0].x} ${height - padding} Z`;
+            }
+            
+            // Render SVG (using amber/orange color to match gauge)
+            const accentColor = '#f5a623';
+            graphCanvas.innerHTML = `
+                <defs>
+                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.4"/>
+                        <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.05"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaD}" fill="url(#lineGradient)" />
+                <path d="${pathD}" fill="none" stroke="${accentColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                ${points.map(p => `
+                    <circle cx="${p.x}" cy="${p.y}" r="${p.isToday ? 5 : 3}" fill="${p.isToday ? accentColor : '#fff'}" stroke="${accentColor}" stroke-width="2"/>
+                `).join('')}
+            `;
+        }
+        
+        // Track the selected week date for the graph
+        let selectedWeekDate = null;
+        
+        // Load weekly graph on page load
+        loadWeeklyGraphData();
+        
+        // Update weekly graph every 10 seconds for live updates (use selected date if set)
+        setInterval(() => {
+            loadWeeklyGraphData(selectedWeekDate);
+        }, 10000);
+
+        // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
+        // Populate year dropdown (minimum 2026 to current year)
+        function initAdminGraphSelectors() {
+            const yearSelect = document.getElementById('adminYearSelect');
+            const monthSelect = document.getElementById('adminMonthSelect');
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            
+            // Populate years from 2026 to current year
+            yearSelect.innerHTML = '';
+            for (let year = 2026; year <= currentYear; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            
+            // Set current month and year as selected
+            monthSelect.value = currentMonth;
+            yearSelect.value = currentYear;
+            
+            // Add event listeners
+            monthSelect.addEventListener('change', loadAdminGraphData);
+            yearSelect.addEventListener('change', loadAdminGraphData);
+        }
+        
+        async function loadAdminGraphData() {
+            const graphCanvas = document.getElementById('adminGraphCanvas');
+            const graphXAxis = document.getElementById('adminGraphXAxis');
+            if (!graphCanvas) return;
+            
+            const today = new Date();
+            const todayPST = getPSTDate();
+            
+            // Get selected month and year from dropdowns
+            const selectedMonth = parseInt(document.getElementById('adminMonthSelect').value);
+            const selectedYear = parseInt(document.getElementById('adminYearSelect').value);
+            const currentYear = selectedYear;
+            const currentMonth = selectedMonth;
+            
+            // Get all days in current month
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            const monthDates = [];
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const dayStr = String(day).padStart(2, '0');
+                const dateStr = `${year}-${month}-${dayStr}`;
+                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const thisDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const isFuture = thisDate > actualToday;
+                
+                monthDates.push({
+                    dateStr: dateStr,
+                    day: day,
+                    isToday: dateStr === todayPST,
+                    isFuture: isFuture
+                });
+            }
+            
+            // Fetch data for each day from MongoDB
+            const monthData = [];
+            for (const dateInfo of monthDates) {
+                if (dateInfo.isFuture) {
+                    monthData.push({ ...dateInfo, onHours: null });
+                } else {
+                    try {
+                        const response = await fetch(`/api/usage/${dateInfo.dateStr}`);
+                        const data = await response.json();
+                        const onHours = (data.onSeconds || 0) / 3600;
+                        monthData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : onHours
+                        });
+                    } catch (e) {
+                        monthData.push({
+                            ...dateInfo,
+                            onHours: dateInfo.isToday ? dailySeconds / 3600 : 0
+                        });
+                    }
+                }
+            }
+            
+            // Update X-axis labels (show select days: 1, 7, 14, 21, 28/last)
+            const xAxisDays = [1, 7, 14, 21, daysInMonth];
+            graphXAxis.innerHTML = xAxisDays.map(d => {
+                const isToday = monthData.find(md => md.day === d)?.isToday;
+                return `<span class="${isToday ? 'today' : ''}">${d}</span>`;
+            }).join('');
+            
+            // Calculate total hours for the month
+            const totalHours = monthData.reduce((sum, d) => sum + (d.onHours || 0), 0);
+            const displayHours = Math.floor(totalHours);
+            const displayMins = Math.floor((totalHours - displayHours) * 60);
+            
+            document.getElementById('adminGraphDateLabel').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            document.getElementById('adminGraphHoursLabel').textContent = `${displayHours}h ${displayMins}m`;
+            
+            // Draw line graph
+            const width = 320;
+            const height = 120;
+            const maxHours = 24;
+            const padding = 8;
+            
+            // Calculate points (only for non-future days)
+            const validData = monthData.filter(d => d.onHours !== null);
+            const points = validData.map((day, i) => {
+                const x = padding + (i * (width - padding * 2) / (validData.length - 1 || 1));
+                const y = height - padding - ((day.onHours / maxHours) * (height - padding * 2));
+                return { x, y, hours: day.onHours, isToday: day.isToday, day: day.day };
+            });
+            
+            // Create sharp line path
+            let pathD = '';
+            if (points.length > 0) {
+                pathD = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 1; i < points.length; i++) {
+                    pathD += ` L ${points[i].x} ${points[i].y}`;
+                }
+            }
+            
+            // Create area fill path
+            let areaD = pathD;
+            if (points.length > 0) {
+                areaD += ` L ${points[points.length - 1].x} ${height - padding}`;
+                areaD += ` L ${points[0].x} ${height - padding} Z`;
+            }
+            
+            // Render SVG (using amber/orange color to match theme)
+            const accentColor = '#f5a623';
+            graphCanvas.innerHTML = `
+                <defs>
+                    <linearGradient id="adminLineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.5"/>
+                        <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.05"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaD}" fill="url(#adminLineGradient)" />
+                <path d="${pathD}" fill="none" stroke="${accentColor}" stroke-width="2" stroke-linejoin="miter"/>
+                ${points.filter(p => p.isToday).map(p => `
+                    <circle cx="${p.x}" cy="${p.y}" r="4" fill="${accentColor}" stroke="${accentColor}" stroke-width="1.5"/>
+                `).join('')}
+            `;
+        }
+        
+        // Initialize selectors on page load
+        let adminGraphInitialized = false;
+        
+        // Load admin graph when info modal opens
+        document.getElementById('infoModal').addEventListener('transitionend', function(e) {
+            if (this.classList.contains('show')) {
+                if (!adminGraphInitialized) {
+                    initAdminGraphSelectors();
+                    adminGraphInitialized = true;
+                }
+                loadAdminGraphData();
+            }
+        });
+        
+        // Also try loading immediately when modal shows
+        const infoModalObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const infoModal = document.getElementById('infoModal');
+                    if (infoModal && infoModal.classList.contains('show')) {
+                        if (!adminGraphInitialized) {
+                            initAdminGraphSelectors();
+                            adminGraphInitialized = true;
+                        }
+                        loadAdminGraphData();
+                    }
+                }
+            });
+        });
+        infoModalObserver.observe(document.getElementById('infoModal'), { attributes: true });
+        
+        // Update admin graph every 5 seconds when modal is open
+        setInterval(() => {
+            const infoModal = document.getElementById('infoModal');
+            if (infoModal && infoModal.classList.contains('show')) {
+                loadAdminGraphData();
+            }
+        }, 5000);
+
+        // Room Light Status Management - Each room has 0-800 lux range and tracks duration
         const roomConfig = {
-            'room-living': { on: false, brightness: 45, name: 'Living Room', duration: 0 },
-            'room-bedroom': { on: false, brightness: 25, name: 'Bedroom', duration: 0 },
-            'room-kitchen': { on: false, brightness: 40, name: 'Kitchen', duration: 0 },
-            'room-bathroom': { on: false, brightness: 30, name: 'Bathroom', duration: 0 },
-            'room-office': { on: false, brightness: 50, name: 'Office', duration: 0 },
-            'room-garage': { on: false, brightness: 35, name: 'Garage', duration: 0 }
+            'room-living': { on: false, brightness: 720, name: 'Living Room', duration: 0, alertSent: false },
+            'room-bedroom': { on: false, brightness: 400, name: 'Bedroom', duration: 0, alertSent: false },
+            'room-kitchen': { on: false, brightness: 640, name: 'Kitchen', duration: 0, alertSent: false },
+            'room-bathroom': { on: false, brightness: 480, name: 'Bathroom', duration: 0, alertSent: false },
+            'room-office': { on: false, brightness: 800, name: 'Office', duration: 0, alertSent: false },
+            'room-garage': { on: false, brightness: 560, name: 'Garage', duration: 0, alertSent: false }
         };
+
+        // Log device details when lights are turned on
+        function logDeviceDetails(actionType, roomId = null, roomName = null) {
+            const payload = {
+                action_type: actionType,
+                room_id: roomId,
+                room_name: roomName
+            };
+            
+            fetch('/api/device/log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            }).catch(err => console.log('Device log error:', err));
+        }
 
         // Load saved room durations from localStorage
         function loadRoomDurations() {
@@ -2717,20 +5265,90 @@
             }));
         }
 
+        // Room ID to API name mapping
+        const roomApiNames = {
+            'room-living': 'living',
+            'room-bedroom': 'bedroom',
+            'room-kitchen': 'kitchen',
+            'room-bathroom': 'bathroom',
+            'room-office': 'office',
+            'room-garage': 'garage'
+        };
+
+        // Save room data to MongoDB
+        function saveRoomToMongoDB(roomId) {
+            const apiName = roomApiNames[roomId];
+            if (!apiName) return;
+            
+            const todayPST = getPSTDate();
+            const room = roomConfig[roomId];
+            
+            fetch(`/api/room/${apiName}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: todayPST,
+                    onSeconds: room.duration,
+                    avgLux: room.brightness
+                })
+            }).catch(err => console.log('Room save error:', err));
+        }
+
+        // Save all rooms to MongoDB
+        function saveAllRoomsToMongoDB() {
+            for (const roomId in roomConfig) {
+                if (roomConfig[roomId].duration > 0) {
+                    saveRoomToMongoDB(roomId);
+                }
+            }
+        }
+
         // Track room durations - called every second
         function trackRoomDurations() {
+            const ALERT_THRESHOLD_SECONDS = 40 * 60; // 40 minutes
+            
             for (const roomId in roomConfig) {
-                if (roomConfig[roomId].on) {
-                    roomConfig[roomId].duration++;
+                const room = roomConfig[roomId];
+                if (room.on) {
+                    room.duration++;
+                    
+                    // If duration crosses threshold and alert not yet sent, log alert
+                    if (!room.alertSent && room.duration >= ALERT_THRESHOLD_SECONDS) {
+                        room.alertSent = true;
+                        try {
+                            fetch('/api/alerts', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    room_id: roomId,
+                                    durationSeconds: room.duration,
+                                    type: 'duration_over_40min',
+                                    date: getPSTDate()
+                                })
+                            }).catch(err => console.log('Alert log error:', err));
+                        } catch (e) {
+                            console.log('Alert log exception:', e);
+                        }
+                    }
                 }
             }
             updateRoomBars();
+            
+            // Save to MongoDB every 1 second
+            saveRoomDurations();
+            saveAllRoomsToMongoDB();
         }
 
         // Start room duration tracking interval
         setInterval(trackRoomDurations, 1000);
+        
+        // Save rooms on page unload
+        window.addEventListener('beforeunload', () => {
+            saveRoomDurations();
+            saveAllRoomsToMongoDB();
+        });
 
-        // Calculate total brightness - average of all active rooms (0-50 range)
+        // Calculate total brightness - average of all active rooms (0-800 range)
         function calculateTotalBrightness() {
             let total = 0;
             let activeCount = 0;
@@ -2744,7 +5362,7 @@
             
             if (activeCount === 0) return 0;
             
-            // Average the brightness of active rooms (stays in 0-50 range)
+            // Average the brightness of active rooms (stays in 0-800 range)
             return Math.round(total / activeCount);
         }
 
@@ -2842,8 +5460,14 @@
         document.querySelectorAll('.room-card').forEach(card => {
             card.addEventListener('click', function() {
                 const roomId = this.id;
+                const wasOn = roomConfig[roomId].on;
                 roomConfig[roomId].on = !roomConfig[roomId].on;
                 updateRoomUI(roomId, roomConfig[roomId].on);
+                
+                // Log device details when room light is turned ON
+                if (!wasOn && roomConfig[roomId].on) {
+                    logDeviceDetails('room_light_on', roomId, roomConfig[roomId].name);
+                }
                 
                 // Check if any room is on - this turns on main power
                 const anyRoomOn = Object.values(roomConfig).some(r => r.on);
@@ -2854,6 +5478,8 @@
                     document.getElementById('powerBtn').classList.add('active');
                     rollerTrack.style.opacity = '1';
                     rollerTrack.style.pointerEvents = 'auto';
+                    // Log device details when gauge/power is turned on via room
+                    logDeviceDetails('gauge_light_on');
                 }
                 
                 // Update gauge based on rooms
@@ -2973,6 +5599,33 @@
             });
         }
 
+        // Mobile sidebar slide-out (phone only)
+        (function initSidebarSlide() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const menuBtn = document.getElementById('sidebarMenuBtn');
+            const closeBtn = document.getElementById('sidebarCloseBtn');
+
+            function openSidebar() {
+                document.body.classList.add('sidebar-open');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+            function closeSidebar() {
+                document.body.classList.remove('sidebar-open');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+
+            if (menuBtn) menuBtn.addEventListener('click', openSidebar);
+            if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+            if (overlay) overlay.addEventListener('click', closeSidebar);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
+                    closeSidebar();
+                }
+            });
+        })();
+
         // Initialize customize button
         document.getElementById('customizeBtn').addEventListener('click', () => {
             document.getElementById('wallpaperModal').classList.add('show');
@@ -2989,11 +5642,131 @@
             }
         });
 
+        // Password protection for info modal
+        const ADMIN_PASSKEY = '95204';
+        
+        document.getElementById('infoBtn').addEventListener('click', () => {
+            document.getElementById('wallpaperModal').classList.remove('show');
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').classList.remove('error');
+            document.getElementById('passwordError').classList.remove('show');
+            document.getElementById('passwordInput').focus();
+        });
+
+        document.getElementById('passwordSubmit').addEventListener('click', () => {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('passwordError');
+            const username = (document.getElementById('usernameInput')?.value || '').trim();
+            
+            if (input.value === ADMIN_PASSKEY) {
+                // Log admin access to backend
+                fetch('/api/admin/access', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                }).catch(err => console.log('Admin log error:', err));
+
+                document.getElementById('passwordModal').classList.remove('show');
+                document.getElementById('infoModal').classList.add('show');
+                input.value = '';
+                input.classList.remove('error');
+                error.classList.remove('show');
+            } else {
+                input.classList.add('error');
+                error.classList.add('show');
+                input.value = '';
+                input.focus();
+            }
+        });
+
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('passwordSubmit').click();
+            }
+        });
+
+        document.getElementById('passwordCancel').addEventListener('click', () => {
+            document.getElementById('passwordModal').classList.remove('show');
+            document.getElementById('passwordInput').value = '';
+        });
+
+        document.getElementById('infoCloseBtn').addEventListener('click', () => {
+            document.getElementById('infoModal').classList.remove('show');
+        });
+        
+        document.getElementById('infoModal').addEventListener('click', (e) => {
+            if (e.target.id === 'infoModal') {
+                document.getElementById('infoModal').classList.remove('show');
+            }
+        });
+
+        // ============ CLOCK ICON / TIMEZONE PANEL ============
+        const clockBtn = document.getElementById('clockBtn');
+        const timezonePanel = document.getElementById('timezonePanel');
+        const wallpaperModal = document.getElementById('wallpaperModal');
+
+        function updateTimezoneSelection() {
+            const selectedTz = getSelectedTimezone();
+            const options = timezonePanel.querySelectorAll('.timezone-option');
+            options.forEach(option => {
+                const tz = option.getAttribute('data-tz');
+                if (tz === selectedTz) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+
+        function handleTimezoneChange(timezone) {
+            setSelectedTimezone(timezone);
+            updateTimezoneSelection();
+            updateTime(); // Update time display immediately
+            updateScreensaverClock(); // Update screensaver clock
+            timezonePanel.classList.remove('show'); // Close panel
+        }
+
+        if (clockBtn && timezonePanel && wallpaperModal) {
+            clockBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                timezonePanel.classList.toggle('show');
+                if (timezonePanel.classList.contains('show')) {
+                    updateTimezoneSelection();
+                }
+            });
+
+            // Add click handlers to timezone options
+            const timezoneOptions = timezonePanel.querySelectorAll('.timezone-option');
+            timezoneOptions.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const timezone = option.getAttribute('data-tz');
+                    if (timezone) {
+                        handleTimezoneChange(timezone);
+                    }
+                });
+            });
+
+            // Close when clicking anywhere inside modal but outside the panel and button
+            wallpaperModal.addEventListener('click', (e) => {
+                const target = e.target;
+                if (timezonePanel.classList.contains('show')) {
+                    if (!timezonePanel.contains(target) && target !== clockBtn) {
+                        timezonePanel.classList.remove('show');
+                    }
+                }
+            });
+            
+            // Initialize timezone selection on load
+            updateTimezoneSelection();
+        }
+
         // Apply saved wallpaper on load
         applyWallpaper(currentWallpaper);
 
         // ==================== SCREENSAVER FEATURE ====================
-        const SCREENSAVER_TIMEOUT = 15000; // 15 seconds of inactivity
+        const SCREENSAVER_TIMEOUT = 30000; // 30 seconds of inactivity
         let screensaverTimer = null;
         let isScreensaverActive = false;
         const screensaverOverlay = document.getElementById('screensaverOverlay');
@@ -3002,17 +5775,18 @@
 
         function updateScreensaverClock() {
             const now = new Date();
+            const timezone = getSelectedTimezone();
             const timeOptions = { 
                 hour: '2-digit', 
                 minute: '2-digit',
                 hour12: false,
-                timeZone: 'America/Los_Angeles'
+                timeZone: timezone
             };
             const dateOptions = { 
                 weekday: 'long', 
                 month: 'long', 
                 day: 'numeric',
-                timeZone: 'America/Los_Angeles'
+                timeZone: timezone
             };
             
             if (screensaverTime) {
@@ -3068,7 +5842,7 @@
 
         // Initialize screensaver timer on page load
         resetScreensaverTimer();
-        console.log('⏰ Screensaver will activate after 15 seconds of inactivity');
+        console.log('⏰ Screensaver will activate after 30 seconds of inactivity');
     </script>
 </body>
 </html>
