@@ -85,6 +85,8 @@ else:
 # Simulated sensor data storage
 sensor_history = []
 
+sensor_history_by_id = {}
+
 def generate_sensor_reading():
     """Simulate a light sensor reading (0-50 lux)"""
     hour = datetime.now().hour
@@ -123,34 +125,47 @@ def get_sensor_data():
     status = get_sensor_status(lux)
     timestamp = datetime.now().isoformat()
     
+
+#Sensor Data API
+def now_iso():
+    return datetime.now().isoformat()
+
+def keep_last_n(history_list, n=50):
+    if len(history_list) > n:
+        del history_list[:-n]
+        
+@app.route("/api/v1/sensors/data", methods=["POST"])
+def submit_single_sensor_reading():
+    data = request.get_json(silent=True) or {}
+
+    sensor_id = data.get("sensor_id")
+    lux = data.get("lux")
+
+    if not sensor_id or not isinstance(sensor_id, str):
+        return jsonify({"success": False, "error": "Missing or invalid 'sensor_id'"}), 400
+
+    try:
+        lux = float(lux)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Missing or invalid 'lux'"}), 400
+
+    timestamp = data.get("timestamp") or now_iso()
+
     reading = {
+        "sensor_id": sensor_id,
         "lux": round(lux, 1),
         "timestamp": timestamp,
-        "status": status
+        "status": get_sensor_status(lux)
     }
-    
+
+    sensor_history_by_id.setdefault(sensor_id, []).append(reading)
+    keep_last_n(sensor_history_by_id[sensor_id], 50)
+
+    # keep your original global history working
     sensor_history.append(reading)
-    if len(sensor_history) > 50:
-        sensor_history.pop(0)
-    
-    return jsonify(reading)
+    keep_last_n(sensor_history, 50)
 
-@app.route('/api/history')
-def get_history():
-    return jsonify(sensor_history)
-
-@app.route('/api/stats')
-def get_stats():
-    if not sensor_history:
-        return jsonify({"avg": 0, "min": 0, "max": 0, "readings": 0})
-    
-    lux_values = [r["lux"] for r in sensor_history]
-    return jsonify({
-        "avg": round(sum(lux_values) / len(lux_values), 1),
-        "min": round(min(lux_values), 1),
-        "max": round(max(lux_values), 1),
-        "readings": len(sensor_history)
-    })
+    return jsonify({"success": True, "reading": reading}), 201
 
 # ===== MongoDB Usage API =====
 
