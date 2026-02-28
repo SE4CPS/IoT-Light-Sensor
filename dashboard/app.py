@@ -87,6 +87,9 @@ sensor_history = []
 
 sensor_history_by_id = {}
 
+#Keeping track of all registered sensors
+registered_sensors = {}
+
 def generate_sensor_reading():
     """Simulate a light sensor reading (0-50 lux)"""
     hour = datetime.now().hour
@@ -133,7 +136,31 @@ def now_iso():
 def keep_last_n(history_list, n=50):
     if len(history_list) > n:
         del history_list[:-n]
-        
+
+#Register new sensor
+@app.route("/api/v1/sensors/register", methods=["POST"])
+def register_new_sensor():
+    data = request.get_json(silent=True) or {}
+
+    sensor_id = data.get("sensor_id")
+    if not sensor_id or not isinstance(sensor_id, str):
+        return jsonify({"success": False, "error": "Missing or invalid 'sensor_id'"}), 400
+
+    meta = data.get("meta") or {}
+
+    record = {
+        "sensor_id": sensor_id,
+        "registeredAt": now_iso(),
+        "meta": meta
+    }
+
+    registered_sensors[sensor_id] = record
+    sensor_history_by_id.setdefault(sensor_id, [])
+
+    return jsonify({"success": True, "sensor": record}), 201
+
+
+#Submit single reading from sensor        
 @app.route("/api/v1/sensors/data", methods=["POST"])
 def submit_single_sensor_reading():
     data = request.get_json(silent=True) or {}
@@ -166,6 +193,86 @@ def submit_single_sensor_reading():
     keep_last_n(sensor_history, 50)
 
     return jsonify({"success": True, "reading": reading}), 201
+    
+
+#Submit batch readings from sensor
+@app.route("/api/v1/sensors/data/batch", methods=["POST"])
+def submit_batch_sensor_readings():
+    payload = request.get_json(silent=True) or {}
+    readings = payload.get("readings")
+
+    if not isinstance(readings, list) or not readings:
+        return jsonify({"success": False, "error": "Missing or invalid 'readings' list"}), 400
+
+    accepted = []
+    rejected = []
+
+    for idx, item in enumerate(readings):
+        if not isinstance(item, dict):
+            rejected.append({"index": idx, "error": "Reading must be an object"})
+            continue
+
+        sensor_id = item.get("sensor_id")
+        lux = item.get("lux")
+
+        if not sensor_id or not isinstance(sensor_id, str):
+            rejected.append({"index": idx, "error": "Missing/invalid sensor_id"})
+            continue
+
+        try:
+            lux = float(lux)
+        except (TypeError, ValueError):
+            rejected.append({"index": idx, "error": "Missing/invalid lux"})
+            continue
+
+        timestamp = item.get("timestamp") or now_iso()
+
+        reading = {
+            "sensor_id": sensor_id,
+            "lux": round(lux, 1),
+            "timestamp": timestamp,
+            "status": get_sensor_status(lux)
+        }
+
+        sensor_history_by_id.setdefault(sensor_id, []).append(reading)
+        keep_last_n(sensor_history_by_id[sensor_id], 50)
+
+        # Optional: keep your existing /api/history + /api/stats working
+        sensor_history.append(reading)
+        keep_last_n(sensor_history, 50)
+
+        accepted.append(reading)
+
+    return jsonify({
+        "success": True,
+        "accepted": len(accepted),
+        "rejected": len(rejected),
+        "accepted_readings": accepted,
+        "rejected_items": rejected
+    }), 201
+    
+    
+#Get sensor status
+@app.route("/api/v1/sensors/<sensor_id>/status", methods=["GET"])
+def get_sensor_status_v1(sensor_id):
+    items = sensor_history_by_id.get(sensor_id, [])
+    if not items:
+        return jsonify({"success": False, "error": "No data for sensor"}), 404
+
+    latest = items[-1]
+
+    return jsonify({
+        "success": True,
+        "sensor_id": sensor_id,
+        "status": latest["status"],
+        "last_reading": {
+            "lux": latest["lux"],
+            "timestamp": latest["timestamp"]
+        }
+    })
+
+
+
 
 # ===== MongoDB Usage API =====
 
