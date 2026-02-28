@@ -2,3 +2,7 @@ flask>=3.0.0
 pymongo>=4.0.0
 certifi
 pytz
+python-dotenv>=1.0.0
+
+gunicorn>=21.2.0
+
