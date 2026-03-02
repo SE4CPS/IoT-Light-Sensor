@@ -45,8 +45,13 @@ def test_drift_increases_observed_over_days():
     cfg = TwinConfig(sampling_seconds=60, drift_per_day=5.0, noise_sigma=0.1, anomaly_rate=0.0)
     start = datetime(2026, 2, 1, 12, 0, tzinfo=timezone.utc)
 
-    docs_day0 = generate_series(start, minutes=60, cfg=cfg, cloud_cover_fn=_fixed_cloud)
-    docs_day2 = generate_series(start + timedelta(days=2), minutes=60, cfg=cfg, cloud_cover_fn=_fixed_cloud)
+    # Generate one long series spanning 3 days so day_index increases (0, 1, 2)
+    docs = generate_series(start, minutes=60 * 24 * 3, cfg=cfg, cloud_cover_fn=_fixed_cloud)
+
+    # Day 0: first 60 minutes (day_index=0)
+    docs_day0 = docs[:60]
+    # Day 2: minutes 2880-2940 (48-49 hours in, day_index=2)
+    docs_day2 = docs[2880:2940]
 
     avg0 = sum(d["lux_obs"] for d in docs_day0) / len(docs_day0)
     avg2 = sum(d["lux_obs"] for d in docs_day2) / len(docs_day2)
