@@ -484,4 +484,4 @@ if __name__ == '__main__':
             "status": get_sensor_status(lux)
         })
     
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5010)
