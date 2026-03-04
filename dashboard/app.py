@@ -192,7 +192,7 @@ def submit_single_sensor_reading():
     sensor_history.append(reading)
     keep_last_n(sensor_history, 50)
 
-    return jsonify({"success": True, "reading": reading}), 201
+    return jsonify({"success": True, "reading": reading, "data" : data}), 201
     
 
 #Submit batch readings from sensor
