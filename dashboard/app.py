@@ -169,12 +169,12 @@ def submit_single_sensor_reading():
     lux = data.get("lux")
 
     if not sensor_id or not isinstance(sensor_id, str):
-        return jsonify({"success": False, "error": "Missing or invalid 'sensor_id'"}), 400
+        return jsonify({"success": False, "error": "Missing or invalid 'sensor_id'", "data" : data}), 400
 
     try:
         lux = float(lux)
     except (TypeError, ValueError):
-        return jsonify({"success": False, "error": "Missing or invalid 'lux'"}), 400
+        return jsonify({"success": False, "error": "Missing or invalid 'lux'", "data" : data}), 400
 
     timestamp = data.get("timestamp") or now_iso()
 
