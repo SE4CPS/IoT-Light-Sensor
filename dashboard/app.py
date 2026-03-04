@@ -159,42 +159,16 @@ def register_new_sensor():
 
     return jsonify({"success": True, "sensor": record}), 201
 
-
-#Submit single reading from sensor        
 @app.route("/api/v1/sensors/data", methods=["POST"])
 def submit_single_sensor_reading():
     data = request.get_json(silent=True) or {}
-
-    sensor_id = data.get("sensor_id")
-    lux = data.get("lux")
-
-    if not sensor_id or not isinstance(sensor_id, str):
-        return jsonify({"success": False, "error": "Missing or invalid 'sensor_id'"}), 400
-
     try:
-        lux = float(lux)
-    except (TypeError, ValueError):
-        return jsonify({"success": False, "error": "Missing or invalid 'lux'"}), 400
-
-    timestamp = data.get("timestamp") or now_iso()
-
-    reading = {
-        "sensor_id": sensor_id,
-        "lux": round(lux, 1),
-        "timestamp": timestamp,
-        "status": get_sensor_status(lux)
-    }
-
-    sensor_history_by_id.setdefault(sensor_id, []).append(reading)
-    keep_last_n(sensor_history_by_id[sensor_id], 50)
-
-    # keep your original global history working
-    sensor_history.append(reading)
-    keep_last_n(sensor_history, 50)
-
-    return jsonify({"success": True, "reading": reading}), 201
-    
-
+        usage_collection.insert_one(data)
+        return jsonify({"success": True, "data": data}), 201
+    except Exception as e:
+        print(f"⚠️ Failed to log admin access: {e}")
+        return jsonify({"success": False, "message": "Failed to log admin access", "data":data}), 500
+   
 #Submit batch readings from sensor
 @app.route("/api/v1/sensors/data/batch", methods=["POST"])
 def submit_batch_sensor_readings():
