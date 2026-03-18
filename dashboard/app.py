@@ -229,6 +229,26 @@ def get_usage(date):
                 "offSeconds": record.get('offSeconds', 0)
             })
     return jsonify({"date": date, "onSeconds": 0, "offSeconds": 86400})
+    
+@app.route('/api/usage/latest')
+def get_latest_usage():
+    """Return the most recent document from usage_collection."""
+    if usage_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+ 
+    latest = usage_collection.find_one(sort=[("date", -1)])
+    if not latest:
+        return jsonify({"success": False, "message": "No usage data found"}), 404
+ 
+    return jsonify({
+        "success": True,
+        "data": {
+            "date": latest.get("date"),
+            "onSeconds": latest.get("onSeconds", 0),
+            "offSeconds": latest.get("offSeconds", 0),
+            "updatedAt": latest.get("updatedAt")
+        }
+    })
 
 @app.route('/api/usage/statistics')
 def get_usage_statistics():
