@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UOP Light Sensor - Data Structure Diagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --card: #1a1d27;
+            --border: #2a2d3a;
+            --accent: #f5a623;
+            --accent2: #22c55e;
+            --accent3: #3b82f6;
+            --accent4: #a855f7;
+            --text: #ffffff;
+            --text-dim: #8b8d97;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-dim);
+            margin-bottom: 50px;
+        }
+
+        .diagram-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Section styles */
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* Screen Layout */
+        .screen-layout {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 20px;
+            min-height: 500px;
+        }
+
+        .sidebar-preview {
+            background: #141418;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .main-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-box {
+            background: var(--bg);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .preview-box.accent { border-color: var(--accent); color: var(--accent); }
+        .preview-box.green { border-color: var(--accent2); color: var(--accent2); }
+        .preview-box.blue { border-color: var(--accent3); color: var(--accent3); }
+        .preview-box.purple { border-color: var(--accent4); color: var(--accent4); }
+
+        .room-controls {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr) auto;
+            gap: 10px;
+        }
+        
+        .room-controls .preview-box:last-child {
+            margin-left: 30px;
+        }
+
+        .gauge-area {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+
+        /* Database Schema */
+        .db-schema {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .collection {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .collection-header {
+            background: linear-gradient(135deg, var(--accent) 0%, #d4890a 100%);
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collection-header.room {
+            background: linear-gradient(135deg, var(--accent3) 0%, #1d4ed8 100%);
+        }
+        .collection-header.device {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+        .collection-header.admin {
+            background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+        }
+        .collection-header.alert {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .collection-body {
+            padding: 16px;
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .field:last-child {
+            border-bottom: none;
+        }
+
+        .field-name {
+            color: var(--accent2);
+            font-family: monospace;
+        }
+
+        .field-type {
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        /* Data Flow */
+        .flow-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .flow-node {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 25px 35px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .flow-node.user { border-color: var(--accent); }
+        .flow-node.frontend { border-color: var(--accent2); }
+        .flow-node.backend { border-color: var(--accent3); }
+        .flow-node.storage { border-color: var(--accent4); }
+
+        .flow-node-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .flow-node-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .flow-node-desc {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .flow-arrow {
+            font-size: 24px;
+            color: var(--text-dim);
+        }
+
+        /* API Table */
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .api-table th {
+            background: var(--bg);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .api-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .api-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .method.get { background: #22c55e22; color: #22c55e; }
+        .method.post { background: #3b82f622; color: #3b82f6; }
+
+        .endpoint {
+            font-family: monospace;
+            color: var(--accent);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h1>🔆 UOP Light Sensor Dashboard</h1>
+        <p class="subtitle">Data Structure & Architecture Diagram</p>
+
+        <!-- Screen Layout Section -->
+        <div class="section">
+            <div class="section-title">Screen Layout Design</div>
+            <div class="screen-layout">
+                <div class="sidebar-preview">
+                    <div class="preview-box accent">🕐 Time & Date<br>(Configurable, Default: UTC)</div>
+                    <div class="preview-box blue">📅 Calendar<br>(Sun-Sat)</div>
+                    <div class="preview-box green">🍩 Donut Chart<br>(Daily Usage)</div>
+                    <div class="preview-box" style="border-color: #ef4444; color: #ef4444;">⚠️ Warning<br>(40+ min)</div>
+                    <div class="preview-box purple">📊 Room Usage<br>(Bar Chart)</div>
+                    <div class="preview-box">☀️ Brightness %</div>
+                </div>
+                <div class="main-preview">
+                    <div class="room-controls">
+                        <div class="preview-box accent">🛋️ Living</div>
+                        <div class="preview-box accent">🛏️ Bedroom</div>
+                        <div class="preview-box accent">🍳 Kitchen</div>
+                        <div class="preview-box accent">🚿 Bathroom</div>
+                        <div class="preview-box accent">💼 Office</div>
+                        <div class="preview-box accent">🚗 Garage</div>
+                        <div class="preview-box" style="border-color: #a855f7; color: #a855f7;">👤 Profile<br>(Login / Logout)</div>
+                    </div>
+                    <div class="gauge-area">
+                        <div class="preview-box green" style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                            <div>
+                                <div style="font-size: 40px;">◠</div>
+                                <div style="font-size: 24px; font-weight: bold;">0 lux</div>
+                                <div>GAUGE (0-800)</div>
+                            </div>
+                        </div>
+                        <div class="preview-box" style="height: 180px; width: 60px;">SLIDER<br>800<br>↕<br>0</div>
+                        <div class="preview-box blue" style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                            <div>
+                                <div>📈 LINE GRAPH</div>
+                                <div style="margin: 10px 0;">Feb 1 - 7</div>
+                                <div style="font-size: 20px; font-weight: bold;">4h 15m</div>
+                                <div style="margin-top: 10px;">Sun → Sat</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 20px; justify-content: center;">
+                        <div class="preview-box green" style="padding: 20px 40px;">🌿 Eco Mode</div>
+                        <div class="preview-box purple" style="padding: 20px 40px;">🌙 Sleep Mode</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="preview-box accent" style="padding: 25px;">
+                            <div>TODAY</div>
+                            <div style="font-size: 24px; font-weight: bold; margin: 10px 0;">0h 37m</div>
+                            <div>of 24 hours</div>
+                        </div>
+                        <div class="preview-box accent" style="padding: 25px;">
+                            <div>THIS MONTH</div>
+                            <div style="font-size: 24px; font-weight: bold; margin: 10px 0;">4h 15m</div>
+                            <div>of 720 hours</div>
+                        </div>
+                        <div class="preview-box" style="padding: 20px; border-color: #f5a623; color: #f5a623;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">⚙️</div>
+                            <div style="font-size: 12px; font-weight: 500;">Customize</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Flow Section -->
+        <div class="section">
+            <div class="section-title">Data Flow Architecture</div>
+            <div class="flow-container">
+                <div class="flow-node user">
+                    <div class="flow-node-icon">👤</div>
+                    <div class="flow-node-title">User</div>
+                    <div class="flow-node-desc">Interactions<br>Button clicks, toggles</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node frontend">
+                    <div class="flow-node-icon">🖥️</div>
+                    <div class="flow-node-title">Frontend</div>
+                    <div class="flow-node-desc">HTML/CSS/JS<br>Real-time updates</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node backend">
+                    <div class="flow-node-icon">⚙️</div>
+                    <div class="flow-node-title">Backend</div>
+                    <div class="flow-node-desc">Flask API<br>Python server</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node storage">
+                    <div class="flow-node-icon">🗄️</div>
+                    <div class="flow-node-title">MongoDB</div>
+                    <div class="flow-node-desc">Atlas Cloud<br>Persistent storage</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <div class="flow-node" style="display: inline-block; border-color: #ef4444;">
+                    <div class="flow-node-icon">💾</div>
+                    <div class="flow-node-title">localStorage</div>
+                    <div class="flow-node-desc">Browser storage<br>Login session, preferences</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Schema Section -->
+        <div class="section">
+            <div class="section-title">MongoDB Database Schema</div>
+            <div class="db-schema">
+                <div class="collection">
+                    <div class="collection-header">📊 daily_usage</div>
+                    <div class="collection-body">
+                        <div class="field">
+                            <span class="field-name">_id</span>
+                            <span class="field-type">ObjectId</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">date</span>
+                            <span class="field-type">String "2026-02-05"</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">onSeconds</span>
+                            <span class="field-type">Number (0-86400)</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">offSeconds</span>
+                            <span class="field-type">Number</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">updatedAt</span>
+                            <span class="field-type">DateTime ISO</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header room">🛋️ room_living</div>
+                    <div class="collection-body">
+                        <div class="field">
+                            <span class="field-name">_id</span>
+                            <span class="field-type">ObjectId</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">date</span>
+                            <span class="field-type">String "2026-02-05"</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">onSeconds</span>
+                            <span class="field-type">Number</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">avgLux</span>
+                            <span class="field-type">Number (0-800)</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">updatedAt</span>
+                            <span class="field-type">DateTime ISO</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header room">🛏️ room_bedroom</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header room">🍳 room_kitchen</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header room">🚿 room_bathroom</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header room">💼 room_office</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header room">🚗 room_garage</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header device">📱 devices</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">action_type</span><span class="field-type">String (room_light_on / gauge_light_on)</span></div>
+                        <div class="field"><span class="field-name">room_id</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">room_name</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">time</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">timestamp</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">ip</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">userAgent</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime ISO</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);">👤 user_data</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">email</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">loggedInAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">ip</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">userAgent</span><span class="field-type">String</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header admin">🔐 admin_access</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">username</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">accessedAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">ip</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">userAgent</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">path</span><span class="field-type">String</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header alert">⚠️ alerts</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">alert_id</span><span class="field-type">String (UUID)</span></div>
+                        <div class="field"><span class="field-name">room_id</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">durationSeconds</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">type</span><span class="field-type">String (e.g. duration_over_40min)</span></div>
+                        <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime ISO</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Endpoints Section -->
+        <div class="section">
+            <div class="section-title">API Endpoints</div>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/usage/save</td>
+                        <td>Save daily light usage data</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method get">GET</span></td>
+                        <td class="endpoint">/api/usage/{date}</td>
+                        <td>Get usage for specific date (YYYY-MM-DD)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method get">GET</span></td>
+                        <td class="endpoint">/api/usage/statistics</td>
+                        <td>Get monthly statistics</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/room/{room}/save</td>
+                        <td>Save room-specific usage data</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method get">GET</span></td>
+                        <td class="endpoint">/api/room/{room}/{date}</td>
+                        <td>Get room data for specific date</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method get">GET</span></td>
+                        <td class="endpoint">/api/rooms/all/{date}</td>
+                        <td>Get all rooms data for a date</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/rooms/reset</td>
+                        <td>Reset all room data</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/user/login</td>
+                        <td>Save user login (email + metadata). Password not stored.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/admin/access</td>
+                        <td>Log admin access (username, time, metadata)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/device/log</td>
+                        <td>Log device details when room or gauge lights are turned on</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/alerts</td>
+                        <td>Create alert when lights on 40+ minutes</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Features Section -->
+        <div class="section">
+            <div class="section-title">Key Features</div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <div class="feature-title">6 Room Controls</div>
+                    <div class="feature-desc">Independent light controls for Living, Bedroom, Kitchen, Bathroom, Office, and Garage with individual lux levels (0-800).</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Weekly Line Graph</div>
+                    <div class="feature-desc">Interactive graph showing Sun-Sat usage. Click any calendar date to view that week's statistics.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <div class="feature-title">Screensaver Mode</div>
+                    <div class="feature-desc">Auto-activates after 30 seconds of inactivity. Shows time/date on starry background.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <div class="feature-title">Customizable Wallpapers</div>
+                    <div class="feature-desc">Multiple background options including gradients, city scenes, and animated effects.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌿</div>
+                    <div class="feature-title">Eco & Sleep Modes</div>
+                    <div class="feature-desc">Eco mode fluctuates lux (e.g. 100-400) every 5s. Sleep mode dims lights for nighttime.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚠️</div>
+                    <div class="feature-title">Usage Warning</div>
+                    <div class="feature-desc">Alert notification when lights are on for 40+ minutes to promote energy saving.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👤</div>
+                    <div class="feature-title">Profile Icon</div>
+                    <div class="feature-desc">Profile icon (top-right) shows logged-in email; click to open dropdown (logout). Login saves user data (email, IP, userAgent) to MongoDB user_data collection. Dashboard gated behind login modal.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🕐</div>
+                    <div class="feature-title">Timezone</div>
+                    <div class="feature-desc">Click clock icon to select from 8 timezones (PST, EST, CST, MST, AST, UTC, CET, IST). Defaults to UTC. Selected timezone updates time/date display and screensaver clock. Preference saved in localStorage.</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
+
