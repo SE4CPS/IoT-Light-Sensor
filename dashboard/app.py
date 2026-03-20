@@ -230,25 +230,29 @@ def get_usage(date):
             })
     return jsonify({"date": date, "onSeconds": 0, "offSeconds": 86400})
     
-@app.route('/api/usage/latest')
-def get_latest_usage():
-    """Return the most recent document from usage_collection."""
+@app.route('/api/v1/sensors/latest', methods=['GET'])
+def get_latest_sensor_reading():
+    """Return the latest document from usage_collection with sensor_id and lux."""
     if usage_collection is None:
         return jsonify({"success": False, "message": "MongoDB not available"}), 503
  
-    latest = usage_collection.find_one(sort=[("date", -1)])
-    if not latest:
-        return jsonify({"success": False, "message": "No usage data found"}), 404
+    try:
+        latest = usage_collection.find_one(
+            sort=[("_id", -1)]
+        )
+        if not latest:
+            return jsonify({"success": False, "message": "No readings found"}), 404
  
-    return jsonify({
-        "success": True,
-        "data": {
-            "date": latest.get("date"),
-            "onSeconds": latest.get("onSeconds", 0),
-            "offSeconds": latest.get("offSeconds", 0),
-            "updatedAt": latest.get("updatedAt")
-        }
-    })
+        return jsonify({
+            "success": True,
+            "data": {
+                "sensor_id": latest.get("sensor_id"),
+                "lux": latest.get("lux")
+            }
+        })
+    except Exception as e:
+        print(f"⚠️ Failed to fetch latest reading: {e}")
+        return jsonify({"success": False, "message": "Failed to fetch latest reading"}), 500
 
 @app.route('/api/usage/statistics')
 def get_usage_statistics():
