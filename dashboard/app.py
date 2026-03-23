@@ -2,12 +2,14 @@ from flask import Flask, render_template, jsonify, request
 import random
 import certifi
 import os
+import re
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import pytz
 from dotenv import load_dotenv
 import uuid
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,6 +29,8 @@ if not MONGO_URI:
     alert_collection = None
     device_collection = None
     user_data_collection = None
+    users_collection = None
+    feedback_collection = None
 else:
     try:
         client = MongoClient(
@@ -57,12 +61,18 @@ else:
         device_collection = db['devices']
         # User login / user data collection (email, login time, etc.)
         user_data_collection = db['user_data']
+        # User auth collection (email + password hash)
+        users_collection = db['users']
+        # Feedback / report an issue collection
+        feedback_collection = db['Feedback']
         
         print("✅ Connected to MongoDB Atlas")
         print("📦 Room collections: living, bedroom, kitchen, bathroom, office, garage")
         print("📦 Admin collection: admin_access")
         print("📦 Device collection: devices")
         print("📦 User data collection: user_data")
+        print("📦 Users collection: users")
+        print("📦 Feedback collection: Feedback")
     except ConnectionFailure as e:
         print(f"⚠️ MongoDB not available. Error: {e}")
         db = None
@@ -72,6 +82,8 @@ else:
         alert_collection = None
         device_collection = None
         user_data_collection = None
+        users_collection = None
+        feedback_collection = None
     except Exception as e:
         print(f"⚠️ MongoDB connection error: {e}")
         db = None
@@ -81,6 +93,8 @@ else:
         alert_collection = None
         device_collection = None
         user_data_collection = None
+        users_collection = None
+        feedback_collection = None
 
 # Simulated sensor data storage
 sensor_history = []
@@ -200,13 +214,18 @@ def save_usage():
     
     if not data or 'date' not in data:
         return jsonify({"error": "Invalid data"}), 400
-    
+
+    sensor_id = (data.get('sensor_id') or '').strip() if isinstance(data, dict) else ''
+
     usage_data = {
         "date": data['date'],
         "onSeconds": data.get('onSeconds', 0),
         "offSeconds": 86400 - data.get('onSeconds', 0),
         "updatedAt": datetime.now().isoformat()
     }
+
+    if sensor_id:
+        usage_data["sensor_id"] = sensor_id
     
     if usage_collection is not None:
         usage_collection.update_one(
@@ -304,13 +323,18 @@ def save_room_usage(room_name):
     data = request.json
     if not data or 'date' not in data:
         return jsonify({"error": "Invalid data"}), 400
-    
+
+    sensor_id = (data.get('sensor_id') or '').strip() if isinstance(data, dict) else ''
+
     room_data = {
         "date": data['date'],
         "onSeconds": data.get('onSeconds', 0),
         "avgLux": data.get('avgLux', 0),
         "updatedAt": datetime.now().isoformat()
     }
+
+    if sensor_id:
+        room_data["sensor_id"] = sensor_id
     
     if room_name in room_collections and room_collections[room_name] is not None:
         room_collections[room_name].update_one(
@@ -333,10 +357,11 @@ def get_room_usage(room_name, date):
             return jsonify({
                 "room": room_name,
                 "date": record['date'],
+                "sensor_id": record.get('sensor_id', ''),
                 "onSeconds": record.get('onSeconds', 0),
                 "avgLux": record.get('avgLux', 0)
             })
-    return jsonify({"room": room_name, "date": date, "onSeconds": 0, "avgLux": 0})
+    return jsonify({"room": room_name, "date": date, "sensor_id": "", "onSeconds": 0, "avgLux": 0})
 
 @app.route('/api/room/<room_name>/statistics')
 def get_room_statistics(room_name):
@@ -384,13 +409,14 @@ def get_all_rooms_usage(date):
             record = room_collections[room_name].find_one({"date": date})
             if record:
                 result[room_name] = {
+                    "sensor_id": record.get('sensor_id', ''),
                     "onSeconds": record.get('onSeconds', 0),
                     "avgLux": record.get('avgLux', 0)
                 }
             else:
-                result[room_name] = {"onSeconds": 0, "avgLux": 0}
+                result[room_name] = {"sensor_id": "", "onSeconds": 0, "avgLux": 0}
         else:
-            result[room_name] = {"onSeconds": 0, "avgLux": 0}
+            result[room_name] = {"sensor_id": "", "onSeconds": 0, "avgLux": 0}
     return jsonify({"date": date, "rooms": result})
 
 @app.route('/api/rooms/reset', methods=['POST'])
@@ -410,7 +436,9 @@ def log_admin_access():
         return jsonify({"success": False, "message": "MongoDB not available"}), 503
 
     data = request.json or {}
-    username = (data.get('username') or '').strip() or 'unknown'
+    username = (data.get('username') or '').strip()
+    if not username:
+        return jsonify({"success": False, "message": "Admin username is required"}), 400
 
     doc = {
         "username": username,
@@ -470,15 +498,45 @@ def create_alert():
 
 @app.route('/api/user/login', methods=['POST'])
 def user_login():
-    """Save user login to user_data collection (email + metadata). Password is not stored."""
-    if user_data_collection is None:
+    """Register on first login; validate password on subsequent logins."""
+    if user_data_collection is None or users_collection is None:
         return jsonify({"success": False, "message": "MongoDB not available"}), 503
 
     data = request.json or {}
     email = (data.get('email') or '').strip()
-    # We do not store the password in the database for security
+    password = data.get('password') or ''
+
     if not email:
         return jsonify({"success": False, "message": "Email is required"}), 400
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        return jsonify({"success": False, "message": "Invalid email id"}), 400
+    if not isinstance(password, str) or not password.strip():
+        return jsonify({"success": False, "message": "Password is required"}), 400
+
+    password = password.strip()
+
+    try:
+        existing_user = users_collection.find_one({"email": email})
+    except Exception as e:
+        print(f"⚠️ Failed to lookup user: {e}")
+        return jsonify({"success": False, "message": "Login failed. Try again."}), 500
+
+    if existing_user is None:
+        # First login → create user
+        try:
+            users_collection.insert_one({
+                "email": email,
+                "passwordHash": generate_password_hash(password),
+                "createdAt": datetime.now().isoformat(),
+            })
+        except Exception as e:
+            print(f"⚠️ Failed to create user: {e}")
+            return jsonify({"success": False, "message": "Failed to create user"}), 500
+    else:
+        # Subsequent login → validate password
+        password_hash = existing_user.get("passwordHash") or ""
+        if not password_hash or not check_password_hash(password_hash, password):
+            return jsonify({"success": False, "message": "Invalid password"}), 401
 
     doc = {
         "email": email,
@@ -492,6 +550,38 @@ def user_login():
     except Exception as e:
         print(f"⚠️ Failed to save user login: {e}")
         return jsonify({"success": False, "message": "Failed to save login"}), 500
+
+
+# ===== Feedback / Report an Issue =====
+
+@app.route('/api/feedback', methods=['POST'])
+def save_feedback():
+    """Store user feedback (report an issue) in the feedback collection with date and time."""
+    if feedback_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+
+    data = request.json or {}
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({"success": False, "message": "Feedback text is required"}), 400
+
+    pst = pytz.timezone('America/Los_Angeles')
+    now_pst = datetime.now(pst)
+
+    doc = {
+        "text": text,
+        "date": now_pst.strftime('%Y-%m-%d'),
+        "time": now_pst.strftime('%H:%M:%S'),
+        "timestamp": now_pst.isoformat(),
+        "createdAt": datetime.now().isoformat(),
+    }
+
+    try:
+        feedback_collection.insert_one(doc)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"⚠️ Failed to save feedback: {e}")
+        return jsonify({"success": False, "message": "Failed to save feedback"}), 500
 
 
 # ===== Device Logging (When Lights Are Turned On) =====

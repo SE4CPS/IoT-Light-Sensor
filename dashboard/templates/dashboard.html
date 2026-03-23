@@ -1625,7 +1625,7 @@
             }
         }
 
-        /* Customize Button */
+        /* Customize Button - above login gate so it stays usable when logged out */
         .customize-btn {
             position: fixed;
             bottom: 24px;
@@ -1640,7 +1640,7 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
-            z-index: 100;
+            z-index: 2100;
         }
 
         .customize-btn:hover {
@@ -1653,7 +1653,7 @@
             font-size: 22px;
         }
 
-        /* Wallpaper Modal */
+        /* Wallpaper Modal - above login gate so customize flow is usable when logged out */
         .wallpaper-modal {
             position: fixed;
             top: 0;
@@ -1664,7 +1664,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 2200;
             backdrop-filter: blur(10px);
         }
 
@@ -1718,6 +1718,76 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
+        }
+
+        .report-issue-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(226, 232, 240, 0.25);
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .report-issue-box .report-issue-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .report-issue-box .report-issue-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .report-issue-box .report-issue-textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .report-issue-box .report-issue-wordcount {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        .report-issue-box .report-issue-actions {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .report-issue-box .report-issue-submit {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .report-issue-box .report-issue-submit:hover {
+            filter: brightness(1.1);
+        }
+
+        .report-issue-box .report-issue-message {
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .report-issue-box .report-issue-message.error {
+            color: #ef4444;
         }
 
         .wallpaper-modal-footer {
@@ -1806,7 +1876,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             padding: 10px 12px;
             display: none;
-            z-index: 1000;
+            z-index: 1;
         }
 
         .timezone-panel.show {
@@ -1845,6 +1915,7 @@
         }
 
         /* Info Modal */
+        /* Info modal - above login gate when opened from customize */
         .info-modal {
             position: fixed;
             top: 0;
@@ -1852,7 +1923,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.85);
-            z-index: 2000;
+            z-index: 2300;
             display: none;
             align-items: center;
             justify-content: center;
@@ -3253,6 +3324,72 @@
             visibility: visible;
         }
 
+        /* Login gate: blocks all dashboard controls when logged out */
+        .login-gate-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .login-gate-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .login-gate-content {
+            text-align: center;
+            padding: 40px;
+            max-width: 360px;
+        }
+
+        .login-gate-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .login-gate-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .login-gate-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .login-gate-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .login-gate-btn:hover {
+            filter: brightness(1.1);
+        }
+
         .screensaver-content {
             position: absolute;
             top: 50%;
@@ -3329,7 +3466,7 @@
             <div class="login-title">Login to Dashboard</div>
             <div class="login-subtitle">Enter your email and password to continue</div>
             <div class="login-input-wrapper">
-                <input type="email" class="login-email-input" id="loginEmailInput" placeholder="Email address" autocomplete="email">
+                <input type="email" class="login-email-input" id="loginEmailInput" placeholder="Email address" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
             </div>
             <div class="login-input-wrapper">
                 <input type="password" class="login-password-input" id="loginPasswordInput" placeholder="Password" autocomplete="current-password">
@@ -3349,6 +3486,16 @@
             <div class="screensaver-date" id="screensaverDate">Monday, January 1</div>
         </div>
         
+    </div>
+
+    <!-- Login gate: blocks all controls when not logged in -->
+    <div class="login-gate-overlay active" id="loginGateOverlay" aria-hidden="false">
+        <div class="login-gate-content">
+            <div class="login-gate-icon">🔒</div>
+            <div class="login-gate-title">Login required</div>
+            <div class="login-gate-text">You must be logged in to use light controls, brightness, and other dashboard features.</div>
+            <button type="button" class="login-gate-btn" id="loginGateBtn">Login</button>
+        </div>
     </div>
 
     <!-- Background Wallpaper Layer -->
@@ -3382,6 +3529,15 @@
             </div>
             <div class="wallpaper-grid" id="wallpaperGrid">
                 <!-- Wallpaper options rendered by JS -->
+            </div>
+            <div class="report-issue-box">
+                <div class="report-issue-title">Report an Issue</div>
+                <textarea id="reportIssueTextarea" class="report-issue-textarea" placeholder="Found a bug or have feedback?" maxlength="4500" rows="4"></textarea>
+                <div class="report-issue-wordcount" id="reportIssueWordcount">0 / 600 words</div>
+                <div class="report-issue-actions">
+                    <button type="button" class="report-issue-submit" id="reportIssueSubmit">Submit</button>
+                    <span class="report-issue-message" id="reportIssueMessage" aria-live="polite"></span>
+                </div>
             </div>
             <div class="wallpaper-modal-footer">
                 <button class="info-btn clock-btn" id="clockBtn" title="Time Zone Options">
@@ -3486,6 +3642,7 @@
                         <div class="db-collection-header">📊 daily_usage</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">offSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">updatedAt</span><span class="db-field-type">DateTime</span></div>
@@ -3495,6 +3652,7 @@
                         <div class="db-collection-header room">🛋️ room_living</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
                         </div>
@@ -3503,6 +3661,7 @@
                         <div class="db-collection-header room">🛏️ room_bedroom</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
                         </div>
@@ -3511,6 +3670,7 @@
                         <div class="db-collection-header room">🍳 room_kitchen</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
                         </div>
@@ -3519,6 +3679,7 @@
                         <div class="db-collection-header room">🚿 room_bathroom</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
                         </div>
@@ -3527,6 +3688,7 @@
                         <div class="db-collection-header room">💼 room_office</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
                         </div>
@@ -3535,6 +3697,7 @@
                         <div class="db-collection-header room">🚗 room_garage</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
                             <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
                         </div>
@@ -3560,6 +3723,16 @@
                             <div class="db-field"><span class="db-field-name">ip</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">userAgent</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">path</span><span class="db-field-type">String</span></div>
+                        </div>
+                    </div>
+                    <div class="db-collection">
+                        <div class="db-collection-header admin">📝 Feedback</div>
+                        <div class="db-collection-body">
+                            <div class="db-field"><span class="db-field-name">text</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">time</span><span class="db-field-type">String</span></div>
+                            <div class="db-field"><span class="db-field-name">timestamp</span><span class="db-field-type">DateTime</span></div>
+                            <div class="db-field"><span class="db-field-name">createdAt</span><span class="db-field-type">DateTime</span></div>
                         </div>
                     </div>
                     <div class="db-collection">
@@ -3634,6 +3807,69 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Admin Daily Usage Graph -->
+            <div class="info-section">
+                <div class="info-section-title">📊 Daily Usage Analytics</div>
+                <div class="admin-graph-selectors">
+                    <select id="adminDailyMonthSelect" class="admin-select">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                    <select id="adminDailyDateSelect" class="admin-select">
+                        <!-- Dates will be populated by JS -->
+                    </select>
+                    <select id="adminDailyRoomSelect" class="admin-select">
+                        <option value="all">All Rooms (Daily Usage)</option>
+                        <option value="living">Living Room</option>
+                        <option value="bedroom">Bedroom</option>
+                        <option value="kitchen">Kitchen</option>
+                        <option value="bathroom">Bathroom</option>
+                        <option value="office">Office</option>
+                        <option value="garage">Garage</option>
+                    </select>
+                </div>
+                <div class="admin-graph-container">
+                    <div class="admin-graph-header">
+                        <div class="admin-graph-title">Light Usage – Selected Day</div>
+                        <div class="admin-graph-value">
+                            <div class="admin-graph-date" id="adminDailyGraphDateLabel">Loading...</div>
+                            <div class="admin-graph-hours" id="adminDailyGraphHoursLabel">--</div>
+                        </div>
+                    </div>
+                    <div class="admin-graph">
+                        <div class="admin-graph-y-axis">
+                            <span>24h</span>
+                            <span>18h</span>
+                            <span>12h</span>
+                            <span>6h</span>
+                            <span>0h</span>
+                        </div>
+                        <div class="admin-graph-canvas-wrapper">
+                            <div class="admin-graph-grid-line" style="top: 0%"></div>
+                            <div class="admin-graph-grid-line" style="top: 25%"></div>
+                            <div class="admin-graph-grid-line" style="top: 50%"></div>
+                            <div class="admin-graph-grid-line" style="top: 75%"></div>
+                            <svg class="admin-graph-canvas" id="adminDailyGraphCanvas" viewBox="0 0 320 120" preserveAspectRatio="none">
+                                <!-- Line and dots rendered by JS -->
+                            </svg>
+                        </div>
+                        <div class="admin-graph-x-axis" id="adminDailyGraphXAxis">
+                            <!-- Hours will be rendered by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Admin Monthly Usage Graph -->
@@ -4062,6 +4298,20 @@
             const STORAGE_KEY = 'dashboardLoggedIn';
             const EMAIL_KEY = 'userEmail';
 
+            function isValidEmail(email) {
+                // Simple, pragmatic check: no spaces, one "@", and a dot in the domain part.
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            }
+
+            function showLoginError(message) {
+                if (!loginError) return;
+                loginError.textContent = message;
+                loginError.classList.add('show');
+            }
+
+            const loginGateOverlay = document.getElementById('loginGateOverlay');
+            const loginGateBtn = document.getElementById('loginGateBtn');
+
             function updateProfileDisplay() {
                 const email = sessionStorage.getItem(EMAIL_KEY);
                 const isLoggedIn = sessionStorage.getItem(STORAGE_KEY);
@@ -4071,12 +4321,20 @@
                         profileEmail.textContent = email;
                         profileEmail.classList.add('show');
                     }
+                    if (loginGateOverlay) {
+                        loginGateOverlay.classList.remove('active');
+                        loginGateOverlay.setAttribute('aria-hidden', 'true');
+                    }
                 } else {
                     if (profileEmail) {
                         profileEmail.classList.remove('show');
                     }
                     if (profileDropdown) {
                         profileDropdown.classList.remove('show');
+                    }
+                    if (loginGateOverlay) {
+                        loginGateOverlay.classList.add('active');
+                        loginGateOverlay.setAttribute('aria-hidden', 'false');
                     }
                 }
             }
@@ -4145,6 +4403,11 @@
                 });
             }
 
+            // Login gate button opens login modal
+            if (loginGateBtn) {
+                loginGateBtn.addEventListener('click', openLoginModal);
+            }
+
             // Close modal when clicking outside
             if (loginModal) {
                 loginModal.addEventListener('click', function(e) {
@@ -4161,17 +4424,15 @@
                     const password = loginPassword && loginPassword.value;
                     if (loginError) loginError.classList.remove('show');
                     if (!email) {
-                        if (loginError) {
-                            loginError.textContent = 'Please enter your email.';
-                            loginError.classList.add('show');
-                        }
+                        showLoginError('Please enter your email.');
+                        return;
+                    }
+                    if (!isValidEmail(email)) {
+                        showLoginError('Invalid email id');
                         return;
                     }
                     if (!password) {
-                        if (loginError) {
-                            loginError.textContent = 'Please enter your password.';
-                            loginError.classList.add('show');
-                        }
+                        showLoginError('Please enter your password.');
                         return;
                     }
                     fetch('/api/user/login', {
@@ -4216,6 +4477,22 @@
             if (loginEmail) {
                 loginEmail.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') loginPassword && loginPassword.focus();
+                });
+                loginEmail.addEventListener('input', function() {
+                    if (!loginError) return;
+                    const email = (loginEmail.value || '').trim();
+                    if (!email) {
+                        loginError.classList.remove('show');
+                        return;
+                    }
+                    if (isValidEmail(email)) {
+                        loginError.classList.remove('show');
+                    }
+                });
+                loginEmail.addEventListener('blur', function() {
+                    const email = (loginEmail.value || '').trim();
+                    if (!email) return;
+                    if (!isValidEmail(email)) showLoginError('Invalid email id');
                 });
             }
         })();
@@ -4575,6 +4852,18 @@
             'CET': 'Europe/Paris',
             'IST': 'Asia/Kolkata'
         };
+
+        // Sensor identifiers
+        // - Daily usage is an aggregate across rooms, so keep it separate from per-room sensors.
+        const DAILY_SENSOR_ID = 'all-rooms';
+        const ROOM_SENSOR_IDS = {
+            living: 'sensor-1',
+            bedroom: 'sensor-2',
+            kitchen: 'sensor-3',
+            bathroom: 'sensor-4',
+            office: 'sensor-5',
+            garage: 'sensor-6'
+        };
         
         function getSelectedTimezone() {
             const saved = localStorage.getItem(TIMEZONE_STORAGE_KEY);
@@ -4612,7 +4901,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         date: today,
-                        onSeconds: dailySeconds
+                        onSeconds: dailySeconds,
+                        sensor_id: DAILY_SENSOR_ID
                     })
                 });
             } catch (error) {
@@ -5018,6 +5308,125 @@
         }, 10000);
 
         // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
+        // Daily graph helpers
+        function initAdminDailySelectors() {
+            const monthSelect = document.getElementById('adminDailyMonthSelect');
+            const dateSelect = document.getElementById('adminDailyDateSelect');
+            const roomSelect = document.getElementById('adminDailyRoomSelect');
+            if (!monthSelect || !dateSelect || !roomSelect) return;
+
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            const currentDate = today.getDate();
+
+            // Pre-select current month
+            monthSelect.value = currentMonth;
+
+            function populateDates() {
+                const selectedMonth = parseInt(monthSelect.value);
+                const daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
+                dateSelect.innerHTML = '';
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const option = document.createElement('option');
+                    option.value = day;
+                    option.textContent = day;
+                    dateSelect.appendChild(option);
+                }
+                // Select today if in same month, else first day
+                if (selectedMonth === currentMonth) {
+                    dateSelect.value = currentDate;
+                } else {
+                    dateSelect.value = 1;
+                }
+            }
+
+            populateDates();
+            monthSelect.addEventListener('change', () => {
+                populateDates();
+                loadAdminDailyGraphData();
+            });
+            dateSelect.addEventListener('change', loadAdminDailyGraphData);
+            roomSelect.addEventListener('change', loadAdminDailyGraphData);
+        }
+
+        async function loadAdminDailyGraphData() {
+            const canvas = document.getElementById('adminDailyGraphCanvas');
+            const xAxis = document.getElementById('adminDailyGraphXAxis');
+            if (!canvas || !xAxis) return;
+
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const selectedMonth = parseInt(document.getElementById('adminDailyMonthSelect').value);
+            const selectedDay = parseInt(document.getElementById('adminDailyDateSelect').value);
+            const selectedRoom = document.getElementById('adminDailyRoomSelect').value;
+
+            const month = String(selectedMonth + 1).padStart(2, '0');
+            const dayStr = String(selectedDay).padStart(2, '0');
+            const dateStr = `${currentYear}-${month}-${dayStr}`;
+
+            let onSeconds = 0;
+            try {
+                let res;
+                if (selectedRoom === 'all') {
+                    // Overall daily usage across all rooms
+                    res = await fetch(`/api/usage/${dateStr}`);
+                    const data = await res.json();
+                    onSeconds = data.onSeconds || 0;
+                } else {
+                    // Specific room usage
+                    res = await fetch(`/api/room/${selectedRoom}/${dateStr}`);
+                    const data = await res.json();
+                    onSeconds = data.onSeconds || 0;
+                }
+            } catch (e) {
+                onSeconds = 0;
+            }
+
+            const hours = onSeconds / 3600;
+            const displayHours = Math.floor(hours);
+            const displayMins = Math.floor((hours - displayHours) * 60);
+            const roomLabelMap = {
+                all: 'All Rooms',
+                living: 'Living Room',
+                bedroom: 'Bedroom',
+                kitchen: 'Kitchen',
+                bathroom: 'Bathroom',
+                office: 'Office',
+                garage: 'Garage'
+            };
+            const roomLabel = roomLabelMap[selectedRoom] || 'All Rooms';
+            document.getElementById('adminDailyGraphDateLabel').textContent = `${dateStr} • ${roomLabel}`;
+            document.getElementById('adminDailyGraphHoursLabel').textContent = `${displayHours}h ${displayMins}m`;
+
+            // Simple 24-hour line: constant usage over the day
+            const width = 320;
+            const height = 120;
+            const padding = 8;
+            const maxHours = 24;
+
+            const y = height - padding - ((hours / maxHours) * (height - padding * 2));
+            const pathD = `M ${padding} ${y} L ${width - padding} ${y}`;
+            const areaD = `${pathD} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`;
+
+            const accentColor = '#f5a623';
+            canvas.innerHTML = `
+                <defs>
+                    <linearGradient id="adminDailyLineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.5"/>
+                        <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.05"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaD}" fill="url(#adminDailyLineGradient)" />
+                <path d="${pathD}" fill="none" stroke="${accentColor}" stroke-width="2" stroke-linejoin="miter"/>
+            `;
+
+            // X-axis: show hour labels 0, 6, 12, 18, 24
+            const hoursLabels = [0, 6, 12, 18, 24];
+            xAxis.innerHTML = hoursLabels.map(h => `<span>${h}h</span>`).join('');
+        }
+
+        // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
         // Populate year dropdown (minimum 2026 to current year)
         function initAdminGraphSelectors() {
             const yearSelect = document.getElementById('adminYearSelect');
@@ -5175,9 +5584,11 @@
             if (this.classList.contains('show')) {
                 if (!adminGraphInitialized) {
                     initAdminGraphSelectors();
+                    initAdminDailySelectors();
                     adminGraphInitialized = true;
                 }
                 loadAdminGraphData();
+                loadAdminDailyGraphData();
             }
         });
         
@@ -5189,9 +5600,11 @@
                     if (infoModal && infoModal.classList.contains('show')) {
                         if (!adminGraphInitialized) {
                             initAdminGraphSelectors();
+                            initAdminDailySelectors();
                             adminGraphInitialized = true;
                         }
                         loadAdminGraphData();
+                        loadAdminDailyGraphData();
                     }
                 }
             });
@@ -5203,6 +5616,7 @@
             const infoModal = document.getElementById('infoModal');
             if (infoModal && infoModal.classList.contains('show')) {
                 loadAdminGraphData();
+                loadAdminDailyGraphData();
             }
         }, 5000);
 
@@ -5282,6 +5696,7 @@
             
             const todayPST = getPSTDate();
             const room = roomConfig[roomId];
+            const sensorId = ROOM_SENSOR_IDS[apiName] || '';
             
             fetch(`/api/room/${apiName}/save`, {
                 method: 'POST',
@@ -5289,7 +5704,8 @@
                 body: JSON.stringify({
                     date: todayPST,
                     onSeconds: room.duration,
-                    avgLux: room.brightness
+                    avgLux: room.brightness,
+                    sensor_id: sensorId
                 })
             }).catch(err => console.log('Room save error:', err));
         }
@@ -5642,6 +6058,85 @@
             }
         });
 
+        // Report an Issue textarea: 600-word limit
+        (function initReportIssueTextarea() {
+            const REPORT_WORD_LIMIT = 600;
+            const ta = document.getElementById('reportIssueTextarea');
+            const wordCountEl = document.getElementById('reportIssueWordcount');
+            if (!ta || !wordCountEl) return;
+
+            function countWords(text) {
+                return text.trim().split(/\s+/).filter(Boolean).length;
+            }
+
+            function updateWordCount() {
+                const text = ta.value;
+                const words = countWords(text);
+                wordCountEl.textContent = words + ' / ' + REPORT_WORD_LIMIT + ' words';
+            }
+
+            ta.addEventListener('input', function() {
+                const text = this.value;
+                const words = text.trim().split(/\s+/).filter(Boolean);
+                if (words.length > REPORT_WORD_LIMIT) {
+                    this.value = words.slice(0, REPORT_WORD_LIMIT).join(' ');
+                }
+                updateWordCount();
+            });
+
+            ta.addEventListener('paste', function() {
+                setTimeout(function() {
+                    const text = ta.value;
+                    const words = text.trim().split(/\s+/).filter(Boolean);
+                    if (words.length > REPORT_WORD_LIMIT) {
+                        ta.value = words.slice(0, REPORT_WORD_LIMIT).join(' ');
+                    }
+                    updateWordCount();
+                }, 0);
+            });
+
+            updateWordCount();
+
+            function submitFeedback() {
+                const text = ta.value.trim();
+                const msgEl = document.getElementById('reportIssueMessage');
+                if (!text) {
+                    if (msgEl) { msgEl.textContent = 'Please enter your feedback.'; msgEl.className = 'report-issue-message error'; }
+                    return;
+                }
+                if (msgEl) { msgEl.textContent = ''; msgEl.className = 'report-issue-message'; }
+                fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        ta.value = '';
+                        updateWordCount();
+                        if (msgEl) { msgEl.textContent = 'Feedback saved.'; msgEl.className = 'report-issue-message'; }
+                    } else {
+                        if (msgEl) { msgEl.textContent = data.message || 'Failed to save.'; msgEl.className = 'report-issue-message error'; }
+                    }
+                })
+                .catch(function() {
+                    if (msgEl) { msgEl.textContent = 'Connection error.'; msgEl.className = 'report-issue-message error'; }
+                });
+            }
+
+            document.getElementById('reportIssueSubmit').addEventListener('click', submitFeedback);
+            ta.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    if (e.shiftKey) {
+                        return;
+                    }
+                    e.preventDefault();
+                    submitFeedback();
+                }
+            });
+        })();
+
         // Password protection for info modal
         const ADMIN_PASSKEY = '95204';
         
@@ -5659,6 +6154,16 @@
             const error = document.getElementById('passwordError');
             const username = (document.getElementById('usernameInput')?.value || '').trim();
             
+            if (!username) {
+                error.textContent = '❌ Please enter admin username.';
+                error.classList.add('show');
+                document.getElementById('usernameInput')?.focus();
+                return;
+            } else {
+                // restore default message if it was changed earlier
+                error.textContent = '❌ Invalid passkey. Try again.';
+            }
+
             if (input.value === ADMIN_PASSKEY) {
                 // Log admin access to backend
                 fetch('/api/admin/access', {
