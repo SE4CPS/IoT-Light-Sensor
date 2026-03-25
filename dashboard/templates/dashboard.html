@@ -2380,6 +2380,27 @@
             letter-spacing: 0;
         }
 
+        .org-login-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            user-select: none;
+        }
+
+        .org-login-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .org-name-wrapper .password-input {
+            margin-top: 0;
+        }
+
         .password-input:focus {
             border-color: var(--accent);
         }
@@ -3575,6 +3596,13 @@
             <div class="password-input-wrapper">
                 <input type="password" class="password-input" id="passwordInput" maxlength="5" placeholder="•••••" autocomplete="off">
             </div>
+            <label class="org-login-row" for="orgLoginCheckbox">
+                <input type="checkbox" id="orgLoginCheckbox">
+                <span>Login through organization</span>
+            </label>
+            <div class="password-input-wrapper org-name-wrapper" id="orgNameWrapper" style="display:none;">
+                <input type="text" class="password-input username-input" id="orgNameInput" placeholder="Organization name" autocomplete="off" disabled>
+            </div>
             <div class="password-error" id="passwordError">❌ Invalid passkey. Try again.</div>
             <button class="password-submit" id="passwordSubmit">Verify</button>
             <button class="password-cancel" id="passwordCancel">Cancel</button>
@@ -4664,6 +4692,7 @@
         
         let isPowerOn = false;  // Start with light OFF
         let savedLux = 25;      // Default brightness when turned on
+        let latestSensorLux = 0;
         
 
         let isEcoMode = false;
@@ -4783,13 +4812,33 @@
                     if (totalBrightness > 0) {
                         updateGauge(totalBrightness);
                     } else {
-                        updateGauge(savedLux || 25);
+                        updateGauge(latestSensorLux || savedLux || 25);
                     }
                     rollerTrack.style.opacity = '1';
                     rollerTrack.style.pointerEvents = 'auto';
                 }
             }
         });
+
+        async function syncLatestSensorReading() {
+            try {
+                const response = await fetch('/api/v1/sensors/latest');
+                const payload = await response.json();
+                if (!response.ok || !payload.success || !payload.data) return;
+
+                const lux = Number(payload.data.lux);
+                if (!Number.isFinite(lux)) return;
+
+                latestSensorLux = Math.max(0, Math.min(800, Math.round(lux)));
+
+                // Use backend latest lux when dashboard is powered on and no room/mode overrides are active.
+                if (isPowerOn && !isEcoMode && !isSleepMode && calculateTotalBrightness() === 0) {
+                    updateGauge(latestSensorLux);
+                }
+            } catch (err) {
+                console.log('Latest sensor fetch error:', err);
+            }
+        }
 
 
         // Live usage tracking - starts fresh from today
@@ -4882,6 +4931,24 @@
             return dateString; // Returns YYYY-MM-DD format
         }
 
+        async function postJsonWithCheck(url, payload, actionLabel) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            let data = {};
+            try {
+                data = await res.json();
+            } catch (e) {
+                data = {};
+            }
+            if (!res.ok || data.success === false) {
+                throw new Error(data.message || `${actionLabel} failed`);
+            }
+            return data;
+        }
+
         async function saveStats() {
             const today = getPSTDate();
             
@@ -4896,17 +4963,13 @@
             
             // Save to MongoDB for donut chart (calendar date selection)
             try {
-                await fetch('/api/usage/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        date: today,
-                        onSeconds: dailySeconds,
-                        sensor_id: DAILY_SENSOR_ID
-                    })
-                });
+                await postJsonWithCheck('/api/usage/save', {
+                    date: today,
+                    onSeconds: dailySeconds,
+                    sensor_id: DAILY_SENSOR_ID
+                }, 'Daily usage save');
             } catch (error) {
-                console.error('Failed to save to MongoDB:', error);
+                console.error('Failed to save daily usage:', error.message || error);
             }
         }
 
@@ -5151,6 +5214,8 @@
         loadStats();
         loadDailyUsageHistory();
         startStatsTracking();
+        syncLatestSensorReading();
+        setInterval(syncLatestSensorReading, 5000);
 
         // Set initial gauge value (light is off initially)
         updateGauge(0);
@@ -5637,14 +5702,9 @@
                 room_id: roomId,
                 room_name: roomName
             };
-            
-            fetch('/api/device/log', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            }).catch(err => console.log('Device log error:', err));
+
+            postJsonWithCheck('/api/device/log', payload, 'Device log')
+                .catch(err => console.log('Device log error:', err.message || err));
         }
 
         // Load saved room durations from localStorage
@@ -5698,16 +5758,13 @@
             const room = roomConfig[roomId];
             const sensorId = ROOM_SENSOR_IDS[apiName] || '';
             
-            fetch(`/api/room/${apiName}/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    date: todayPST,
-                    onSeconds: room.duration,
-                    avgLux: room.brightness,
-                    sensor_id: sensorId
-                })
-            }).catch(err => console.log('Room save error:', err));
+            postJsonWithCheck(`/api/room/${apiName}/save`, {
+                date: todayPST,
+                onSeconds: room.duration,
+                avgLux: room.brightness,
+                sensor_id: sensorId
+            }, `Room save (${apiName})`)
+            .catch(err => console.log('Room save error:', err.message || err));
         }
 
         // Save all rooms to MongoDB
@@ -5732,16 +5789,13 @@
                     if (!room.alertSent && room.duration >= ALERT_THRESHOLD_SECONDS) {
                         room.alertSent = true;
                         try {
-                            fetch('/api/alerts', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    room_id: roomId,
-                                    durationSeconds: room.duration,
-                                    type: 'duration_over_40min',
-                                    date: getPSTDate()
-                                })
-                            }).catch(err => console.log('Alert log error:', err));
+                            postJsonWithCheck('/api/alerts', {
+                                room_id: roomId,
+                                durationSeconds: room.duration,
+                                type: 'duration_over_40min',
+                                date: getPSTDate()
+                            }, 'Alert log')
+                            .catch(err => console.log('Alert log error:', err.message || err));
                         } catch (e) {
                             console.log('Alert log exception:', e);
                         }
@@ -6146,18 +6200,48 @@
             document.getElementById('passwordInput').value = '';
             document.getElementById('passwordInput').classList.remove('error');
             document.getElementById('passwordError').classList.remove('show');
+            const orgCb = document.getElementById('orgLoginCheckbox');
+            const orgWrap = document.getElementById('orgNameWrapper');
+            const orgInput = document.getElementById('orgNameInput');
+            if (orgCb) orgCb.checked = false;
+            if (orgWrap) orgWrap.style.display = 'none';
+            if (orgInput) { orgInput.value = ''; orgInput.disabled = true; }
             document.getElementById('passwordInput').focus();
         });
 
-        document.getElementById('passwordSubmit').addEventListener('click', () => {
+        // Organization login toggle
+        (function initOrgLoginToggle() {
+            const orgCb = document.getElementById('orgLoginCheckbox');
+            const orgWrap = document.getElementById('orgNameWrapper');
+            const orgInput = document.getElementById('orgNameInput');
+            if (!orgCb || !orgWrap || !orgInput) return;
+            orgCb.addEventListener('change', function() {
+                const on = !!orgCb.checked;
+                orgWrap.style.display = on ? 'block' : 'none';
+                orgInput.disabled = !on;
+                if (!on) orgInput.value = '';
+                if (on) orgInput.focus();
+            });
+        })();
+
+        document.getElementById('passwordSubmit').addEventListener('click', async () => {
             const input = document.getElementById('passwordInput');
             const error = document.getElementById('passwordError');
             const username = (document.getElementById('usernameInput')?.value || '').trim();
+            const orgChecked = !!document.getElementById('orgLoginCheckbox')?.checked;
+            const orgName = (document.getElementById('orgNameInput')?.value || '').trim();
             
             if (!username) {
                 error.textContent = '❌ Please enter admin username.';
                 error.classList.add('show');
                 document.getElementById('usernameInput')?.focus();
+                return;
+            }
+
+            if (orgChecked && !orgName) {
+                error.textContent = '❌ Please enter organization name.';
+                error.classList.add('show');
+                document.getElementById('orgNameInput')?.focus();
                 return;
             } else {
                 // restore default message if it was changed earlier
@@ -6165,12 +6249,29 @@
             }
 
             if (input.value === ADMIN_PASSKEY) {
-                // Log admin access to backend
-                fetch('/api/admin/access', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username })
-                }).catch(err => console.log('Admin log error:', err));
+                // Log admin access and only continue when backend confirms success.
+                try {
+                    const res = await fetch('/api/admin/access', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username,
+                            loginType: orgChecked ? 'organization' : 'personal',
+                            organizationName: orgChecked ? orgName : ''
+                        })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        error.textContent = `❌ ${data.message || 'Failed to log admin access.'}`;
+                        error.classList.add('show');
+                        return;
+                    }
+                } catch (err) {
+                    console.log('Admin log error:', err);
+                    error.textContent = '❌ Could not connect to backend. Try again.';
+                    error.classList.add('show');
+                    return;
+                }
 
                 document.getElementById('passwordModal').classList.remove('show');
                 document.getElementById('infoModal').classList.add('show');

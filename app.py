@@ -26,7 +26,6 @@ if not MONGO_URI:
     usage_collection = None
     room_collections = {}
     admin_collection = None
-    organization_collection = None
     alert_collection = None
     device_collection = None
     user_data_collection = None
@@ -56,8 +55,6 @@ else:
 
         # Admin access/log collection
         admin_collection = db['admin_access']
-        # Organization login collection (admin + organization + date/time)
-        organization_collection = db['Organization']
         # Alert collection for long-on durations / warnings
         alert_collection = db['alerts']
         # Device collection for logging device details when lights are turned on
@@ -72,7 +69,6 @@ else:
         print("✅ Connected to MongoDB Atlas")
         print("📦 Room collections: living, bedroom, kitchen, bathroom, office, garage")
         print("📦 Admin collection: admin_access")
-        print("📦 Organization collection: Organization")
         print("📦 Device collection: devices")
         print("📦 User data collection: user_data")
         print("📦 Users collection: users")
@@ -83,7 +79,6 @@ else:
         usage_collection = None
         room_collections = {}
         admin_collection = None
-        organization_collection = None
         alert_collection = None
         device_collection = None
         user_data_collection = None
@@ -95,7 +90,6 @@ else:
         usage_collection = None
         room_collections = {}
         admin_collection = None
-        organization_collection = None
         alert_collection = None
         device_collection = None
         user_data_collection = None
@@ -446,18 +440,8 @@ def log_admin_access():
     if not username:
         return jsonify({"success": False, "message": "Admin username is required"}), 400
 
-    login_type = (data.get('loginType') or 'personal').strip()
-    organization_name = (data.get('organizationName') or '').strip()
-    if login_type == 'organization' and not organization_name:
-        return jsonify({"success": False, "message": "Organization name is required"}), 400
-
-    pst = pytz.timezone('America/Los_Angeles')
-    now_pst = datetime.now(pst)
-
     doc = {
         "username": username,
-        "loginType": login_type,
-        "organizationName": organization_name if login_type == 'organization' else '',
         "accessedAt": datetime.now().isoformat(),
         "ip": request.remote_addr,
         "userAgent": request.headers.get('User-Agent', ''),
@@ -465,18 +449,6 @@ def log_admin_access():
     }
     try:
         admin_collection.insert_one(doc)
-
-        # If admin logged in through organization, also store in Organization collection
-        if login_type == 'organization' and organization_collection is not None:
-            organization_collection.insert_one({
-                "adminName": username,
-                "organizationName": organization_name,
-                "date": now_pst.strftime('%Y-%m-%d'),
-                "time": now_pst.strftime('%H:%M:%S'),
-                "timestamp": now_pst.isoformat(),
-                "createdAt": datetime.now().isoformat(),
-            })
-
         return jsonify({"success": True})
     except Exception as e:
         print(f"⚠️ Failed to log admin access: {e}")
