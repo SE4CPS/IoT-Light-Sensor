@@ -3901,20 +3901,6 @@
             <div class="info-section">
                 <div class="info-section-title">📊 Daily Usage Analytics</div>
                 <div class="admin-graph-selectors">
-                    <select id="adminDailyMonthSelect" class="admin-select">
-                        <option value="0">January</option>
-                        <option value="1">February</option>
-                        <option value="2">March</option>
-                        <option value="3">April</option>
-                        <option value="4">May</option>
-                        <option value="5">June</option>
-                        <option value="6">July</option>
-                        <option value="7">August</option>
-                        <option value="8">September</option>
-                        <option value="9">October</option>
-                        <option value="10">November</option>
-                        <option value="11">December</option>
-                    </select>
                     <select id="adminDailyDateSelect" class="admin-select">
                         <!-- Dates will be populated by JS -->
                     </select>
@@ -5536,42 +5522,22 @@
         // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
         // Daily graph helpers
         function initAdminDailySelectors() {
-            const monthSelect = document.getElementById('adminDailyMonthSelect');
             const dateSelect = document.getElementById('adminDailyDateSelect');
             const roomSelect = document.getElementById('adminDailyRoomSelect');
-            if (!monthSelect || !dateSelect || !roomSelect) return;
+            if (!dateSelect || !roomSelect) return;
 
             const today = new Date();
             const currentYear = today.getFullYear();
-            const currentMonth = today.getMonth();
             const currentDate = today.getDate();
-
-            // Pre-select current month
-            monthSelect.value = currentMonth;
-
-            function populateDates() {
-                const selectedMonth = parseInt(monthSelect.value);
-                const daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
-                dateSelect.innerHTML = '';
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const option = document.createElement('option');
-                    option.value = day;
-                    option.textContent = day;
-                    dateSelect.appendChild(option);
-                }
-                // Select today if in same month, else first day
-                if (selectedMonth === currentMonth) {
-                    dateSelect.value = currentDate;
-                } else {
-                    dateSelect.value = 1;
-                }
+            
+            dateSelect.innerHTML = '';
+            for (let day = 1; day <= 31; day++) {
+                const option = document.createElement('option');
+                option.value = day;
+                option.textContent = day;
+                dateSelect.appendChild(option);
             }
-
-            populateDates();
-            monthSelect.addEventListener('change', () => {
-                populateDates();
-                loadAdminDailyGraphData();
-            });
+            dateSelect.value = currentDate;
             dateSelect.addEventListener('change', loadAdminDailyGraphData);
             roomSelect.addEventListener('change', loadAdminDailyGraphData);
         }
@@ -5583,35 +5549,45 @@
 
             const today = new Date();
             const currentYear = today.getFullYear();
-            const selectedMonth = parseInt(document.getElementById('adminDailyMonthSelect').value);
             const selectedDay = parseInt(document.getElementById('adminDailyDateSelect').value);
             const selectedRoom = document.getElementById('adminDailyRoomSelect').value;
+            const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthData = [];
 
-            const month = String(selectedMonth + 1).padStart(2, '0');
-            const dayStr = String(selectedDay).padStart(2, '0');
-            const dateStr = `${currentYear}-${month}-${dayStr}`;
-
-            let onSeconds = 0;
-            try {
-                let res;
-                if (selectedRoom === 'all') {
-                    // Overall daily usage across all rooms
-                    res = await fetch(`/api/usage/${dateStr}`);
-                    const data = await res.json();
-                    onSeconds = data.onSeconds || 0;
-                } else {
-                    // Specific room usage
-                    res = await fetch(`/api/room/${selectedRoom}/${dateStr}`);
-                    const data = await res.json();
-                    onSeconds = data.onSeconds || 0;
+            for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
+                const daysInMonth = new Date(currentYear, monthIdx + 1, 0).getDate();
+                if (selectedDay > daysInMonth) {
+                    monthData.push({ monthIdx, label: monthNamesShort[monthIdx], onHours: null });
+                    continue;
                 }
-            } catch (e) {
-                onSeconds = 0;
+
+                const month = String(monthIdx + 1).padStart(2, '0');
+                const dayStr = String(selectedDay).padStart(2, '0');
+                const dateStr = `${currentYear}-${month}-${dayStr}`;
+                let onSeconds = 0;
+                try {
+                    let res;
+                    if (selectedRoom === 'all') {
+                        res = await fetch(`/api/usage/${dateStr}`);
+                    } else {
+                        res = await fetch(`/api/room/${selectedRoom}/${dateStr}`);
+                    }
+                    const data = await res.json();
+                    onSeconds = data.onSeconds || 0;
+                } catch (e) {
+                    onSeconds = 0;
+                }
+                monthData.push({
+                    monthIdx,
+                    label: monthNamesShort[monthIdx],
+                    onHours: onSeconds / 3600
+                });
             }
 
-            const hours = onSeconds / 3600;
-            const displayHours = Math.floor(hours);
-            const displayMins = Math.floor((hours - displayHours) * 60);
+            const totalHours = monthData.reduce((sum, m) => sum + (m.onHours || 0), 0);
+            const displayHours = Math.floor(totalHours);
+            const displayMins = Math.floor((totalHours - displayHours) * 60);
             const roomLabelMap = {
                 all: 'All Rooms',
                 living: 'Living Room',
@@ -5622,34 +5598,32 @@
                 garage: 'Garage'
             };
             const roomLabel = roomLabelMap[selectedRoom] || 'All Rooms';
-            document.getElementById('adminDailyGraphDateLabel').textContent = `${dateStr} • ${roomLabel}`;
+            document.getElementById('adminDailyGraphDateLabel').textContent = `Day ${selectedDay} • ${currentYear} • ${roomLabel}`;
             document.getElementById('adminDailyGraphHoursLabel').textContent = `${displayHours}h ${displayMins}m`;
 
-            // Simple 24-hour line: constant usage over the day
+            // Vertical bar chart across months
             const width = 320;
             const height = 120;
-            const padding = 8;
+            const padding = 10;
             const maxHours = 24;
-
-            const y = height - padding - ((hours / maxHours) * (height - padding * 2));
-            const pathD = `M ${padding} ${y} L ${width - padding} ${y}`;
-            const areaD = `${pathD} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`;
+            const chartHeight = height - padding * 2;
+            const baseY = height - padding;
+            const count = monthData.length;
+            const slot = (width - padding * 2) / count;
+            const barWidth = Math.max(8, slot * 0.62);
 
             const accentColor = '#f5a623';
-            canvas.innerHTML = `
-                <defs>
-                    <linearGradient id="adminDailyLineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.5"/>
-                        <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.05"/>
-                    </linearGradient>
-                </defs>
-                <path d="${areaD}" fill="url(#adminDailyLineGradient)" />
-                <path d="${pathD}" fill="none" stroke="${accentColor}" stroke-width="2" stroke-linejoin="miter"/>
-            `;
+            const bars = monthData.map((m, i) => {
+                if (m.onHours === null) return '';
+                const h = Math.max(0, Math.min(maxHours, m.onHours));
+                const barH = (h / maxHours) * chartHeight;
+                const x = padding + i * slot + (slot - barWidth) / 2;
+                const y = baseY - barH;
+                return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barWidth.toFixed(2)}" height="${barH.toFixed(2)}" rx="2" fill="${accentColor}" opacity="0.92"></rect>`;
+            }).join('');
 
-            // X-axis: show hour labels 0, 6, 12, 18, 24
-            const hoursLabels = [0, 6, 12, 18, 24];
-            xAxis.innerHTML = hoursLabels.map(h => `<span>${h}h</span>`).join('');
+            canvas.innerHTML = bars;
+            xAxis.innerHTML = monthNamesShort.map(m => `<span>${m}</span>`).join('');
         }
 
         // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
