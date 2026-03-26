@@ -852,6 +852,66 @@
             position: relative;
         }
 
+        .user-data-view-container {
+            background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+            border-radius: 16px;
+            padding: 16px;
+            width: 330px;
+            height: 280px;
+            position: relative;
+        }
+
+        .user-data-selectors {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .user-data-select {
+            flex: 1;
+            background: rgba(26, 32, 44, 0.9);
+            border: 1px solid rgba(113, 128, 150, 0.4);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 12px;
+            padding: 7px 10px;
+            outline: none;
+        }
+
+        .user-data-view-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #a0aec0;
+            margin-bottom: 8px;
+        }
+
+        .user-data-view-body {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(113, 128, 150, 0.25);
+            border-radius: 10px;
+            padding: 10px;
+            height: 190px;
+            overflow-y: auto;
+        }
+
+        .user-data-row {
+            display: grid;
+            grid-template-columns: 95px 1fr;
+            gap: 8px;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .user-data-key {
+            color: #a0aec0;
+            font-weight: 600;
+        }
+
+        .user-data-val {
+            color: #f7fafc;
+            word-break: break-all;
+        }
+
         .weekly-graph-header {
             display: flex;
             justify-content: space-between;
@@ -4261,6 +4321,32 @@
                     </div>
                 </div>
             </div>
+
+            <div class="user-data-view-container">
+                <div class="user-data-selectors">
+                    <select id="userDataMonthSelect" class="user-data-select"></select>
+                    <select id="userDataDateSelect" class="user-data-select"></select>
+                    <select id="userDataRoomSelect" class="user-data-select">
+                        <option value="all">All Rooms</option>
+                        <option value="living">Living Room</option>
+                        <option value="bedroom">Bedroom</option>
+                        <option value="kitchen">Kitchen</option>
+                        <option value="bathroom">Bathroom</option>
+                        <option value="office">Office</option>
+                        <option value="garage">Garage</option>
+                    </select>
+                </div>
+                <div class="user-data-view-title">User View (MongoDB Data)</div>
+                <div class="user-data-view-body" id="userDataViewBody">
+                    <div class="user-data-row"><span class="user-data-key">date</span><span class="user-data-val">-</span></div>
+                    <div class="user-data-row"><span class="user-data-key">onSeconds</span><span class="user-data-val">-</span></div>
+                    <div class="user-data-row"><span class="user-data-key">offSeconds</span><span class="user-data-val">-</span></div>
+                    <div class="user-data-row"><span class="user-data-key">sensor_id</span><span class="user-data-val">-</span></div>
+                    <div class="user-data-row"><span class="user-data-key">lux</span><span class="user-data-val">-</span></div>
+                    <div class="user-data-row"><span class="user-data-key">updatedAt</span><span class="user-data-val">-</span></div>
+                    <div class="user-data-row"><span class="user-data-key">luxUpdatedAt</span><span class="user-data-val">-</span></div>
+                </div>
+            </div>
         </div>
 
         <div class="mode-cards">
@@ -5363,9 +5449,84 @@
         
         // Track the selected week date for the graph
         let selectedWeekDate = null;
+
+        // User-view date selectors + MongoDB data box (beside weekly graph)
+        function initUserDataViewSelectors() {
+            const monthSelect = document.getElementById('userDataMonthSelect');
+            const dateSelect = document.getElementById('userDataDateSelect');
+            const roomSelect = document.getElementById('userDataRoomSelect');
+            if (!monthSelect || !dateSelect || !roomSelect) return;
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+
+            monthSelect.innerHTML = monthNames.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            const currentDate = today.getDate();
+            monthSelect.value = currentMonth;
+
+            function populateDates() {
+                const m = parseInt(monthSelect.value);
+                const daysInMonth = new Date(currentYear, m + 1, 0).getDate();
+                dateSelect.innerHTML = '';
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    dateSelect.appendChild(opt);
+                }
+                dateSelect.value = (m === currentMonth ? currentDate : 1);
+            }
+
+            populateDates();
+            monthSelect.addEventListener('change', () => {
+                populateDates();
+                loadUserDataView();
+            });
+            dateSelect.addEventListener('change', loadUserDataView);
+            roomSelect.addEventListener('change', loadUserDataView);
+        }
+
+        async function loadUserDataView() {
+            const monthSelect = document.getElementById('userDataMonthSelect');
+            const dateSelect = document.getElementById('userDataDateSelect');
+            const roomSelect = document.getElementById('userDataRoomSelect');
+            const body = document.getElementById('userDataViewBody');
+            if (!monthSelect || !dateSelect || !roomSelect || !body) return;
+
+            const y = new Date().getFullYear();
+            const m = String(parseInt(monthSelect.value) + 1).padStart(2, '0');
+            const d = String(parseInt(dateSelect.value)).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+            const room = roomSelect.value;
+
+            try {
+                const endpoint = room === 'all' ? `/api/usage/${dateStr}` : `/api/room/${room}/${dateStr}`;
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                const luxValue = room === 'all' ? (data.lux ?? '-') : (data.avgLux ?? '-');
+                body.innerHTML = `
+                    <div class="user-data-row"><span class="user-data-key">room</span><span class="user-data-val">${room === 'all' ? 'all' : room}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">date</span><span class="user-data-val">${data.date || '-'}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">onSeconds</span><span class="user-data-val">${data.onSeconds ?? '-'}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">offSeconds</span><span class="user-data-val">${data.offSeconds ?? '-'}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">sensor_id</span><span class="user-data-val">${data.sensor_id || '-'}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">${room === 'all' ? 'lux' : 'avgLux'}</span><span class="user-data-val">${luxValue}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">updatedAt</span><span class="user-data-val">${data.updatedAt || '-'}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">luxUpdatedAt</span><span class="user-data-val">${data.luxUpdatedAt || '-'}</span></div>
+                `;
+            } catch (e) {
+                body.innerHTML = `<div class="user-data-row"><span class="user-data-key">error</span><span class="user-data-val">Failed to load data</span></div>`;
+            }
+        }
         
         // Load weekly graph on page load
         loadWeeklyGraphData();
+        initUserDataViewSelectors();
+        loadUserDataView();
         
         // Update weekly graph every 10 seconds for live updates (use selected date if set)
         setInterval(() => {

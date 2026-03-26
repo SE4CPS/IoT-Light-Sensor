@@ -110,6 +110,16 @@ sensor_history_by_id = {}
 #Keeping track of all registered sensors
 registered_sensors = {}
 
+# Embedded sensor-to-room mapping for per-room lux updates
+SENSOR_ROOM_MAP = {
+    "sensor-1": "living",
+    "sensor-2": "bedroom",
+    "sensor-3": "kitchen",
+    "sensor-4": "bathroom",
+    "sensor-5": "office",
+    "sensor-6": "garage",
+}
+
 def generate_sensor_reading():
     """Simulate a light sensor reading (0-50 lux)"""
     hour = datetime.now().hour
@@ -173,8 +183,54 @@ def register_new_sensor():
 def submit_single_sensor_reading():
     data = request.get_json(silent=True) or {}
     try:
-        usage_collection.insert_one(data)
-        return jsonify({"success": True, "data": data}), 201
+        if usage_collection is None:
+            return jsonify({"success": False, "message": "MongoDB not available"}), 503
+
+        if "lux" not in data:
+            return jsonify({"success": False, "message": "Missing lux value"}), 400
+
+        sensor_id = (data.get("sensor_id") or "").strip()
+        lux_value = float(data["lux"])
+
+        pst = pytz.timezone('America/Los_Angeles')
+        now_pst = datetime.now(pst)
+        today = now_pst.strftime('%Y-%m-%d')
+
+        usage_collection.update_one(
+            {"date": today},
+            {"$set": {
+                "lux": lux_value,
+                "sensor_id": sensor_id,
+                "luxUpdatedAt": now_pst.isoformat(),
+                "updatedAt": datetime.now().isoformat()
+            }},
+            upsert=True
+        )
+
+        # Also push lux into the mapped individual room collection only if that room is ON.
+        # Room ON state is inferred from today's onSeconds > 0 in the room document.
+        room_name = SENSOR_ROOM_MAP.get(sensor_id)
+        if room_name and room_name in room_collections and room_collections[room_name] is not None:
+            room_doc = room_collections[room_name].find_one({"date": today}) or {}
+            if int(room_doc.get("onSeconds", 0) or 0) > 0:
+                room_collections[room_name].update_one(
+                    {"date": today},
+                    {"$set": {
+                        "avgLux": lux_value,
+                        "sensor_id": sensor_id,
+                        "luxUpdatedAt": now_pst.isoformat(),
+                        "updatedAt": datetime.now().isoformat()
+                    }},
+                    upsert=True
+                )
+
+        return jsonify({"success": True, "data": {
+            "date": today,
+            "lux": lux_value,
+            "sensor_id": sensor_id,
+            "room": room_name,
+            "luxUpdatedAt": now_pst.isoformat()
+        }}), 200
     except Exception as e:
         print(f"⚠️ Failed to submit reading: {e}")
         return jsonify({"success": False, "message": "Failed to log admin access", "data":data}), 500
@@ -249,11 +305,25 @@ def get_usage(date):
         record = usage_collection.find_one({"date": date})
         if record:
             return jsonify({
+                "_id": str(record.get('_id', '')),
                 "date": record['date'],
+                "sensor_id": record.get('sensor_id', ''),
                 "onSeconds": record.get('onSeconds', 0),
-                "offSeconds": record.get('offSeconds', 0)
+                "offSeconds": record.get('offSeconds', 0),
+                "lux": record.get('lux', None),
+                "updatedAt": record.get('updatedAt', ''),
+                "luxUpdatedAt": record.get('luxUpdatedAt', '')
             })
-    return jsonify({"date": date, "onSeconds": 0, "offSeconds": 86400})
+    return jsonify({
+        "_id": "",
+        "date": date,
+        "sensor_id": "",
+        "onSeconds": 0,
+        "offSeconds": 86400,
+        "lux": None,
+        "updatedAt": "",
+        "luxUpdatedAt": ""
+    })
     
 @app.route('/api/v1/sensors/latest', methods=['GET'])
 def get_latest_sensor_reading():
@@ -361,13 +431,25 @@ def get_room_usage(room_name, date):
         record = room_collections[room_name].find_one({"date": date})
         if record:
             return jsonify({
+                "_id": str(record.get('_id', '')),
                 "room": room_name,
                 "date": record['date'],
                 "sensor_id": record.get('sensor_id', ''),
                 "onSeconds": record.get('onSeconds', 0),
-                "avgLux": record.get('avgLux', 0)
+                "avgLux": record.get('avgLux', 0),
+                "updatedAt": record.get('updatedAt', ''),
+                "luxUpdatedAt": record.get('luxUpdatedAt', '')
             })
-    return jsonify({"room": room_name, "date": date, "sensor_id": "", "onSeconds": 0, "avgLux": 0})
+    return jsonify({
+        "_id": "",
+        "room": room_name,
+        "date": date,
+        "sensor_id": "",
+        "onSeconds": 0,
+        "avgLux": 0,
+        "updatedAt": "",
+        "luxUpdatedAt": ""
+    })
 
 @app.route('/api/room/<room_name>/statistics')
 def get_room_statistics(room_name):
