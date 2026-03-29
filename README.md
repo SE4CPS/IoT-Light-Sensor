@@ -64,7 +64,7 @@ Each component has a clear responsibility and communicates through well defined 
   }
 }
 
-
+---
 
 ### Introduction
 IoT-Light-Sensor Project
