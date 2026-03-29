@@ -1,8 +1,19 @@
 # Indoor Light Notification System
 
+[![API Status](https://img.shields.io/badge/API-Live-brightgreen)](https://iot-light-sensor-zumx.onrender.com/api/docs)
+[![Swagger](https://img.shields.io/badge/Swagger-Docs-85EA2D?logo=swagger)](https://iot-light-sensor-zumx.onrender.com/api/docs)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.1.3-black?logo=flask)](https://flask.palletsprojects.com/)
+
 This repository contains a small, end to end indoor monitoring system that tracks room light usage, visualizes the current state, and notifies users when lights are left on for too long.
 
-The project is intentionally simple and layered, following long established system design principles that are easy to teach, reason about, and extend.
+---
+
+## 🚀 Quick Links
+
+- **[Live API Documentation](https://iot-light-sensor-zumx.onrender.com/api/docs)** - Interactive Swagger UI
+- **[Production API](https://iot-light-sensor-zumx.onrender.com)** - Live endpoint
+- **[GitHub Pages](https://se4cps.github.io/IoT-Light-Sensor/)** - Project website
 
 ---
 
@@ -14,42 +25,20 @@ The project is intentionally simple and layered, following long established syst
 
 ---
 
-## System Overview
+## 📡 API Documentation
 
+### Base URLs
+- **Production**: `https://iot-light-sensor-zumx.onrender.com`
+- **Swagger UI**: https://iot-light-sensor-zumx.onrender.com/api/docs
 
-Each component has a clear responsibility and communicates through well defined interfaces.
-
----
-
-## Architecture Layers
-
-### Sensor
-- Detects light ON / OFF state
-- Attaches timestamps
-- Sends events to the backend
-
-### Backend
-- Receives sensor events
-- Validates data
-- Applies notification rules
-- Exposes data to the frontend
-
-### Database
-- Stores light events per room
-- Supports historical queries
-
-### Frontend
-- Displays current light status
-- Shows basic history per room
-
-### Notification
-- Evaluates light duration
-- Triggers alerts when rules are violated
+### Quick Test
+```bash
+curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
+```
 
 ---
 
 ## Core Data Model
-
 ```json
 {
   "meta": {
@@ -63,3 +52,20 @@ Each component has a clear responsibility and communicates through well defined 
     "timestamp": "ISO-8601"
   }
 }
+```
+
+---
+
+## 🏗️ Tech Stack
+
+- **Backend**: Flask 3.1.3, Python 3.9+
+- **Database**: MongoDB Atlas
+- **Deployment**: Render.com
+- **API Documentation**: Swagger/OpenAPI 3.0
+- **CI/CD**: GitHub Actions
+
+---
+
+## 📝 License
+
+This project is part of the SE4CPS coursework.
