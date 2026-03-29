@@ -3,7 +3,7 @@ info:
   title: IoT Light Sensor API - All 21 Endpoints
   version: 1.0.0
 servers:
-  - url: http://localhost:5001
+  - url: https://iot-light-sensor.onrender.com
 tags:
   - name: Dashboard
   - name: Sensors  
