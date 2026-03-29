@@ -5,3 +5,4 @@ pymongo==4.16.0
 python-dotenv==1.2.1
 gunicorn==21.2.0
 certifi
+pytz
