@@ -63,3 +63,6 @@ Each component has a clear responsibility and communicates through well defined 
     "timestamp": "ISO-8601"
   }
 }
+[IOT_Light_sensor_project_documentation.pdf](https://github.com/user-attachments/files/26328483/IOT_Light_sensor_project_documentation.pdf)
+
+
