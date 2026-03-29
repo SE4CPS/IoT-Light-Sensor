@@ -10,6 +10,7 @@ import pytz
 from dotenv import load_dotenv
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_swagger_ui import get_swaggerui_blueprint
 
 # Load environment variables from .env file
 load_dotenv()
@@ -101,6 +102,22 @@ else:
         user_data_collection = None
         users_collection = None
         feedback_collection = None
+
+
+# Swagger UI Configuration
+SWAGGER_URL = '/api/docs'
+API_URL = '/swagger/swagger.yaml'
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={'app_name': "IoT Light Sensor API"}
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
+@app.route('/swagger/swagger.yaml')
+def swagger_spec():
+    from flask import send_file
+    return send_file('swagger/swagger.yaml', mimetype='text/yaml')
 
 # Simulated sensor data storage
 sensor_history = []

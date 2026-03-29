@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: IoT Light Sensor API - All 21 Endpoints
+  version: 1.0.0
+servers:
+  - url: http://localhost:5001
+tags:
+  - name: Dashboard
+  - name: Sensors  
+  - name: Usage Statistics
+  - name: Room Management
+  - name: Admin & Logging
+paths:
+  /:
+    get:
+      tags: [Dashboard]
+      summary: Dashboard home
+      responses:
+        '200':
+          description: OK
+  /diagram:
+    get:
+      tags: [Dashboard]
+      summary: System diagram
+      responses:
+        '200':
+          description: OK
+  /api/sensor:
+    get:
+      tags: [Sensors]
+      summary: Get current sensor
+      responses:
+        '200':
+          description: OK
+  /api/v1/sensors/register:
+    post:
+      tags: [Sensors]
+      summary: Register sensor
+      responses:
+        '201':
+          description: Created
+  /api/v1/sensors/data:
+    post:
+      tags: [Sensors]
+      summary: Submit reading
+      responses:
+        '200':
+          description: OK
+  /api/v1/sensors/{sensor_id}/status:
+    get:
+      tags: [Sensors]
+      summary: Get sensor status
+      parameters:
+        - name: sensor_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/v1/sensors/latest:
+    get:
+      tags: [Sensors]
+      summary: Get latest
+      responses:
+        '200':
+          description: OK
+  /api/usage/reset:
+    post:
+      tags: [Usage Statistics]
+      summary: Reset usage
+      responses:
+        '200':
+          description: OK
+  /api/usage/save:
+    post:
+      tags: [Usage Statistics]
+      summary: Save usage
+      responses:
+        '200':
+          description: OK
+  /api/usage/{date}:
+    get:
+      tags: [Usage Statistics]
+      summary: Get usage
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/usage/statistics:
+    get:
+      tags: [Usage Statistics]
+      summary: Get statistics
+      responses:
+        '200':
+          description: OK
+  /api/room/{room_name}/save:
+    post:
+      tags: [Room Management]
+      summary: Save room
+      parameters:
+        - name: room_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/room/{room_name}/{date}:
+    get:
+      tags: [Room Management]
+      summary: Get room
+      parameters:
+        - name: room_name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/room/{room_name}/statistics:
+    get:
+      tags: [Room Management]
+      summary: Room stats
+      parameters:
+        - name: room_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/rooms/all/{date}:
+    get:
+      tags: [Room Management]
+      summary: All rooms
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/rooms/reset:
+    post:
+      tags: [Room Management]
+      summary: Reset rooms
+      responses:
+        '200':
+          description: OK
+  /api/admin/access:
+    post:
+      tags: [Admin & Logging]
+      summary: Admin access
+      responses:
+        '200':
+          description: OK
+  /api/alerts:
+    post:
+      tags: [Admin & Logging]
+      summary: Create alert
+      responses:
+        '200':
+          description: OK
+  /api/user/login:
+    post:
+      tags: [Admin & Logging]
+      summary: User login
+      responses:
+        '200':
+          description: OK
+  /api/feedback:
+    post:
+      tags: [Admin & Logging]
+      summary: Feedback
+      responses:
+        '200':
+          description: OK
+  /api/device/log:
+    post:
+      tags: [Admin & Logging]
+      summary: Device log
+      responses:
+        '200':
+          description: OK
