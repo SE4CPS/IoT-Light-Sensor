@@ -89,7 +89,7 @@ String timestamp = getISOTime();
 // JSON payload
 String payload = "{";
 payload += "\"sensor_id\":\"" + String(sensorId) + "\",";
-//payload += "\"timestamp\":\"" + String(timestamp) + "\",";
+payload += "\"timestamp\":\"" + String(timestamp) + "\",";
 payload += "\"lux\":" + String(lux);
 payload += "}";
 
