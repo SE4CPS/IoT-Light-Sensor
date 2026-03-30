@@ -441,6 +441,10 @@
                             <span class="field-type">String "2026-02-05"</span>
                         </div>
                         <div class="field">
+                            <span class="field-name">sensor_id</span>
+                            <span class="field-type">String (e.g. "all-rooms")</span>
+                        </div>
+                        <div class="field">
                             <span class="field-name">onSeconds</span>
                             <span class="field-type">Number (0-86400)</span>
                         </div>
@@ -449,8 +453,16 @@
                             <span class="field-type">Number</span>
                         </div>
                         <div class="field">
+                            <span class="field-name">lux</span>
+                            <span class="field-type">Number (0-800) - latest embedded sensor reading</span>
+                        </div>
+                        <div class="field">
                             <span class="field-name">updatedAt</span>
-                            <span class="field-type">DateTime ISO</span>
+                            <span class="field-type">DateTime ISO (server time)</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">luxUpdatedAt</span>
+                            <span class="field-type">DateTime ISO (PST, last sensor update)</span>
                         </div>
                     </div>
                 </div>
@@ -466,6 +478,10 @@
                             <span class="field-type">String "2026-02-05"</span>
                         </div>
                         <div class="field">
+                            <span class="field-name">sensor_id</span>
+                            <span class="field-type">String (e.g. "sensor-1")</span>
+                        </div>
+                        <div class="field">
                             <span class="field-name">onSeconds</span>
                             <span class="field-type">Number</span>
                         </div>
@@ -477,46 +493,70 @@
                             <span class="field-name">updatedAt</span>
                             <span class="field-type">DateTime ISO</span>
                         </div>
+                        <div class="field">
+                            <span class="field-name">luxUpdatedAt</span>
+                            <span class="field-type">DateTime ISO (PST, last sensor update for this room)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="collection">
                     <div class="collection-header room">🛏️ room_bedroom</div>
                     <div class="collection-body">
+                        <div class="field"><span class="field-name">_id</span><span class="field-type">ObjectId</span></div>
                         <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">sensor_id</span><span class="field-type">String (e.g. "sensor-2")</span></div>
                         <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
                         <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">updatedAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">luxUpdatedAt</span><span class="field-type">DateTime ISO (PST)</span></div>
                     </div>
                 </div>
                 <div class="collection">
                     <div class="collection-header room">🍳 room_kitchen</div>
                     <div class="collection-body">
+                        <div class="field"><span class="field-name">_id</span><span class="field-type">ObjectId</span></div>
                         <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">sensor_id</span><span class="field-type">String (e.g. "sensor-3")</span></div>
                         <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
                         <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">updatedAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">luxUpdatedAt</span><span class="field-type">DateTime ISO (PST)</span></div>
                     </div>
                 </div>
                 <div class="collection">
                     <div class="collection-header room">🚿 room_bathroom</div>
                     <div class="collection-body">
+                        <div class="field"><span class="field-name">_id</span><span class="field-type">ObjectId</span></div>
                         <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">sensor_id</span><span class="field-type">String (e.g. "sensor-4")</span></div>
                         <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
                         <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">updatedAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">luxUpdatedAt</span><span class="field-type">DateTime ISO (PST)</span></div>
                     </div>
                 </div>
                 <div class="collection">
                     <div class="collection-header room">💼 room_office</div>
                     <div class="collection-body">
+                        <div class="field"><span class="field-name">_id</span><span class="field-type">ObjectId</span></div>
                         <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">sensor_id</span><span class="field-type">String (e.g. "sensor-5")</span></div>
                         <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
                         <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">updatedAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">luxUpdatedAt</span><span class="field-type">DateTime ISO (PST)</span></div>
                     </div>
                 </div>
                 <div class="collection">
                     <div class="collection-header room">🚗 room_garage</div>
                     <div class="collection-body">
+                        <div class="field"><span class="field-name">_id</span><span class="field-type">ObjectId</span></div>
                         <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">sensor_id</span><span class="field-type">String (e.g. "sensor-6")</span></div>
                         <div class="field"><span class="field-name">onSeconds</span><span class="field-type">Number</span></div>
                         <div class="field"><span class="field-name">avgLux</span><span class="field-type">Number</span></div>
+                        <div class="field"><span class="field-name">updatedAt</span><span class="field-type">DateTime ISO</span></div>
+                        <div class="field"><span class="field-name">luxUpdatedAt</span><span class="field-type">DateTime ISO (PST)</span></div>
                     </div>
                 </div>
                 <div class="collection">
@@ -546,6 +586,8 @@
                     <div class="collection-header admin">🔐 admin_access</div>
                     <div class="collection-body">
                         <div class="field"><span class="field-name">username</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">loginType</span><span class="field-type">String ("personal" or "organization")</span></div>
+                        <div class="field"><span class="field-name">organizationName</span><span class="field-type">String (if loginType = "organization")</span></div>
                         <div class="field"><span class="field-name">accessedAt</span><span class="field-type">DateTime ISO</span></div>
                         <div class="field"><span class="field-name">ip</span><span class="field-type">String</span></div>
                         <div class="field"><span class="field-name">userAgent</span><span class="field-type">String</span></div>
@@ -560,6 +602,35 @@
                         <div class="field"><span class="field-name">date</span><span class="field-type">String</span></div>
                         <div class="field"><span class="field-name">durationSeconds</span><span class="field-type">Number</span></div>
                         <div class="field"><span class="field-name">type</span><span class="field-type">String (e.g. duration_over_40min)</span></div>
+                        <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime ISO</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);">🔑 users</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">email</span><span class="field-type">String (unique)</span></div>
+                        <div class="field"><span class="field-name">passwordHash</span><span class="field-type">String (hashed password)</span></div>
+                        <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime ISO</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">📝 Feedback</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">text</span><span class="field-type">String (reported issue)</span></div>
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String (PST)</span></div>
+                        <div class="field"><span class="field-name">time</span><span class="field-type">String (PST)</span></div>
+                        <div class="field"><span class="field-name">timestamp</span><span class="field-type">DateTime ISO (PST)</span></div>
+                        <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime ISO</span></div>
+                    </div>
+                </div>
+                <div class="collection">
+                    <div class="collection-header admin">🏢 Organization</div>
+                    <div class="collection-body">
+                        <div class="field"><span class="field-name">adminName</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">organizationName</span><span class="field-type">String</span></div>
+                        <div class="field"><span class="field-name">date</span><span class="field-type">String (PST)</span></div>
+                        <div class="field"><span class="field-name">time</span><span class="field-type">String (PST)</span></div>
+                        <div class="field"><span class="field-name">timestamp</span><span class="field-type">DateTime ISO (PST)</span></div>
                         <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime ISO</span></div>
                     </div>
                 </div>
@@ -581,27 +652,32 @@
                     <tr>
                         <td><span class="method post">POST</span></td>
                         <td class="endpoint">/api/usage/save</td>
-                        <td>Save daily light usage data</td>
+                        <td>Save daily light usage data (on/off seconds + optional sensor_id)</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
                         <td class="endpoint">/api/usage/{date}</td>
-                        <td>Get usage for specific date (YYYY-MM-DD)</td>
+                        <td>Get usage for specific date (YYYY-MM-DD), including lux + sensor_id if present</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
                         <td class="endpoint">/api/usage/statistics</td>
-                        <td>Get monthly statistics</td>
+                        <td>Get weekly + monthly statistics (excluding today; used for dashboard totals)</td>
                     </tr>
                     <tr>
                         <td><span class="method post">POST</span></td>
                         <td class="endpoint">/api/room/{room}/save</td>
-                        <td>Save room-specific usage data</td>
+                        <td>Save room-specific usage data (onSeconds, avgLux, optional sensor_id)</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
                         <td class="endpoint">/api/room/{room}/{date}</td>
-                        <td>Get room data for specific date</td>
+                        <td>Get room data for specific date (includes sensor_id + luxUpdatedAt)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method get">GET</span></td>
+                        <td class="endpoint">/api/room/{room}/statistics</td>
+                        <td>Get weekly + monthly usage statistics for a specific room</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
@@ -615,13 +691,18 @@
                     </tr>
                     <tr>
                         <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/usage/reset</td>
+                        <td>Reset all daily_usage data</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
                         <td class="endpoint">/api/user/login</td>
-                        <td>Save user login (email + metadata). Password not stored.</td>
+                        <td>Register first-time users and validate password on subsequent logins; logs login into user_data</td>
                     </tr>
                     <tr>
                         <td><span class="method post">POST</span></td>
                         <td class="endpoint">/api/admin/access</td>
-                        <td>Log admin access (username, time, metadata)</td>
+                        <td>Log admin access (mandatory username, loginType, optional organizationName, metadata)</td>
                     </tr>
                     <tr>
                         <td><span class="method post">POST</span></td>
@@ -631,7 +712,22 @@
                     <tr>
                         <td><span class="method post">POST</span></td>
                         <td class="endpoint">/api/alerts</td>
-                        <td>Create alert when lights on 40+ minutes</td>
+                        <td>Create alert when lights on 40+ minutes (deduplicated per room/date/type)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/feedback</td>
+                        <td>Store "Report an Issue" text from customize modal into Feedback collection</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td class="endpoint">/api/v1/sensors/data</td>
+                        <td>Upsert today's lux + sensor_id into daily_usage and into the mapped room collection only if that room is ON</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method get">GET</span></td>
+                        <td class="endpoint">/api/v1/sensors/latest</td>
+                        <td>Return latest lux + sensor_id from daily_usage (used by gauge)</td>
                     </tr>
                 </tbody>
             </table>
@@ -648,8 +744,8 @@
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
-                    <div class="feature-title">Weekly Line Graph</div>
-                    <div class="feature-desc">Interactive graph showing Sun-Sat usage. Click any calendar date to view that week's statistics.</div>
+                    <div class="feature-title">Weekly & Monthly Analytics</div>
+                    <div class="feature-desc">Weekly Sun-Sat line graph plus a Daily Usage analytics section that shows a vertical bar chart with months on the x-axis for the selected day across the year.</div>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🌙</div>
@@ -659,7 +755,7 @@
                 <div class="feature-card">
                     <div class="feature-icon">🎨</div>
                     <div class="feature-title">Customizable Wallpapers</div>
-                    <div class="feature-desc">Multiple background options including gradients, city scenes, and animated effects.</div>
+                    <div class="feature-desc">Multiple background options including gradients, city scenes, and animated effects. Customize button, timezone, and info remain accessible even before login.</div>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🌿</div>
@@ -674,12 +770,27 @@
                 <div class="feature-card">
                     <div class="feature-icon">👤</div>
                     <div class="feature-title">Profile Icon</div>
-                    <div class="feature-desc">Profile icon (top-right) shows logged-in email; click to open dropdown (logout). Login saves user data (email, IP, userAgent) to MongoDB user_data collection. Dashboard gated behind login modal.</div>
+                    <div class="feature-desc">Profile icon (top-right) shows logged-in email; click to open dropdown (logout). Login requires a valid email + password. First login stores hashed password; subsequent logins validate and show "Invalid password" if incorrect. Successful logins save user data (email, IP, userAgent) to user_data. Dashboard content is gated behind the login modal.</div>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🕐</div>
                     <div class="feature-title">Timezone</div>
                     <div class="feature-desc">Click clock icon to select from 8 timezones (PST, EST, CST, MST, AST, UTC, CET, IST). Defaults to UTC. Selected timezone updates time/date display and screensaver clock. Preference saved in localStorage.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <div class="feature-title">User View Box</div>
+                    <div class="feature-desc">Beside the weekly stats, a user-facing data view box shows MongoDB daily usage data based on selected month, date, and room dropdowns, with internal MongoDB <code>_id</code> hidden.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <div class="feature-title">Report an Issue & Feedback</div>
+                    <div class="feature-desc">Inside the Customize modal, a "Report an Issue" box lets users type up to ~600 words. Submissions are stored in the Feedback collection with PST date/time and are surfaced in the admin data-structure view.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <div class="feature-title">Organization Admin Login</div>
+                    <div class="feature-desc">Admin access modal requires a username. An optional organization checkbox + textbox lets admins log in on behalf of an organization; these logins are written to both admin_access and Organization collections with date/time.</div>
                 </div>
             </div>
         </div>
