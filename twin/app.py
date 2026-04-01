@@ -30,15 +30,17 @@ def _get_required_env(name: str) -> str:
     return v
 
 
-def _client() -> MongoClient:
-    return MongoClient(_get_required_env("MONGO_URI"))
+# Reuse one MongoDB client for the app
+mongo_client = MongoClient(_get_required_env("MONGO_URI"))
 
 
 def _collection():
     db_name = os.getenv("DB_NAME", "light_sensor_db")
-    col = _client()[db_name]["readings"]
-    col.create_index([("device_id", ASCENDING), ("ts", ASCENDING)])
-    return col
+    return mongo_client[db_name]["readings"]
+
+
+# Create index once at startup, not on every request
+_collection().create_index([("device_id", ASCENDING), ("ts", ASCENDING)], name="idx_device_ts")
 
 
 def _parse_hours(default: int = 24) -> int:
@@ -59,44 +61,47 @@ def _parse_limit(default: int = 500) -> int:
 
 @app.get("/api/readings")
 def api_readings():
-    device_id = request.args.get("device_id") or os.getenv("DEVICE_ID", "ls-100-0001")
-    hours = _parse_hours(24)
-    limit = _parse_limit(1000)
+    try:
+        device_id = request.args.get("device_id") or os.getenv("DEVICE_ID", "ls-100-0001")
+        hours = _parse_hours(24)
+        limit = _parse_limit(1000)
 
-    end = datetime.now(timezone.utc)
-    start = end - timedelta(hours=hours)
+        end = datetime.now(timezone.utc)
+        start = end - timedelta(hours=hours)
 
-    q = {"device_id": device_id, "ts": {"$gte": start, "$lt": end}}
-    docs = list(
-        _collection()
-        .find(q, {"_id": 0, "ts": 1, "lux_pred": 1, "lux_obs": 1, "cloud_cover": 1, "flags": 1})
-        .sort("ts", 1)
-        .limit(limit)
-    )
-
-    # Convert datetime -> ISO8601 string for the browser
-    out = []
-    for d in docs:
-        ts = d.get("ts")
-        out.append(
-            {
-                "ts": ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z") if ts else None,
-                "lux_pred": float(d.get("lux_pred", 0.0)),
-                "lux_obs": float(d.get("lux_obs", 0.0)),
-                "cloud_cover": float(d.get("cloud_cover", 0.0)),
-                "flags": d.get("flags", {}),
-            }
+        q = {"device_id": device_id, "ts": {"$gte": start, "$lt": end}}
+        docs = list(
+            _collection()
+            .find(q, {"_id": 0, "ts": 1, "lux_pred": 1, "lux_obs": 1, "cloud_cover": 1, "flags": 1})
+            .sort("ts", 1)
+            .limit(limit)
         )
 
-    return jsonify(
-        {
-            "device_id": device_id,
-            "start": start.isoformat().replace("+00:00", "Z"),
-            "end": end.isoformat().replace("+00:00", "Z"),
-            "count": len(out),
-            "readings": out,
-        }
-    )
+        # Convert datetime -> ISO8601 string for the browser
+        out = []
+        for d in docs:
+            ts = d.get("ts")
+            out.append(
+                {
+                    "ts": ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z") if ts else None,
+                    "lux_pred": float(d.get("lux_pred", 0.0)),
+                    "lux_obs": float(d.get("lux_obs", 0.0)),
+                    "cloud_cover": float(d.get("cloud_cover", 0.0)),
+                    "flags": d.get("flags", {}),
+                }
+            )
+
+        return jsonify(
+            {
+                "device_id": device_id,
+                "start": start.isoformat().replace("+00:00", "Z"),
+                "end": end.isoformat().replace("+00:00", "Z"),
+                "count": len(out),
+                "readings": out,
+            }
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to load readings: {str(e)}"}), 500
 
 
 @app.get("/")
@@ -165,74 +170,103 @@ async function loadData() {
   const deviceId = document.getElementById("deviceId").value.trim();
   const hours = Number(document.getElementById("hours").value || 24);
 
-  const url = `/api/readings?device_id=${encodeURIComponent(deviceId)}&hours=${encodeURIComponent(hours)}&limit=2000`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    setMeta(`Error: ${res.status} ${res.statusText}`);
-    btn.disabled = false;
-    return;
-  }
-  const data = await res.json();
+  try {
+    const url = `/api/readings?device_id=${encodeURIComponent(deviceId)}&hours=${encodeURIComponent(hours)}&limit=2000`;
+    const res = await fetch(url);
 
-  const pointsPred = data.readings.map(r => ({ x: r.ts, y: r.lux_pred }));
-  const pointsObs  = data.readings.map(r => ({ x: r.ts, y: r.lux_obs }));
+    if (!res.ok) {
+      setMeta(`Error: ${res.status} ${res.statusText}`);
+      if (chart) {
+        chart.destroy();
+        chart = null;
+      }
+      btn.disabled = false;
+      return;
+    }
 
-  const negCount = data.readings.filter(r => r.flags && r.flags.is_negative).length;
-  const highCount = data.readings.filter(r => r.flags && r.flags.is_impossible_high).length;
-  const stuckCount = data.readings.filter(r => r.flags && r.flags.is_stuck).length;
+    const data = await res.json();
 
-  setMeta(
+    if (data.count === 0) {
+      setMeta(
+`device_id: ${data.device_id}
+window:   ${data.start}  →  ${data.end}
+count:    0
+message:  No data found for the selected time range.`
+      );
+      if (chart) {
+        chart.destroy();
+        chart = null;
+      }
+      btn.disabled = false;
+      return;
+    }
+
+    const pointsPred = data.readings.map(r => ({ x: r.ts, y: r.lux_pred }));
+    const pointsObs  = data.readings.map(r => ({ x: r.ts, y: r.lux_obs }));
+
+    const negCount = data.readings.filter(r => r.flags && r.flags.is_negative).length;
+    const highCount = data.readings.filter(r => r.flags && r.flags.is_impossible_high).length;
+    const stuckCount = data.readings.filter(r => r.flags && r.flags.is_stuck).length;
+
+    setMeta(
 `device_id: ${data.device_id}
 window:   ${data.start}  →  ${data.end}
 count:    ${data.count}
 flags:    negative=${negCount}, impossible_high=${highCount}, stuck=${stuckCount}`
-  );
+    );
 
-  const ctx = document.getElementById("chart").getContext("2d");
-  if (chart) chart.destroy();
+    const ctx = document.getElementById("chart").getContext("2d");
+    if (chart) chart.destroy();
 
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      datasets: [
-        {
-          label: "lux_pred",
-          data: pointsPred,
-          tension: 0.15,
-          borderWidth: 2,
-          pointRadius: 0
-        },
-        {
-          label: "lux_obs",
-          data: pointsObs,
-          tension: 0.15,
-          borderWidth: 2,
-          pointRadius: 0
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: "index", intersect: false },
-      plugins: {
-        legend: { display: true },
-        tooltip: { enabled: true }
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        datasets: [
+          {
+            label: "lux_pred",
+            data: pointsPred,
+            tension: 0.15,
+            borderWidth: 2,
+            pointRadius: 0
+          },
+          {
+            label: "lux_obs",
+            data: pointsObs,
+            tension: 0.15,
+            borderWidth: 2,
+            pointRadius: 0
+          }
+        ]
       },
-      scales: {
-        x: {
-          type: "time",
-          time: { tooltipFormat: "PPpp" },
-          ticks: { maxRotation: 0 }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: true },
+          tooltip: { enabled: true }
         },
-        y: {
-          title: { display: true, text: "lux" }
+        scales: {
+          x: {
+            type: "time",
+            time: { tooltipFormat: "PPpp" },
+            ticks: { maxRotation: 0 }
+          },
+          y: {
+            title: { display: true, text: "lux" }
+          }
         }
       }
+    });
+  } catch (err) {
+    setMeta(`Error: ${err.message}`);
+    if (chart) {
+      chart.destroy();
+      chart = null;
     }
-  });
-
-  btn.disabled = false;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 document.getElementById("loadBtn").addEventListener("click", loadData);
@@ -245,5 +279,4 @@ loadData();
 
 
 if __name__ == "__main__":
-    # Traditional dev run
     app.run(host="127.0.0.1", port=5000, debug=True)
