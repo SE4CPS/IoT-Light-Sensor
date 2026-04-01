@@ -5232,7 +5232,25 @@
 
         // Donut Chart
         async function updateDonutChart() {
-            const usageSeconds = await getUsageForDate(selectedDate);
+            const usageSecondsRaw = await getUsageForDate(selectedDate);
+            const usageSecondsSafe = Number(usageSecondsRaw);
+            let usageSeconds = Number.isFinite(usageSecondsSafe) ? usageSecondsSafe : 0;
+
+            const todayPST = getPSTDate();
+            const selYear = selectedDate.getFullYear();
+            const selMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const selDay = String(selectedDate.getDate()).padStart(2, '0');
+            const selectedDateStr = `${selYear}-${selMonth}-${selDay}`;
+            const isSelectedToday = selectedDateStr === todayPST;
+
+            // Requested behavior: when current lights are OFF, today's donut should display 0.
+            if (isSelectedToday) {
+                const anyRoomOn = Object.values(roomConfig).some((room) => room.on);
+                if (!anyRoomOn) {
+                    usageSeconds = 0;
+                }
+            }
+
             const hours = usageSeconds / 3600;
             const maxHours = 24;
             const percentage = Math.min(hours / maxHours, 1);
@@ -5252,14 +5270,9 @@
             }
             
             // Update the unit label based on selected date
-            const todayPST = getPSTDate();
-            const selYear = selectedDate.getFullYear();
-            const selMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
-            const selDay = String(selectedDate.getDate()).padStart(2, '0');
-            const selectedDateStr = `${selYear}-${selMonth}-${selDay}`;
             const donutUnit = document.getElementById('donutUnit');
             
-            if (selectedDateStr === todayPST) {
+            if (isSelectedToday) {
                 donutUnit.textContent = 'today';
             } else {
                 donutUnit.textContent = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}`;

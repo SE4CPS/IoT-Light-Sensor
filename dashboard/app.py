@@ -117,7 +117,11 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 @app.route('/swagger/swagger.yaml')
 def swagger_spec():
     from flask import send_file
-    return send_file('swagger/swagger.yaml', mimetype='text/yaml')
+    # Use app root so this works on Render regardless of process working directory
+    path = os.path.join(app.root_path, 'swagger', 'swagger.yaml')
+    if not os.path.isfile(path):
+        return jsonify({"error": "swagger spec not found"}), 404
+    return send_file(path, mimetype='text/yaml')
 
 # Simulated sensor data storage
 sensor_history = []
