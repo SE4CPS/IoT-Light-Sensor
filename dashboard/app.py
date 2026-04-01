@@ -170,7 +170,16 @@ def dashboard():
 
 @app.route('/diagram')
 def diagram():
-    return render_template('diagram.html')
+    # Serve as static HTML — do not pass through Jinja. Path placeholders like
+    # /api/usage/{date} are valid REST notation but can break Jinja on some
+    # versions (500 on Render). This page has no template variables.
+    from flask import send_file
+    tpl = os.path.join(app.root_path, 'templates', 'diagram.html')
+    root = os.path.join(app.root_path, 'diagram.html')
+    path = tpl if os.path.isfile(tpl) else root
+    if not os.path.isfile(path):
+        return jsonify({"error": "diagram page not found"}), 404
+    return send_file(path, mimetype='text/html')
 
 @app.route('/api/sensor')
 def get_sensor_data():
