@@ -1,6 +1,7 @@
 openapi: 3.0.3
 info:
-  title: IoT Light Sensor API - All 21 Endpoints
+  title: IoT Light Sensor API
+  description: 21 paths in this file. The full manifest in MongoDB collection API includes GET /api/docs (22 total).
   version: 1.0.0
 servers:
   - url: https://iot-light-sensor.onrender.com

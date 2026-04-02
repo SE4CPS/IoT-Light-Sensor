@@ -12,8 +12,8 @@ import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_swagger_ui import get_swaggerui_blueprint
 
-# Load environment variables from .env file
-load_dotenv()
+# Load .env from this file's directory so MONGO_URI works regardless of cwd (e.g. gunicorn, IDE)
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
@@ -21,10 +21,14 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 MONGO_URI = os.getenv('MONGO_URI')
 DB_NAME = os.getenv('DB_NAME', 'light_sensor_db')
 
+# MongoDB collection name for storing the full API route list as text
+API_COLLECTION_NAME = 'API'
+
 if not MONGO_URI:
     print("⚠️ MONGO_URI not found in .env file")
     db = None
     usage_collection = None
+    readings_collection = None
     room_collections = {}
     admin_collection = None
     organization_collection = None
@@ -33,6 +37,7 @@ if not MONGO_URI:
     user_data_collection = None
     users_collection = None
     feedback_collection = None
+    api_collection = None
 else:
     try:
         client = MongoClient(
@@ -44,6 +49,7 @@ else:
         client.admin.command('ping')
         db = client[DB_NAME]
         usage_collection = db['daily_usage']
+        readings_collection = db['readings']
         
         # Room-specific collections
         room_collections = {
@@ -69,7 +75,9 @@ else:
         users_collection = db['users']
         # Feedback / report an issue collection
         feedback_collection = db['Feedback']
-        
+        # Plain-text manifest of documented APIs (fixed list, not from url_map)
+        api_collection = db[API_COLLECTION_NAME]
+
         print("✅ Connected to MongoDB Atlas")
         print("📦 Room collections: living, bedroom, kitchen, bathroom, office, garage")
         print("📦 Admin collection: admin_access")
@@ -78,10 +86,12 @@ else:
         print("📦 User data collection: user_data")
         print("📦 Users collection: users")
         print("📦 Feedback collection: Feedback")
+        print(f"📦 API manifest collection: {API_COLLECTION_NAME}")
     except ConnectionFailure as e:
         print(f"⚠️ MongoDB not available. Error: {e}")
         db = None
         usage_collection = None
+        readings_collection = None
         room_collections = {}
         admin_collection = None
         organization_collection = None
@@ -90,10 +100,12 @@ else:
         user_data_collection = None
         users_collection = None
         feedback_collection = None
+        api_collection = None
     except Exception as e:
         print(f"⚠️ MongoDB connection error: {e}")
         db = None
         usage_collection = None
+        readings_collection = None
         room_collections = {}
         admin_collection = None
         organization_collection = None
@@ -102,6 +114,7 @@ else:
         user_data_collection = None
         users_collection = None
         feedback_collection = None
+        api_collection = None
 
 
 # Swagger UI Configuration
@@ -355,24 +368,96 @@ def get_usage(date):
         "luxUpdatedAt": ""
     })
     
+# Lux at or above this level is treated as "lights / ambient on" for the dashboard badge.
+LUX_LIGHTS_ON_THRESHOLD = 25.0
+
+
 @app.route('/api/v1/sensors/latest', methods=['GET'])
 def get_latest_sensor_reading():
-    """Return the latest document from usage_collection with sensor_id and lux."""
-    if usage_collection is None:
+    """Latest lux plus today's on/off durations from daily_usage (or readings fallback)."""
+    if usage_collection is None and readings_collection is None:
         return jsonify({"success": False, "message": "MongoDB not available"}), 503
- 
+
     try:
-        latest = usage_collection.find_one(
-            sort=[("_id", -1)]
-        )
-        if not latest:
+        pst = pytz.timezone('America/Los_Angeles')
+        today_str = datetime.now(pst).strftime('%Y-%m-%d')
+
+        latest = None
+        source = None
+        if usage_collection is not None:
+            latest = usage_collection.find_one(
+                {"lux": {"$ne": None}},
+                sort=[("luxUpdatedAt", -1), ("updatedAt", -1), ("_id", -1)]
+            )
+            source = "daily_usage" if latest else None
+        if latest is None and readings_collection is not None:
+            latest = readings_collection.find_one(
+                {"lux": {"$ne": None}},
+                sort=[("luxUpdatedAt", -1), ("updatedAt", -1), ("_id", -1)]
+            )
+            source = "readings" if latest else None
+
+        sid = ((latest or {}).get("sensor_id") or "").strip()
+        usage_today = None
+        if usage_collection is not None:
+            if sid:
+                usage_today = usage_collection.find_one({"date": today_str, "sensor_id": sid})
+            if not usage_today:
+                usage_today = usage_collection.find_one({"date": today_str})
+
+        if not latest and not usage_today:
             return jsonify({"success": False, "message": "No readings found"}), 404
- 
+
+        lux_val = (latest or {}).get("lux")
+        if lux_val is None and usage_today is not None:
+            lux_val = usage_today.get("lux")
+
+        sensor_id = sid or ((usage_today or {}).get("sensor_id") or "")
+
+        if usage_today:
+            on_sec = int(usage_today.get("onSeconds", 0) or 0)
+            off_sec = int(usage_today.get("offSeconds", 0) or 0)
+            if off_sec <= 0:
+                off_sec = max(0, 86400 - on_sec)
+            duration_date = usage_today.get("date", today_str)
+            lux_updated = (usage_today.get("luxUpdatedAt") or (latest or {}).get("luxUpdatedAt") or "")
+            updated_at = (usage_today.get("updatedAt") or (latest or {}).get("updatedAt") or "")
+            if source is None:
+                source = "daily_usage"
+        elif latest:
+            on_sec = int(latest.get("onSeconds", 0) or 0)
+            off_sec = int(latest.get("offSeconds", 0) or 0)
+            if off_sec <= 0:
+                off_sec = max(0, 86400 - on_sec)
+            duration_date = latest.get("date", today_str)
+            lux_updated = latest.get("luxUpdatedAt", "") or ""
+            updated_at = latest.get("updatedAt", "") or ""
+        else:
+            on_sec = 0
+            off_sec = 86400
+            duration_date = today_str
+            lux_updated = ""
+            updated_at = ""
+
+        lights_on = None
+        if lux_val is not None:
+            try:
+                lights_on = float(lux_val) >= LUX_LIGHTS_ON_THRESHOLD
+            except (TypeError, ValueError):
+                lights_on = None
+
         return jsonify({
             "success": True,
             "data": {
-                "sensor_id": latest.get("sensor_id"),
-                "lux": latest.get("lux")
+                "source": source,
+                "sensor_id": sensor_id,
+                "lux": lux_val,
+                "lightsOn": lights_on,
+                "date": duration_date,
+                "onSeconds": on_sec,
+                "offSeconds": off_sec,
+                "luxUpdatedAt": lux_updated,
+                "updatedAt": updated_at,
             }
         })
     except Exception as e:
@@ -759,6 +844,58 @@ def log_device():
     except Exception as e:
         print(f"⚠️ Failed to log device: {e}")
         return jsonify({"success": False, "message": "Failed to log device"}), 500
+
+
+# Documented API list (22 total: OpenAPI paths + Swagger UI; same as diagram / Info modal).
+DOCUMENTED_APIS = [
+    ('GET', '/', 'Dashboard page'),
+    ('GET', '/diagram', 'Architecture diagram page'),
+    ('GET', '/api/docs', 'Swagger UI (interactive API docs)'),
+    ('GET', '/api/sensor', 'Simulated sensor reading'),
+    ('POST', '/api/v1/sensors/register', 'Register sensor device'),
+    ('POST', '/api/v1/sensors/data', 'Submit lux sensor reading'),
+    ('GET', '/api/v1/sensors/{sensor_id}/status', 'Sensor status by ID'),
+    ('GET', '/api/v1/sensors/latest', 'Latest lux from daily_usage'),
+    ('POST', '/api/usage/reset', 'Clear all daily usage'),
+    ('POST', '/api/usage/save', 'Save daily usage'),
+    ('GET', '/api/usage/{date}', 'Get usage for date'),
+    ('GET', '/api/usage/statistics', 'Weekly and monthly stats'),
+    ('POST', '/api/room/{room}/save', 'Save room usage'),
+    ('GET', '/api/room/{room}/{date}', 'Get room data for date'),
+    ('GET', '/api/room/{room}/statistics', 'Room weekly and monthly stats'),
+    ('GET', '/api/rooms/all/{date}', 'All rooms for date'),
+    ('POST', '/api/rooms/reset', 'Clear all room data'),
+    ('POST', '/api/admin/access', 'Log admin access'),
+    ('POST', '/api/alerts', 'Create long-on alert'),
+    ('POST', '/api/user/login', 'User login (email and password)'),
+    ('POST', '/api/feedback', 'Report an issue'),
+    ('POST', '/api/device/log', 'Log device when lights turn on'),
+]
+
+
+def sync_api_routes_text_to_mongodb():
+    """Write the documented API list as plain text into the API collection (fixed manifest, not url_map)."""
+    if api_collection is None:
+        return
+    lines = [f'{m} {p}  --  {d}' for m, p, d in DOCUMENTED_APIS]
+    text = '\n'.join(lines)
+    try:
+        api_collection.replace_one(
+            {'name': 'api_manifest'},
+            {
+                'name': 'api_manifest',
+                'apisText': text,
+                'lineCount': len(DOCUMENTED_APIS),
+                'updatedAt': datetime.now().isoformat(),
+            },
+            upsert=True,
+        )
+        print(f"📦 Collection '{API_COLLECTION_NAME}': stored {len(DOCUMENTED_APIS)} documented APIs as text")
+    except Exception as e:
+        print(f"⚠️ Failed to sync {API_COLLECTION_NAME} collection: {e}")
+
+
+sync_api_routes_text_to_mongodb()
 
 if __name__ == '__main__':
     for i in range(20):

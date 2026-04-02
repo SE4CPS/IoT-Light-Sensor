@@ -657,15 +657,44 @@
         .main-content {
             flex: 1;
             padding: 32px 48px;
+            padding-right: 260px;
             display: flex;
             flex-direction: column;
         }
 
         .header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
             margin-bottom: 32px;
+        }
+
+        .header-left {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-center {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-right-spacer {
+            flex: 1 1 0;
+            min-width: 0;
+            pointer-events: none;
+        }
+
+        .header .sensor-live-status {
+            min-width: 0;
+            max-width: min(320px, 90vw);
+            padding: 8px 18px;
+            font-size: 16px;
         }
 
         .title-wrapper {
@@ -825,12 +854,26 @@
         .gauge-container {
             flex: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
-            gap: 48px;
+            gap: 20px;
         }
 
+        .gauge-main-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+            gap: 32px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
+        }
 
         .roller-container {
             display: flex;
@@ -841,15 +884,48 @@
             height: 280px;
         }
 
+        .sensor-live-status {
+            font-size: 16px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .sensor-live-status.on {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.4);
+        }
+
+        .sensor-live-status.off {
+            background: rgba(148, 163, 184, 0.15);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+        }
+
+        .sensor-live-status.unknown {
+            background: rgba(113, 128, 150, 0.15);
+            color: #94a3b8;
+        }
+
+        .sensor-live-status.off-inactive {
+            background: rgba(239, 68, 68, 0.18);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.5);
+        }
+
         /* Weekly Line Graph */
         .weekly-graph-container {
             background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
             border-radius: 16px;
             padding: 20px;
-            margin-left: 30px;
+            margin-left: 0;
             width: 350px;
             height: 280px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .user-data-view-container {
@@ -859,6 +935,7 @@
             width: 330px;
             height: 280px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .user-data-selectors {
@@ -964,7 +1041,7 @@
 
         .graph-y-axis span {
             text-align: right;
-            width: 30px;
+            width: 34px;
         }
 
         .graph-canvas-wrapper {
@@ -979,17 +1056,30 @@
             height: 100%;
         }
 
+        .graph-x-axis-wrap {
+            padding-top: 8px;
+        }
+
         .graph-x-axis {
             display: flex;
             justify-content: space-between;
-            padding-top: 8px;
             font-size: 10px;
             color: #718096;
         }
 
         .graph-x-axis span {
             text-align: center;
-            width: 35px;
+            flex: 1;
+            min-width: 0;
+            max-width: 44px;
+        }
+
+        .graph-x-axis-note {
+            text-align: center;
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 2px;
+            width: 100%;
         }
 
         .graph-x-axis span.today {
@@ -1079,6 +1169,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
             gap: 24px;
             background: linear-gradient(to bottom, rgba(28, 28, 32, 0.85) 0%, rgba(28, 28, 32, 0.9) 65%, rgba(28, 28, 32, 0.92) 100%);
             border-radius: 20px;
@@ -2655,6 +2746,7 @@
         @media (max-width: 1024px) {
             .main-content {
                 padding: 24px 32px;
+                padding-right: 200px;
             }
             
             .gauge-wrapper {
@@ -2679,7 +2771,7 @@
             
             .weekly-graph-container {
                 margin-left: 0;
-                margin-top: 24px;
+                margin-top: 0;
             }
         }
 
@@ -2759,20 +2851,40 @@
             
             .main-content {
                 padding: 16px;
+                padding-right: 88px;
                 width: 100%;
             }
             
             .header {
                 margin-bottom: 20px;
-                display: flex;
-                align-items: center;
+                flex-wrap: wrap;
+                row-gap: 10px;
+            }
+
+            .header-left {
+                flex: 1 1 auto;
+                min-width: 0;
             }
             
             .header .title {
                 flex: 1;
-                text-align: center;
+                text-align: left;
                 margin: 0;
                 font-size: 20px;
+            }
+
+            .header-center {
+                order: 3;
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            .header .sensor-live-status {
+                max-width: 100%;
+            }
+
+            .header-right-spacer {
+                display: none;
             }
             
             
@@ -2817,13 +2929,6 @@
                 font-size: 10px;
             }
             
-            /* Stack gauge, slider, then graph; center gauge and slider */
-            .gauge-container {
-                flex-direction: column;
-                align-items: center;
-                gap: 24px;
-            }
-            
             .gauge-ambient-box {
                 flex-direction: column;
                 width: 100%;
@@ -2831,7 +2936,7 @@
                 padding: 16px 40px 16px 16px;
                 gap: 16px;
             }
-            
+
             .gauge-wrapper {
                 width: 100%;
                 max-width: 300px;
@@ -2885,48 +2990,6 @@
             
             .roller-track {
                 height: 200px;
-            }
-            
-            /* Weekly graph below gauge and slider – slightly smaller for mobile */
-            .weekly-graph-container {
-                width: 100%;
-                max-width: 100%;
-                margin-left: 0;
-                margin-top: 8px;
-                align-self: stretch;
-                padding: 14px;
-                border-radius: 12px;
-            }
-            
-            .weekly-graph-header {
-                margin-bottom: 6px;
-            }
-            
-            .weekly-graph-title {
-                font-size: 12px;
-            }
-            
-            .weekly-graph-value .date {
-                font-size: 11px;
-            }
-            
-            .weekly-graph-value .hours {
-                font-size: 13px;
-            }
-            
-            .weekly-graph {
-                height: 140px;
-                padding-left: 28px;
-                padding-bottom: 20px;
-            }
-            
-            .graph-y-axis {
-                height: 115px;
-                font-size: 10px;
-            }
-            
-            .graph-x-axis {
-                font-size: 10px;
             }
             
             .room-bars-section {
@@ -3051,6 +3114,66 @@
             }
         }
 
+        /* Stack gauge + weekly graph + user view only on very narrow screens */
+        @media (max-width: 560px) {
+            .gauge-main-row {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                overflow-x: visible;
+            }
+
+            .weekly-graph-container {
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                margin-top: 0;
+                align-self: stretch;
+                padding: 14px;
+                border-radius: 12px;
+                height: auto;
+                min-height: 220px;
+            }
+
+            .weekly-graph-header {
+                margin-bottom: 6px;
+            }
+
+            .weekly-graph-title {
+                font-size: 12px;
+            }
+
+            .weekly-graph-value .date {
+                font-size: 11px;
+            }
+
+            .weekly-graph-value .hours {
+                font-size: 13px;
+            }
+
+            .weekly-graph {
+                height: 140px;
+                padding-left: 28px;
+                padding-bottom: 20px;
+            }
+
+            .graph-y-axis {
+                height: 115px;
+                font-size: 10px;
+            }
+
+            .graph-x-axis {
+                font-size: 10px;
+            }
+
+            .user-data-view-container {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                min-height: 240px;
+            }
+        }
+
         /* Small Mobile Styles (up to 480px) */
         @media (max-width: 480px) {
             .sidebar {
@@ -3063,6 +3186,7 @@
             
             .main-content {
                 padding: 12px;
+                padding-right: 72px;
             }
             
             /* Keep 2 room cards per row on small phones too */
@@ -3685,6 +3809,133 @@
                 </a>
             </div>
 
+            <!-- API Endpoints: placed first so admins see the full list without scrolling past other sections -->
+            <div class="info-section" id="infoApiEndpoints">
+                <div class="info-section-title">📡 API Endpoints (all routes)</div>
+                <p style="font-size: 12px; color: var(--text-dim); margin: -8px 0 12px 0;">22 entries — same backend as <code>app.py</code>. Scroll this panel if the table is tall.</p>
+                <table class="info-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/</td>
+                            <td>Dashboard page</td>
+                        </tr>
+                            <tr>
+                                <td><span class="method get">GET</span></td>
+                                <td class="endpoint">/diagram</td>
+                                <td>Architecture diagram page</td>
+                            </tr>
+                            <tr>
+                                <td><span class="method get">GET</span></td>
+                                <td class="endpoint">/api/docs</td>
+                            <td>Swagger UI (interactive API docs)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/sensor</td>
+                            <td>Simulated sensor reading</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/v1/sensors/register</td>
+                            <td>Register sensor device</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/v1/sensors/data</td>
+                            <td>Submit lux sensor reading</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/v1/sensors/{sensor_id}/status</td>
+                            <td>Sensor status by ID</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/v1/sensors/latest</td>
+                            <td>Latest lux from daily_usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/usage/reset</td>
+                            <td>Clear all daily usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/usage/save</td>
+                            <td>Save daily usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/usage/{date}</td>
+                            <td>Get usage for date</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/usage/statistics</td>
+                            <td>Weekly and monthly stats</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/room/{room}/save</td>
+                            <td>Save room usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/room/{room}/{date}</td>
+                            <td>Get room data for date</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/room/{room}/statistics</td>
+                            <td>Room weekly and monthly stats</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method get">GET</span></td>
+                            <td class="endpoint">/api/rooms/all/{date}</td>
+                            <td>All rooms for date</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/rooms/reset</td>
+                            <td>Clear all room data</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/admin/access</td>
+                            <td>Log admin access</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/alerts</td>
+                            <td>Create long-on alert</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/user/login</td>
+                            <td>User login (email and password)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/feedback</td>
+                            <td>Report an issue</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method post">POST</span></td>
+                            <td class="endpoint">/api/device/log</td>
+                            <td>Log device when lights turn on</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Screen Layout Overview -->
             <div class="info-section">
                 <div class="info-section-title">📊 Screen Layout Overview</div>
@@ -3849,52 +4100,6 @@
                     <div class="info-flow-arrow">→</div>
                     <div class="info-flow-node">🗄️ MongoDB<br><small>Atlas Cloud</small></div>
                 </div>
-            </div>
-
-            <!-- API Endpoints -->
-            <div class="info-section">
-                <div class="info-section-title">📡 API Endpoints</div>
-                <table class="info-table">
-                    <thead>
-                        <tr>
-                            <th>Method</th>
-                            <th>Endpoint</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="method post">POST</span></td>
-                            <td class="endpoint">/api/usage/save</td>
-                            <td>Save daily usage</td>
-                        </tr>
-                        <tr>
-                            <td><span class="method get">GET</span></td>
-                            <td class="endpoint">/api/usage/{date}</td>
-                            <td>Get usage for date</td>
-                        </tr>
-                        <tr>
-                            <td><span class="method get">GET</span></td>
-                            <td class="endpoint">/api/usage/statistics</td>
-                            <td>Get monthly stats</td>
-                        </tr>
-                        <tr>
-                            <td><span class="method post">POST</span></td>
-                            <td class="endpoint">/api/room/{room}/save</td>
-                            <td>Save room usage</td>
-                        </tr>
-                        <tr>
-                            <td><span class="method get">GET</span></td>
-                            <td class="endpoint">/api/room/{room}/{date}</td>
-                            <td>Get room data</td>
-                        </tr>
-                        <tr>
-                            <td><span class="method get">GET</span></td>
-                            <td class="endpoint">/api/rooms/all/{date}</td>
-                            <td>Get all rooms</td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
 
             <!-- Admin Daily Usage Graph -->
@@ -4144,12 +4349,18 @@
 
     <main class="main-content">
         <header class="header">
-            <button class="sidebar-menu-btn" id="sidebarMenuBtn" type="button" aria-label="Open menu">
-                <span class="menu-icon-bar"></span>
-                <span class="menu-icon-bar"></span>
-                <span class="menu-icon-bar"></span>
-            </button>
-            <h1 class="title">UOP Light Sensor</h1>
+            <div class="header-left">
+                <button class="sidebar-menu-btn" id="sidebarMenuBtn" type="button" aria-label="Open menu">
+                    <span class="menu-icon-bar"></span>
+                    <span class="menu-icon-bar"></span>
+                    <span class="menu-icon-bar"></span>
+                </button>
+                <h1 class="title">UOP Light Sensor</h1>
+            </div>
+            <div class="header-center">
+                <div class="sensor-live-status unknown" id="sensorLiveStatus" role="status" aria-live="polite">Loading…</div>
+            </div>
+            <div class="header-right-spacer" aria-hidden="true"></div>
         </header>
 
         <!-- Room Light Buttons -->
@@ -4205,6 +4416,7 @@
         </div>
 
         <div class="gauge-container">
+            <div class="gauge-main-row">
             <div class="gauge-ambient-box">
             <div class="gauge-wrapper">
                 <!-- Sunlight Detection Popup -->
@@ -4281,11 +4493,11 @@
                 </div>
                 <div class="weekly-graph">
                     <div class="graph-y-axis">
-                        <span>24h</span>
-                        <span>18h</span>
-                        <span>12h</span>
-                        <span>6h</span>
-                        <span>0h</span>
+                        <span>800</span>
+                        <span>600</span>
+                        <span>400</span>
+                        <span>200</span>
+                        <span>0</span>
                     </div>
                     <div class="graph-canvas-wrapper">
                         <div class="graph-grid-line" style="top: 0%"></div>
@@ -4296,14 +4508,17 @@
                             <!-- Line and dots rendered by JS -->
                         </svg>
                     </div>
-                    <div class="graph-x-axis" id="graphXAxis">
-                        <span>Sun</span>
-                        <span>Mon</span>
-                        <span>Tue</span>
-                        <span>Wed</span>
-                        <span>Thu</span>
-                        <span>Fri</span>
-                        <span>Sat</span>
+                    <div class="graph-x-axis-wrap">
+                        <div class="graph-x-axis" id="graphXAxis">
+                            <span>0</span>
+                            <span>4</span>
+                            <span>8</span>
+                            <span>12</span>
+                            <span>16</span>
+                            <span>20</span>
+                            <span>24</span>
+                        </div>
+                        <div class="graph-x-axis-note">Hours (0–24)</div>
                     </div>
                 </div>
             </div>
@@ -4333,6 +4548,8 @@
                     <div class="user-data-row"><span class="user-data-key">luxUpdatedAt</span><span class="user-data-val">-</span></div>
                 </div>
             </div>
+            </div>
+
         </div>
 
         <div class="mode-cards">
@@ -4892,11 +5109,49 @@
             }
         });
 
+        /** If lux timestamp is older than this (seconds), treat sensor as not live → OFF (red). */
+        const SENSOR_LUX_MAX_AGE_SEC = 180;
+
+        function isLuxReadingStale(luxUpdatedAtIso) {
+            if (!luxUpdatedAtIso || typeof luxUpdatedAtIso !== 'string') return false;
+            const t = Date.parse(luxUpdatedAtIso);
+            if (!Number.isFinite(t)) return false;
+            return (Date.now() - t) / 1000 > SENSOR_LUX_MAX_AGE_SEC;
+        }
+
+        function updateSensorStatusBadge(payloadData) {
+            const statusEl = document.getElementById('sensorLiveStatus');
+            if (!statusEl) return;
+
+            const luxRaw = payloadData.lux;
+            const luxNum = Number(luxRaw);
+            const hasActiveReading = luxRaw !== null && luxRaw !== undefined && luxRaw !== '' && Number.isFinite(luxNum);
+            const stale = isLuxReadingStale(payloadData.luxUpdatedAt);
+            const ambientOn = hasActiveReading && payloadData.lightsOn === true && !stale;
+
+            if (ambientOn) {
+                statusEl.textContent = 'Sensor ON';
+                statusEl.className = 'sensor-live-status on';
+            } else {
+                statusEl.textContent = 'Sensor OFF';
+                statusEl.className = 'sensor-live-status off-inactive';
+            }
+        }
+
         async function syncLatestSensorReading() {
             try {
                 const response = await fetch('/api/v1/sensors/latest');
                 const payload = await response.json();
-                if (!response.ok || !payload.success || !payload.data) return;
+                if (!response.ok || !payload.success || !payload.data) {
+                    const statusEl = document.getElementById('sensorLiveStatus');
+                    if (statusEl) {
+                        statusEl.textContent = 'Sensor OFF';
+                        statusEl.className = 'sensor-live-status off-inactive';
+                    }
+                    return;
+                }
+
+                updateSensorStatusBadge(payload.data);
 
                 const lux = Number(payload.data.lux);
                 if (!Number.isFinite(lux)) return;
@@ -4909,6 +5164,11 @@
                 }
             } catch (err) {
                 console.log('Latest sensor fetch error:', err);
+                const statusEl = document.getElementById('sensorLiveStatus');
+                if (statusEl) {
+                    statusEl.textContent = 'Sensor OFF';
+                    statusEl.className = 'sensor-live-status off-inactive';
+                }
             }
         }
 
@@ -5314,7 +5574,6 @@
         
         async function loadWeeklyGraphData(targetDate = null) {
             const graphCanvas = document.getElementById('weeklyGraphCanvas');
-            const graphXAxis = document.getElementById('graphXAxis');
             if (!graphCanvas) return;
             
             const today = new Date();
@@ -5351,35 +5610,34 @@
                 });
             }
             
-            // Fetch data for each day
+            // Fetch data for each day (lux for Y axis 0–800; X axis is 0–24 hours across the week)
             const weekData = [];
             for (const dateInfo of weekDates) {
                 if (dateInfo.isFuture) {
-                    weekData.push({ ...dateInfo, onHours: null });
+                    weekData.push({ ...dateInfo, lux: null });
                 } else {
                     try {
                         const response = await fetch(`/api/usage/${dateInfo.dateStr}`);
                         const data = await response.json();
-                        const onHours = (data.onSeconds || 0) / 3600;
+                        let lux = data.lux != null && data.lux !== '' ? Number(data.lux) : null;
+                        if (!Number.isFinite(lux)) lux = null;
+                        if (lux !== null) lux = Math.max(0, Math.min(800, lux));
                         weekData.push({
                             ...dateInfo,
-                            onHours: dateInfo.isToday ? dailySeconds / 3600 : onHours
+                            lux
                         });
                     } catch (e) {
                         weekData.push({
                             ...dateInfo,
-                            onHours: dateInfo.isToday ? dailySeconds / 3600 : 0
+                            lux: null
                         });
                     }
                 }
             }
             
-            // Update X-axis labels
-            graphXAxis.innerHTML = weekData.map(day => 
-                `<span class="${day.isToday ? 'today' : ''}">${day.dayName}</span>`
-            ).join('');
+            // X-axis: fixed 0–24 hour ticks (see HTML); no day labels
             
-            // Update header with week range and total hours
+            // Update header with week range and average lux for the week
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const firstParts = weekDates[0].dateStr.split('-');
             const lastParts = weekDates[6].dateStr.split('-');
@@ -5388,26 +5646,29 @@
             const lastDay = parseInt(lastParts[2]);
             const weekRange = `${monthNames[firstMonth]} ${firstDay} - ${lastDay}`;
             
-            // Calculate total hours for the week
-            const totalHours = weekData.reduce((sum, d) => sum + (d.onHours || 0), 0);
-            const displayHours = Math.floor(totalHours);
-            const displayMins = Math.floor((totalHours - displayHours) * 60);
+            const luxSamples = weekData.filter(d => d.lux !== null && d.lux !== undefined).map(d => d.lux);
+            const avgLux = luxSamples.length
+                ? luxSamples.reduce((a, b) => a + b, 0) / luxSamples.length
+                : null;
             
             document.getElementById('graphDateLabel').textContent = weekRange;
-            document.getElementById('graphHoursLabel').textContent = `${displayHours}h ${displayMins}m`;
+            document.getElementById('graphHoursLabel').textContent =
+                avgLux !== null ? `${avgLux.toFixed(0)} lux avg` : '— lux';
             
-            // Draw line graph
+            // Draw line graph: X = hour position 0–24 (week samples spread), Y = lux 0–800
             const width = 280;
             const height = 135;
-            const maxHours = 24;
+            const maxLux = 800;
             const padding = 10;
             
-            // Calculate points (only for non-future days)
-            const validData = weekData.filter(d => d.onHours !== null);
+            const validData = weekData.filter(d => d.lux !== null && d.lux !== undefined);
+            const n = validData.length;
             const points = validData.map((day, i) => {
-                const x = padding + (i * (width - padding * 2) / (validData.length - 1 || 1));
-                const y = height - padding - ((day.onHours / maxHours) * (height - padding * 2));
-                return { x, y, hours: day.onHours, isToday: day.isToday };
+                const t = n <= 1 ? 0 : i / (n - 1);
+                const hour = t * 24;
+                const x = padding + (hour / 24) * (width - padding * 2);
+                const y = height - padding - ((day.lux / maxLux) * (height - padding * 2));
+                return { x, y, lux: day.lux, hour, isToday: day.isToday };
             });
             
             // Create smooth curve path
