@@ -797,8 +797,8 @@ def save_feedback():
         return jsonify({"success": False, "message": "MongoDB not available"}), 503
 
     data = request.json or {}
-    component = data.get('component').strip()
-    error_type = data.get('error_type').strip()
+    component = (data.get('component') or '').strip()
+    error_type = (data.get('error_type') or '').strip()
     message = (data.get('message') or '').strip()
     if not text:
         return jsonify({"success": False, "message": "Feedback text is required"}), 400
