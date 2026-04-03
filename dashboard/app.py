@@ -141,9 +141,12 @@ sensor_history_by_id = {}
 registered_sensors = {}
 
 # Embedded sensor-to-room mapping for per-room lux updates
+# Dashboard + simulators use sensor-1/2; ESP32 firmware often uses esp32_01, etc.
 SENSOR_ROOM_MAP = {
     "sensor-1": "living",
     "sensor-2": "bedroom",
+    "esp32_01": "living",
+    "esp32_02": "bedroom",
 }
 
 def generate_sensor_reading():
