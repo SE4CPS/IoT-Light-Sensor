@@ -797,7 +797,9 @@ def save_feedback():
         return jsonify({"success": False, "message": "MongoDB not available"}), 503
 
     data = request.json or {}
-    text = (data.get('text') or '').strip()
+    component = data.get('component').strip()
+    error_type = data.get('error_type').strip()
+    message = (data.get('message') or '').strip()
     if not text:
         return jsonify({"success": False, "message": "Feedback text is required"}), 400
 
@@ -805,7 +807,9 @@ def save_feedback():
     now_pst = datetime.now(pst)
 
     doc = {
-        "text": text,
+    	"component" : component,
+    	"error_type": error_type,
+        "message": message,
         "date": now_pst.strftime('%Y-%m-%d'),
         "time": now_pst.strftime('%H:%M:%S'),
         "timestamp": now_pst.isoformat(),
