@@ -3958,7 +3958,7 @@
                     <div class="info-card">
                         <div class="info-card-title">🎛️ Main Area</div>
                         <div class="info-card-content">
-                            • 6 Room Controls<br>
+                            • 2 Room Controls<br>
                             • Gauge (0-800 lux)<br>
                             • Brightness Slider<br>
                             • Weekly Line Graph<br>
@@ -4002,42 +4002,6 @@
                     </div>
                     <div class="db-collection">
                         <div class="db-collection-header room">🛏️ room_bedroom</div>
-                        <div class="db-collection-body">
-                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
-                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
-                        </div>
-                    </div>
-                    <div class="db-collection">
-                        <div class="db-collection-header room">🍳 room_kitchen</div>
-                        <div class="db-collection-body">
-                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
-                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
-                        </div>
-                    </div>
-                    <div class="db-collection">
-                        <div class="db-collection-header room">🚿 room_bathroom</div>
-                        <div class="db-collection-body">
-                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
-                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
-                        </div>
-                    </div>
-                    <div class="db-collection">
-                        <div class="db-collection-header room">💼 room_office</div>
-                        <div class="db-collection-body">
-                            <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
-                            <div class="db-field"><span class="db-field-name">onSeconds</span><span class="db-field-type">Number</span></div>
-                            <div class="db-field"><span class="db-field-name">avgLux</span><span class="db-field-type">Number</span></div>
-                        </div>
-                    </div>
-                    <div class="db-collection">
-                        <div class="db-collection-header room">🚗 room_garage</div>
                         <div class="db-collection-body">
                             <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span></div>
                             <div class="db-field"><span class="db-field-name">sensor_id</span><span class="db-field-type">String</span></div>
@@ -4117,10 +4081,6 @@
                         <option value="all">All Rooms (Daily Usage)</option>
                         <option value="living">Living Room</option>
                         <option value="bedroom">Bedroom</option>
-                        <option value="kitchen">Kitchen</option>
-                        <option value="bathroom">Bathroom</option>
-                        <option value="office">Office</option>
-                        <option value="garage">Garage</option>
                     </select>
                 </div>
                 <div class="admin-graph-container">
@@ -4307,34 +4267,6 @@
                 </div>
                 <span class="room-bar-value" id="val-bedroom">0m</span>
             </div>
-            <div class="room-bar-item" id="bar-item-kitchen" data-room="room-kitchen">
-                <span class="room-bar-label">Kitchen</span>
-                <div class="room-bar-track">
-                    <div class="room-bar-fill" id="bar-kitchen"></div>
-                </div>
-                <span class="room-bar-value" id="val-kitchen">0m</span>
-            </div>
-            <div class="room-bar-item" id="bar-item-bathroom" data-room="room-bathroom">
-                <span class="room-bar-label">Bathroom</span>
-                <div class="room-bar-track">
-                    <div class="room-bar-fill" id="bar-bathroom"></div>
-                </div>
-                <span class="room-bar-value" id="val-bathroom">0m</span>
-            </div>
-            <div class="room-bar-item" id="bar-item-office" data-room="room-office">
-                <span class="room-bar-label">Office</span>
-                <div class="room-bar-track">
-                    <div class="room-bar-fill" id="bar-office"></div>
-                </div>
-                <span class="room-bar-value" id="val-office">0m</span>
-            </div>
-            <div class="room-bar-item" id="bar-item-garage" data-room="room-garage">
-                <span class="room-bar-label">Garage</span>
-                <div class="room-bar-track">
-                    <div class="room-bar-fill" id="bar-garage"></div>
-                </div>
-                <span class="room-bar-value" id="val-garage">0m</span>
-            </div>
         </div>
         
         <div class="brightness-section">
@@ -4382,38 +4314,6 @@
                 <div class="room-card-content">
                     <div class="room-card-title">Bedroom</div>
                     <div class="room-card-subtitle">Rest area</div>
-                </div>
-                <div class="room-toggle"></div>
-            </div>
-            <div class="room-card" id="room-kitchen">
-                <div class="room-card-icon">🍳</div>
-                <div class="room-card-content">
-                    <div class="room-card-title">Kitchen</div>
-                    <div class="room-card-subtitle">Cooking area</div>
-                </div>
-                <div class="room-toggle"></div>
-            </div>
-            <div class="room-card" id="room-bathroom">
-                <div class="room-card-icon">🚿</div>
-                <div class="room-card-content">
-                    <div class="room-card-title">Bathroom</div>
-                    <div class="room-card-subtitle">Washroom</div>
-                </div>
-                <div class="room-toggle"></div>
-            </div>
-            <div class="room-card" id="room-office">
-                <div class="room-card-icon">💼</div>
-                <div class="room-card-content">
-                    <div class="room-card-title">Office</div>
-                    <div class="room-card-subtitle">Work area</div>
-                </div>
-                <div class="room-toggle"></div>
-            </div>
-            <div class="room-card" id="room-garage">
-                <div class="room-card-icon">🚗</div>
-                <div class="room-card-content">
-                    <div class="room-card-title">Garage</div>
-                    <div class="room-card-subtitle">Parking</div>
                 </div>
                 <div class="room-toggle"></div>
             </div>
@@ -4548,10 +4448,6 @@
                         <option value="all">All Rooms</option>
                         <option value="living">Living Room</option>
                         <option value="bedroom">Bedroom</option>
-                        <option value="kitchen">Kitchen</option>
-                        <option value="bathroom">Bathroom</option>
-                        <option value="office">Office</option>
-                        <option value="garage">Garage</option>
                     </select>
                 </div>
                 <div class="user-data-view-title">User View (MongoDB Data)</div>
@@ -5268,11 +5164,7 @@
         const DAILY_SENSOR_ID = 'all-rooms';
         const ROOM_SENSOR_IDS = {
             living: 'sensor-1',
-            bedroom: 'sensor-2',
-            kitchen: 'sensor-3',
-            bathroom: 'sensor-4',
-            office: 'sensor-5',
-            garage: 'sensor-6'
+            bedroom: 'sensor-2'
         };
         
         function getSelectedTimezone() {
@@ -5935,11 +5827,7 @@
             const roomLabelMap = {
                 all: 'All Rooms',
                 living: 'Living Room',
-                bedroom: 'Bedroom',
-                kitchen: 'Kitchen',
-                bathroom: 'Bathroom',
-                office: 'Office',
-                garage: 'Garage'
+                bedroom: 'Bedroom'
             };
             const roomLabel = roomLabelMap[selectedRoom] || 'All Rooms';
             document.getElementById('adminDailyGraphDateLabel').textContent = `Day ${selectedDay} • ${currentYear} • ${roomLabel}`;
@@ -6167,11 +6055,7 @@
         // Room Light Status Management - Each room has 0-800 lux range and tracks duration
         const roomConfig = {
             'room-living': { on: false, brightness: 720, name: 'Living Room', duration: 0, alertSent: false },
-            'room-bedroom': { on: false, brightness: 400, name: 'Bedroom', duration: 0, alertSent: false },
-            'room-kitchen': { on: false, brightness: 640, name: 'Kitchen', duration: 0, alertSent: false },
-            'room-bathroom': { on: false, brightness: 480, name: 'Bathroom', duration: 0, alertSent: false },
-            'room-office': { on: false, brightness: 800, name: 'Office', duration: 0, alertSent: false },
-            'room-garage': { on: false, brightness: 560, name: 'Garage', duration: 0, alertSent: false }
+            'room-bedroom': { on: false, brightness: 400, name: 'Bedroom', duration: 0, alertSent: false }
         };
 
         // Log device details when lights are turned on
@@ -6221,11 +6105,7 @@
         // Room ID to API name mapping
         const roomApiNames = {
             'room-living': 'living',
-            'room-bedroom': 'bedroom',
-            'room-kitchen': 'kitchen',
-            'room-bathroom': 'bathroom',
-            'room-office': 'office',
-            'room-garage': 'garage'
+            'room-bedroom': 'bedroom'
         };
 
         // Save room data to MongoDB
@@ -6363,11 +6243,7 @@
         function updateRoomBars() {
             const roomBarMap = {
                 'room-living': 'living',
-                'room-bedroom': 'bedroom',
-                'room-kitchen': 'kitchen',
-                'room-bathroom': 'bathroom',
-                'room-office': 'office',
-                'room-garage': 'garage'
+                'room-bedroom': 'bedroom'
             };
             
             // Find max duration for scaling (min 1 hour for reference)

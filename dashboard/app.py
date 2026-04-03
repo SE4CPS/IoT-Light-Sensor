@@ -55,10 +55,6 @@ else:
         room_collections = {
             'living': db['room_living'],
             'bedroom': db['room_bedroom'],
-            'kitchen': db['room_kitchen'],
-            'bathroom': db['room_bathroom'],
-            'office': db['room_office'],
-            'garage': db['room_garage']
         }
 
         # Admin access/log collection
@@ -79,7 +75,7 @@ else:
         api_collection = db[API_COLLECTION_NAME]
 
         print("✅ Connected to MongoDB Atlas")
-        print("📦 Room collections: living, bedroom, kitchen, bathroom, office, garage")
+        print("📦 Room collections: living, bedroom")
         print("📦 Admin collection: admin_access")
         print("📦 Organization collection: Organization")
         print("📦 Device collection: devices")
@@ -148,10 +144,6 @@ registered_sensors = {}
 SENSOR_ROOM_MAP = {
     "sensor-1": "living",
     "sensor-2": "bedroom",
-    "sensor-3": "kitchen",
-    "sensor-4": "bathroom",
-    "sensor-5": "office",
-    "sensor-6": "garage",
 }
 
 def generate_sensor_reading():
@@ -510,7 +502,7 @@ def get_usage_statistics():
 
 # ===== Room-Specific Usage API =====
 
-VALID_ROOMS = ['living', 'bedroom', 'kitchen', 'bathroom', 'office', 'garage']
+VALID_ROOMS = ['living', 'bedroom']
 
 @app.route('/api/room/<room_name>/save', methods=['POST'])
 def save_room_usage(room_name):
