@@ -1023,11 +1023,11 @@
             position: relative;
             width: 100%;
             height: 160px;
-            padding-left: 35px;
+            padding-left: 42px;
             padding-bottom: 25px;
         }
 
-        .graph-y-axis {
+        .weekly-graph .graph-y-axis {
             position: absolute;
             left: 0;
             top: 0;
@@ -1035,14 +1035,16 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            font-size: 11px;
+            font-size: 10px;
             color: #f5a623 !important;
-            font-weight: 600;
+            font-weight: 700;
+            line-height: 1;
         }
 
-        .graph-y-axis span {
+        .weekly-graph .graph-y-axis span {
             text-align: right;
-            width: 34px;
+            width: 40px;
+            font-weight: 700;
         }
 
         .graph-canvas-wrapper {
@@ -3154,13 +3156,19 @@
 
             .weekly-graph {
                 height: 140px;
-                padding-left: 28px;
+                padding-left: 34px;
                 padding-bottom: 20px;
             }
 
-            .graph-y-axis {
+            .weekly-graph .graph-y-axis {
                 height: 115px;
-                font-size: 10px;
+                font-size: 9px;
+                font-weight: 700;
+            }
+
+            .weekly-graph .graph-y-axis span {
+                width: 32px;
+                font-weight: 700;
             }
 
             .graph-x-axis {
@@ -3243,13 +3251,19 @@
             
             .weekly-graph {
                 height: 120px;
-                padding-left: 26px;
+                padding-left: 30px;
                 padding-bottom: 18px;
             }
-            
-            .graph-y-axis {
+
+            .weekly-graph .graph-y-axis {
                 height: 100px;
-                font-size: 9px;
+                font-size: 8px;
+                font-weight: 700;
+            }
+
+            .weekly-graph .graph-y-axis span {
+                width: 28px;
+                font-weight: 700;
             }
             
             .graph-x-axis {
@@ -3813,7 +3827,7 @@
             <!-- API Endpoints: placed first so admins see the full list without scrolling past other sections -->
             <div class="info-section" id="infoApiEndpoints">
                 <div class="info-section-title">📡 API Endpoints (all routes)</div>
-                <p style="font-size: 12px; color: var(--text-dim); margin: -8px 0 12px 0;">22 entries — same backend as <code>app.py</code>. Scroll this panel if the table is tall.</p>
+                <p style="font-size: 12px; color: var(--text-dim); margin: -8px 0 12px 0;">20 entries — same backend as <code>app.py</code>. Scroll this panel if the table is tall.</p>
                 <table class="info-table">
                     <thead>
                         <tr>
@@ -3865,11 +3879,6 @@
                         </tr>
                         <tr>
                             <td><span class="method post">POST</span></td>
-                            <td class="endpoint">/api/usage/reset</td>
-                            <td>Clear all daily usage</td>
-                        </tr>
-                        <tr>
-                            <td><span class="method post">POST</span></td>
                             <td class="endpoint">/api/usage/save</td>
                             <td>Save daily usage</td>
                         </tr>
@@ -3902,11 +3911,6 @@
                             <td><span class="method get">GET</span></td>
                             <td class="endpoint">/api/rooms/all/{date}</td>
                             <td>All rooms for date</td>
-                        </tr>
-                        <tr>
-                            <td><span class="method post">POST</span></td>
-                            <td class="endpoint">/api/rooms/reset</td>
-                            <td>Clear all room data</td>
                         </tr>
                         <tr>
                             <td><span class="method post">POST</span></td>
@@ -4486,7 +4490,7 @@
             <!-- Weekly Line Graph -->
             <div class="weekly-graph-container">
                 <div class="weekly-graph-header">
-                    <div class="weekly-graph-title">Weekly Usage</div>
+                    <div class="weekly-graph-title">Today's Usage</div>
                     <div class="weekly-graph-value">
                         <div class="date" id="graphDateLabel">Today</div>
                         <div class="hours" id="graphHoursLabel">0h 0m</div>
@@ -4494,17 +4498,30 @@
                 </div>
                 <div class="weekly-graph">
                     <div class="graph-y-axis">
-                        <span>800</span>
-                        <span>600</span>
-                        <span>400</span>
-                        <span>200</span>
-                        <span>0</span>
+                        <span>1.0</span>
+                        <span>0.9</span>
+                        <span>0.8</span>
+                        <span>0.7</span>
+                        <span>0.6</span>
+                        <span>0.5</span>
+                        <span>0.4</span>
+                        <span>0.3</span>
+                        <span>0.2</span>
+                        <span>0.1</span>
+                        <span>0.0</span>
                     </div>
                     <div class="graph-canvas-wrapper">
                         <div class="graph-grid-line" style="top: 0%"></div>
-                        <div class="graph-grid-line" style="top: 25%"></div>
+                        <div class="graph-grid-line" style="top: 10%"></div>
+                        <div class="graph-grid-line" style="top: 20%"></div>
+                        <div class="graph-grid-line" style="top: 30%"></div>
+                        <div class="graph-grid-line" style="top: 40%"></div>
                         <div class="graph-grid-line" style="top: 50%"></div>
-                        <div class="graph-grid-line" style="top: 75%"></div>
+                        <div class="graph-grid-line" style="top: 60%"></div>
+                        <div class="graph-grid-line" style="top: 70%"></div>
+                        <div class="graph-grid-line" style="top: 80%"></div>
+                        <div class="graph-grid-line" style="top: 90%"></div>
+                        <div class="graph-grid-line" style="top: 100%"></div>
                         <svg class="graph-canvas" id="weeklyGraphCanvas" viewBox="0 0 280 135" preserveAspectRatio="none">
                             <!-- Line and dots rendered by JS -->
                         </svg>
@@ -5192,7 +5209,6 @@
                     // Same day - load today's value only
                     dailySeconds = data.daily || 0;
                 }
-                // Weekly and monthly will be fetched from MongoDB
             }
             
             // Initialize weekly/monthly to match daily (will be updated by MongoDB fetch)
@@ -5202,8 +5218,21 @@
             updateStatsDisplay();
             updateDonutChart();
             
-            // Fetch accurate weekly/monthly from MongoDB
-            fetchWeeklyMonthlyFromDB();
+            // Merge stored server totals for today so history is not lost across reloads
+            fetch(`/api/usage/${todayPST}`)
+                .then((r) => r.json())
+                .then((rec) => {
+                    const mongoOn = Number(rec.onSeconds);
+                    if (Number.isFinite(mongoOn) && mongoOn > dailySeconds) {
+                        dailySeconds = mongoOn;
+                    }
+                    updateStatsDisplay();
+                    updateDonutChart();
+                })
+                .catch(() => {})
+                .finally(() => {
+                    fetchWeeklyMonthlyFromDB();
+                });
         }
         
         async function fetchWeeklyMonthlyFromDB() {
@@ -5261,6 +5290,21 @@
             const timezone = getSelectedTimezone();
             const dateString = now.toLocaleDateString('en-CA', { timeZone: timezone });
             return dateString; // Returns YYYY-MM-DD format
+        }
+
+        /** YYYY-MM-DD from a Date's local calendar (matches sidebar calendar selection). */
+        function getYmdFromDate(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        /** YYYY-MM-DD from calendar year + zero-based month index + day. */
+        function formatCalendarYmd(year, monthIndex, day) {
+            const m = String(monthIndex + 1).padStart(2, '0');
+            const d = String(day).padStart(2, '0');
+            return `${year}-${m}-${d}`;
         }
 
         async function postJsonWithCheck(url, payload, actionLabel) {
@@ -5371,15 +5415,10 @@
         }
 
         async function getUsageForDate(date) {
-            // Format date as YYYY-MM-DD using the date's local values (not timezone converted)
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const dateStr = `${year}-${month}-${day}`;
-            
+            const dateStr = getYmdFromDate(date);
             const todayStr = getPSTDate();
             
-            // If today (PST), return current live session data
+            // If today (dashboard TZ), return live session (same key as saveStats POST date)
             if (dateStr === todayStr) {
                 return dailySeconds;
             }
@@ -5412,8 +5451,7 @@
             const container = document.getElementById('calendarDays');
             container.innerHTML = '';
             
-            const today = new Date();
-            const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+            const todayYmd = getPSTDate();
             const isSelectedMonth = selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
             
             // Previous month days
@@ -5425,6 +5463,9 @@
                 
                 const prevMonth = month === 0 ? 11 : month - 1;
                 const prevYear = month === 0 ? year - 1 : year;
+                if (formatCalendarYmd(prevYear, prevMonth, dayNum) === todayYmd) {
+                    dayEl.classList.add('today');
+                }
                 dayEl.addEventListener('click', () => selectDate(prevYear, prevMonth, dayNum));
                 
                 container.appendChild(dayEl);
@@ -5435,7 +5476,7 @@
                 const dayEl = document.createElement('div');
                 dayEl.className = 'calendar-day';
                 
-                if (isCurrentMonth && i === today.getDate()) {
+                if (formatCalendarYmd(year, month, i) === todayYmd) {
                     dayEl.classList.add('today');
                 }
                 if (isSelectedMonth && i === selectedDate.getDate()) {
@@ -5457,10 +5498,33 @@
                 
                 const nextMonth = month === 11 ? 0 : month + 1;
                 const nextYear = month === 11 ? year + 1 : year;
+                if (formatCalendarYmd(nextYear, nextMonth, i) === todayYmd) {
+                    dayEl.classList.add('today');
+                }
                 dayEl.addEventListener('click', () => selectDate(nextYear, nextMonth, i));
                 
                 container.appendChild(dayEl);
             }
+        }
+
+        function syncUserDataViewSelectorsFromCalendar() {
+            const monthSelect = document.getElementById('userDataMonthSelect');
+            const dateSelect = document.getElementById('userDataDateSelect');
+            if (!monthSelect || !dateSelect) return;
+            const y = selectedDate.getFullYear();
+            const mo = selectedDate.getMonth();
+            const day = selectedDate.getDate();
+            monthSelect.value = String(mo);
+            const daysInMonth = new Date(y, mo + 1, 0).getDate();
+            dateSelect.innerHTML = '';
+            for (let i = 1; i <= daysInMonth; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                dateSelect.appendChild(opt);
+            }
+            dateSelect.value = String(Math.min(day, daysInMonth));
+            loadUserDataView();
         }
 
         function selectDate(year, month, day) {
@@ -5476,6 +5540,7 @@
             }
             
             renderCalendar();
+            syncUserDataViewSelectorsFromCalendar();
             updateDonutChart();
             loadWeeklyGraphData(selectedDate);
         }
@@ -5497,11 +5562,7 @@
             let usageSeconds = Number.isFinite(usageSecondsSafe) ? usageSecondsSafe : 0;
 
             const todayPST = getPSTDate();
-            const selYear = selectedDate.getFullYear();
-            const selMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
-            const selDay = String(selectedDate.getDate()).padStart(2, '0');
-            const selectedDateStr = `${selYear}-${selMonth}-${selDay}`;
-            const isSelectedToday = selectedDateStr === todayPST;
+            const isSelectedToday = getYmdFromDate(selectedDate) === todayPST;
 
             // Requested behavior: when current lights are OFF, today's donut should display 0.
             if (isSelectedToday) {
@@ -5610,7 +5671,7 @@
                 });
             }
             
-            // Fetch data for each day (lux for Y axis 0–800; X axis is 0–24 hours across the week)
+            // Fetch data for each day (lux normalized to 0–1 for Y; X axis is 0–24 hours across the week)
             const weekData = [];
             for (const dateInfo of weekDates) {
                 if (dateInfo.isFuture) {
@@ -5637,37 +5698,40 @@
             
             // X-axis: fixed 0–24 hour ticks (see HTML); no day labels
             
-            // Update header with week range and average lux for the week
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const firstParts = weekDates[0].dateStr.split('-');
-            const lastParts = weekDates[6].dateStr.split('-');
-            const firstMonth = parseInt(firstParts[1]) - 1;
-            const firstDay = parseInt(firstParts[2]);
-            const lastDay = parseInt(lastParts[2]);
-            const weekRange = `${monthNames[firstMonth]} ${firstDay} - ${lastDay}`;
-            
+            // Header: selected week anchor date (dashboard timezone)
+            const tz = getSelectedTimezone();
+            const labelForDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 12, 0, 0);
+            const graphDateLabel = labelForDate.toLocaleDateString('en-US', {
+                timeZone: tz,
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+
             const luxSamples = weekData.filter(d => d.lux !== null && d.lux !== undefined).map(d => d.lux);
             const avgLux = luxSamples.length
                 ? luxSamples.reduce((a, b) => a + b, 0) / luxSamples.length
                 : null;
             
-            document.getElementById('graphDateLabel').textContent = weekRange;
+            document.getElementById('graphDateLabel').textContent = graphDateLabel;
+            const avgNorm = avgLux !== null ? avgLux / 800 : null;
             document.getElementById('graphHoursLabel').textContent =
-                avgLux !== null ? `${avgLux.toFixed(0)} lux avg` : '— lux';
-            
-            // Draw line graph: X = hour position 0–24 (week samples spread), Y = lux 0–800
+                avgNorm !== null ? `${avgNorm.toFixed(2)} avg` : '—';
+
+            // Draw line graph: X = hour position 0–24 (week samples spread), Y = normalized lux 0–1
             const width = 280;
             const height = 135;
             const maxLux = 800;
             const padding = 10;
-            
+
             const validData = weekData.filter(d => d.lux !== null && d.lux !== undefined);
             const n = validData.length;
             const points = validData.map((day, i) => {
                 const t = n <= 1 ? 0 : i / (n - 1);
                 const hour = t * 24;
                 const x = padding + (hour / 24) * (width - padding * 2);
-                const y = height - padding - ((day.lux / maxLux) * (height - padding * 2));
+                const norm = Math.max(0, Math.min(1, day.lux / maxLux));
+                const y = height - padding - (norm * (height - padding * 2));
                 return { x, y, lux: day.lux, hour, isToday: day.isToday };
             });
             
@@ -5722,15 +5786,12 @@
 
             monthSelect.innerHTML = monthNames.map((m, i) => `<option value="${i}">${m}</option>`).join('');
 
-            const today = new Date();
-            const currentYear = today.getFullYear();
-            const currentMonth = today.getMonth();
-            const currentDate = today.getDate();
-            monthSelect.value = currentMonth;
+            monthSelect.value = String(calendarDate.getMonth());
 
             function populateDates() {
+                const y = calendarDate.getFullYear();
                 const m = parseInt(monthSelect.value);
-                const daysInMonth = new Date(currentYear, m + 1, 0).getDate();
+                const daysInMonth = new Date(y, m + 1, 0).getDate();
                 dateSelect.innerHTML = '';
                 for (let d = 1; d <= daysInMonth; d++) {
                     const opt = document.createElement('option');
@@ -5738,15 +5799,24 @@
                     opt.textContent = d;
                     dateSelect.appendChild(opt);
                 }
-                dateSelect.value = (m === currentMonth ? currentDate : 1);
+                const sameMonth = m === selectedDate.getMonth() && y === selectedDate.getFullYear();
+                dateSelect.value = sameMonth ? selectedDate.getDate() : 1;
             }
 
             populateDates();
             monthSelect.addEventListener('change', () => {
                 populateDates();
-                loadUserDataView();
+                const y = calendarDate.getFullYear();
+                const m = parseInt(monthSelect.value);
+                const d = parseInt(dateSelect.value);
+                selectDate(y, m, d);
             });
-            dateSelect.addEventListener('change', loadUserDataView);
+            dateSelect.addEventListener('change', () => {
+                const y = calendarDate.getFullYear();
+                const m = parseInt(monthSelect.value);
+                const d = parseInt(dateSelect.value);
+                selectDate(y, m, d);
+            });
             roomSelect.addEventListener('change', loadUserDataView);
         }
 
@@ -5757,7 +5827,7 @@
             const body = document.getElementById('userDataViewBody');
             if (!monthSelect || !dateSelect || !roomSelect || !body) return;
 
-            const y = new Date().getFullYear();
+            const y = calendarDate.getFullYear();
             const m = String(parseInt(monthSelect.value) + 1).padStart(2, '0');
             const d = String(parseInt(dateSelect.value)).padStart(2, '0');
             const dateStr = `${y}-${m}-${d}`;
@@ -6387,7 +6457,7 @@
             
             // Update donut if viewing today
             const today = new Date();
-            if (selectedDate.toDateString() === today.toDateString()) {
+            if (getYmdFromDate(selectedDate) === getPSTDate()) {
                 updateDonutChart();
             }
         }, 30000);

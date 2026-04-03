@@ -306,11 +306,18 @@ def get_sensor_status_v1(sensor_id):
 
 @app.route('/api/usage/reset', methods=['POST'])
 def reset_usage():
-    """Reset all usage data"""
-    if usage_collection is not None:
-        usage_collection.delete_many({})
-        return jsonify({"success": True, "message": "All data cleared"})
-    return jsonify({"success": False, "message": "MongoDB not available"})
+    """Clear only today's daily_usage row (PST). Previous days are kept."""
+    if usage_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"})
+    pst = pytz.timezone('America/Los_Angeles')
+    today_str = datetime.now(pst).strftime('%Y-%m-%d')
+    result = usage_collection.delete_many({"date": today_str})
+    return jsonify({
+        "success": True,
+        "message": "Today's usage cleared; previous days unchanged",
+        "date": today_str,
+        "deletedCount": result.deleted_count,
+    })
 
 @app.route('/api/usage/save', methods=['POST'])
 def save_usage():
@@ -624,11 +631,20 @@ def get_all_rooms_usage(date):
 
 @app.route('/api/rooms/reset', methods=['POST'])
 def reset_all_rooms():
-    """Reset all room usage data"""
+    """Clear only today's room documents (PST). Previous days are kept."""
+    pst = pytz.timezone('America/Los_Angeles')
+    today_str = datetime.now(pst).strftime('%Y-%m-%d')
+    total = 0
     for room_name in VALID_ROOMS:
         if room_name in room_collections and room_collections[room_name] is not None:
-            room_collections[room_name].delete_many({})
-    return jsonify({"success": True, "message": "All room data cleared"})
+            r = room_collections[room_name].delete_many({"date": today_str})
+            total += r.deleted_count
+    return jsonify({
+        "success": True,
+        "message": "Today's room data cleared; previous days unchanged",
+        "date": today_str,
+        "deletedCount": total,
+    })
 
 # ===== Admin Access Logging =====
 
@@ -846,7 +862,7 @@ def log_device():
         return jsonify({"success": False, "message": "Failed to log device"}), 500
 
 
-# Documented API list (22 total: OpenAPI paths + Swagger UI; same as diagram / Info modal).
+# Documented API list (20 total: OpenAPI paths + Swagger UI; same as diagram / Info modal).
 DOCUMENTED_APIS = [
     ('GET', '/', 'Dashboard page'),
     ('GET', '/diagram', 'Architecture diagram page'),
@@ -856,7 +872,6 @@ DOCUMENTED_APIS = [
     ('POST', '/api/v1/sensors/data', 'Submit lux sensor reading'),
     ('GET', '/api/v1/sensors/{sensor_id}/status', 'Sensor status by ID'),
     ('GET', '/api/v1/sensors/latest', 'Latest lux from daily_usage'),
-    ('POST', '/api/usage/reset', 'Clear all daily usage'),
     ('POST', '/api/usage/save', 'Save daily usage'),
     ('GET', '/api/usage/{date}', 'Get usage for date'),
     ('GET', '/api/usage/statistics', 'Weekly and monthly stats'),
@@ -864,7 +879,6 @@ DOCUMENTED_APIS = [
     ('GET', '/api/room/{room}/{date}', 'Get room data for date'),
     ('GET', '/api/room/{room}/statistics', 'Room weekly and monthly stats'),
     ('GET', '/api/rooms/all/{date}', 'All rooms for date'),
-    ('POST', '/api/rooms/reset', 'Clear all room data'),
     ('POST', '/api/admin/access', 'Log admin access'),
     ('POST', '/api/alerts', 'Create long-on alert'),
     ('POST', '/api/user/login', 'User login (email and password)'),

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: IoT Light Sensor API
-  description: 21 paths in this file. The full manifest in MongoDB collection API includes GET /api/docs (22 total).
+  description: 19 paths in this file. The full manifest in MongoDB collection API includes GET /api/docs (20 total).
   version: 1.0.0
 servers:
   - url: https://iot-light-sensor.onrender.com
@@ -64,13 +64,6 @@ paths:
     get:
       tags: [Sensors]
       summary: Get latest
-      responses:
-        '200':
-          description: OK
-  /api/usage/reset:
-    post:
-      tags: [Usage Statistics]
-      summary: Reset usage
       responses:
         '200':
           description: OK
@@ -155,13 +148,6 @@ paths:
           required: true
           schema:
             type: string
-      responses:
-        '200':
-          description: OK
-  /api/rooms/reset:
-    post:
-      tags: [Room Management]
-      summary: Reset rooms
       responses:
         '200':
           description: OK
