@@ -1,9 +1,6 @@
 name: Production Release
 
 on:
-  push:
-    branches:
-      - production
   workflow_dispatch:
 
 permissions:
@@ -11,24 +8,26 @@ permissions:
 
 jobs:
   release:
+    # ensure it only runs on production branch
+    if: github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout full history
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Compute next tag from production history
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Compute next patch tag
         id: version
         shell: bash
         run: |
           set -euo pipefail
 
-          git fetch --tags --force
-
           LAST_TAG="$(git tag --list 'v*' --sort=-version:refname | head -n 1)"
-
           if [ -z "$LAST_TAG" ]; then
             LAST_TAG="v0.0.0"
           fi
@@ -45,21 +44,37 @@ jobs:
           echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
           echo "next_tag=$NEXT_TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Create and push tag on production HEAD
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push tag
         shell: bash
         run: |
           set -euo pipefail
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          TAG="${{ steps.version.outputs.next_tag }}"
 
-          git tag "${{ steps.version.outputs.next_tag }}"
-          git push origin "${{ steps.version.outputs.next_tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists"
+          else
+            git tag "$TAG" "${GITHUB_SHA}"
+            git push origin "$TAG"
+          fi
 
-      - name: Create GitHub Release with auto notes
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.next_tag }}
-          target_commitish: ${{ github.sha }}
-          generate_release_notes: true
-          previous_tag: ${{ steps.version.outputs.last_tag }}
+      - name: Create release with auto-generated notes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ steps.version.outputs.next_tag }}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"
+          else
+            gh release create "$TAG" \
+              --target "${GITHUB_SHA}" \
+              --generate-notes \
+              --latest
+          fi
