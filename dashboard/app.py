@@ -29,6 +29,8 @@ if not MONGO_URI:
     db = None
     usage_collection = None
     readings_collection = None
+    sensor_latest_collection = None
+    sensor_hourly_collection = None
     room_collections = {}
     admin_collection = None
     organization_collection = None
@@ -50,6 +52,8 @@ else:
         db = client[DB_NAME]
         usage_collection = db['daily_usage']
         readings_collection = db['readings']
+        sensor_latest_collection = db['sensor_latest']
+        sensor_hourly_collection = db['sensor_hourly']
         
         # Room-specific collections
         room_collections = {
@@ -88,6 +92,8 @@ else:
         db = None
         usage_collection = None
         readings_collection = None
+        sensor_latest_collection = None
+        sensor_hourly_collection = None
         room_collections = {}
         admin_collection = None
         organization_collection = None
@@ -102,6 +108,8 @@ else:
         db = None
         usage_collection = None
         readings_collection = None
+        sensor_latest_collection = None
+        sensor_hourly_collection = None
         room_collections = {}
         admin_collection = None
         organization_collection = None
@@ -148,6 +156,31 @@ SENSOR_ROOM_MAP = {
     "esp32_01": "living",
     "esp32_02": "bedroom",
 }
+
+# Header badges: each slot accepts any of these sensor_id strings (newest lux wins).
+SENSOR_BADGE_GROUPS = (
+    ("sensor1", ("sensor-1", "esp32_01")),
+    ("sensor2", ("sensor-2", "esp32_02")),
+)
+
+# Lux at or above this level counts as “bright / lights on” (badges, hourly graph).
+LUX_LIGHTS_ON_THRESHOLD = 25.0
+
+# daily_usage: one doc per (date, sensor_id). Dashboard timer uses sensor_id "all-rooms";
+# each device POST uses its own sensor_id so lux/onSeconds do not overwrite each other.
+DAILY_USAGE_AGGREGATE_SENSOR_ID = "all-rooms"
+
+
+def _daily_usage_aggregate_match():
+    """Match Mongo docs that store the whole-dashboard onSeconds (User View “All Rooms”)."""
+    return {
+        "$or": [
+            {"sensor_id": DAILY_USAGE_AGGREGATE_SENSOR_ID},
+            {"sensor_id": ""},
+            {"sensor_id": {"$exists": False}},
+        ]
+    }
+
 
 def generate_sensor_reading():
     """Simulate a light sensor reading (0-50 lux)"""
@@ -234,33 +267,71 @@ def submit_single_sensor_reading():
         now_pst = datetime.now(pst)
         today = now_pst.strftime('%Y-%m-%d')
 
-        usage_collection.update_one(
-            {"date": today},
-            {"$set": {
-                "lux": lux_value,
-                "sensor_id": sensor_id,
-                "luxUpdatedAt": now_pst.isoformat(),
-                "updatedAt": datetime.now().isoformat()
-            }},
-            upsert=True
-        )
+        # Per-device row in daily_usage (same sensor→room mapping as room_living / room_bedroom).
+        if usage_collection is not None and sensor_id:
+            usage_collection.update_one(
+                {"date": today, "sensor_id": sensor_id},
+                {
+                    "$set": {
+                        "lux": lux_value,
+                        "luxUpdatedAt": now_pst.isoformat(),
+                        "updatedAt": datetime.now().isoformat(),
+                    },
+                    "$setOnInsert": {
+                        "date": today,
+                        "sensor_id": sensor_id,
+                        "onSeconds": 0,
+                        "offSeconds": 86400,
+                    },
+                },
+                upsert=True,
+            )
 
-        # Also push lux into the mapped individual room collection only if that room is ON.
-        # Room ON state is inferred from today's onSeconds > 0 in the room document.
-        room_name = SENSOR_ROOM_MAP.get(sensor_id)
+        if sensor_id and sensor_latest_collection is not None:
+            sensor_latest_collection.update_one(
+                {"sensor_id": sensor_id},
+                {"$set": {
+                    "lux": lux_value,
+                    "luxUpdatedAt": now_pst.isoformat(),
+                    "updatedAt": datetime.now().isoformat(),
+                    "date": today,
+                }},
+                upsert=True,
+            )
+
+        if sensor_id and sensor_hourly_collection is not None:
+            hour_slot = int(now_pst.hour)
+            inc_doc = {"samples": 1}
+            if lux_value >= LUX_LIGHTS_ON_THRESHOLD:
+                inc_doc["bright_samples"] = 1
+            sensor_hourly_collection.update_one(
+                {"date": today, "hour": hour_slot, "sensor_id": sensor_id},
+                {
+                    "$inc": inc_doc,
+                    "$set": {
+                        "luxLast": lux_value,
+                        "updatedAt": datetime.now().isoformat(),
+                    },
+                },
+                upsert=True,
+            )
+
+        # Sensor 1 → room_living, Sensor 2 → room_bedroom (see SENSOR_ROOM_MAP). Always store latest lux.
+        room_name = SENSOR_ROOM_MAP.get(sensor_id) if sensor_id else None
         if room_name and room_name in room_collections and room_collections[room_name] is not None:
-            room_doc = room_collections[room_name].find_one({"date": today}) or {}
-            if int(room_doc.get("onSeconds", 0) or 0) > 0:
-                room_collections[room_name].update_one(
-                    {"date": today},
-                    {"$set": {
+            room_collections[room_name].update_one(
+                {"date": today},
+                {
+                    "$set": {
                         "avgLux": lux_value,
                         "sensor_id": sensor_id,
                         "luxUpdatedAt": now_pst.isoformat(),
-                        "updatedAt": datetime.now().isoformat()
-                    }},
-                    upsert=True
-                )
+                        "updatedAt": datetime.now().isoformat(),
+                    },
+                    "$setOnInsert": {"date": today, "onSeconds": 0},
+                },
+                upsert=True,
+            )
 
         return jsonify({"success": True, "data": {
             "date": today,
@@ -323,20 +394,19 @@ def save_usage():
         return jsonify({"error": "Invalid data"}), 400
 
     sensor_id = (data.get('sensor_id') or '').strip() if isinstance(data, dict) else ''
+    sid = sensor_id or DAILY_USAGE_AGGREGATE_SENSOR_ID
 
     usage_data = {
         "date": data['date'],
+        "sensor_id": sid,
         "onSeconds": data.get('onSeconds', 0),
         "offSeconds": 86400 - data.get('onSeconds', 0),
         "updatedAt": datetime.now().isoformat()
     }
 
-    if sensor_id:
-        usage_data["sensor_id"] = sensor_id
-    
     if usage_collection is not None:
         usage_collection.update_one(
-            {"date": data['date']},
+            {"date": data['date'], "sensor_id": sid},
             {"$set": usage_data},
             upsert=True
         )
@@ -369,9 +439,6 @@ def get_usage(date):
         "updatedAt": "",
         "luxUpdatedAt": ""
     })
-    
-# Lux at or above this level is treated as "lights / ambient on" for the dashboard badge.
-LUX_LIGHTS_ON_THRESHOLD = 25.0
 
 
 @app.route('/api/v1/sensors/latest', methods=['GET'])
@@ -405,7 +472,13 @@ def get_latest_sensor_reading():
             if sid:
                 usage_today = usage_collection.find_one({"date": today_str, "sensor_id": sid})
             if not usage_today:
-                usage_today = usage_collection.find_one({"date": today_str})
+                usage_today = usage_collection.find_one(
+                    {"date": today_str, "sensor_id": DAILY_USAGE_AGGREGATE_SENSOR_ID}
+                )
+            if not usage_today:
+                usage_today = usage_collection.find_one(
+                    {"$and": [{"date": today_str}, _daily_usage_aggregate_match()]}
+                )
 
         if not latest and not usage_today:
             return jsonify({"success": False, "message": "No readings found"}), 404
@@ -466,6 +539,121 @@ def get_latest_sensor_reading():
         print(f"⚠️ Failed to fetch latest reading: {e}")
         return jsonify({"success": False, "message": "Failed to fetch latest reading"}), 500
 
+
+@app.route('/api/v1/sensors/badges', methods=['GET'])
+def get_sensor_badges():
+    """Latest lux per logical sensor (Sensor 1 / Sensor 2) for dashboard pills."""
+    if sensor_latest_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+    try:
+        data = {}
+        for key, ids in SENSOR_BADGE_GROUPS:
+            label = "Sensor 1" if key == "sensor1" else "Sensor 2"
+            docs = list(sensor_latest_collection.find({"sensor_id": {"$in": list(ids)}}))
+            best = None
+            for d in docs:
+                if best is None:
+                    best = d
+                else:
+                    a = d.get("luxUpdatedAt") or ""
+                    b = best.get("luxUpdatedAt") or ""
+                    if a > b:
+                        best = d
+            if not best:
+                data[key] = {
+                    "label": label,
+                    "sensor_id": "",
+                    "lux": None,
+                    "lightsOn": None,
+                    "luxUpdatedAt": "",
+                }
+                continue
+            lux = best.get("lux")
+            lux_updated = best.get("luxUpdatedAt") or ""
+            sid = (best.get("sensor_id") or "").strip()
+            lights_on = None
+            if lux is not None:
+                try:
+                    lights_on = float(lux) >= LUX_LIGHTS_ON_THRESHOLD
+                except (TypeError, ValueError):
+                    lights_on = None
+            data[key] = {
+                "label": label,
+                "sensor_id": sid,
+                "lux": lux,
+                "lightsOn": lights_on,
+                "luxUpdatedAt": lux_updated,
+            }
+        return jsonify({"success": True, "data": data})
+    except Exception as e:
+        print(f"⚠️ Failed to fetch sensor badges: {e}")
+        return jsonify({"success": False, "message": "Failed to fetch sensor badges"}), 500
+
+
+@app.route('/api/v1/sensors/hourly_graph', methods=['GET'])
+def get_hourly_sensor_graph():
+    """24-point series (0–1) per logical sensor from MongoDB sensor_hourly (POST /data buckets)."""
+    date_str = (request.args.get('date') or '').strip()
+    if not date_str or not re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
+        return jsonify({"success": False, "message": "Missing or invalid date (YYYY-MM-DD)"}), 400
+    if sensor_hourly_collection is None:
+        return jsonify({"success": False, "message": "MongoDB not available"}), 503
+    try:
+        out = {
+            "sensor1": [0.0] * 24,
+            "sensor2": [0.0] * 24,
+            "totals": {
+                "sensor1": {"samples": 0, "brightSamples": 0},
+                "sensor2": {"samples": 0, "brightSamples": 0},
+            },
+        }
+        for group_key, ids in SENSOR_BADGE_GROUPS:
+            tk = "sensor1" if group_key == "sensor1" else "sensor2"
+            arr = out[tk]
+            pipeline = [
+                {"$match": {"date": date_str, "sensor_id": {"$in": list(ids)}}},
+                {
+                    "$group": {
+                        "_id": "$hour",
+                        "samples": {"$sum": "$samples"},
+                        "bright": {"$sum": "$bright_samples"},
+                    }
+                },
+            ]
+            for row in sensor_hourly_collection.aggregate(pipeline):
+                h = row.get("_id")
+                if h is None:
+                    continue
+                try:
+                    hi = int(h)
+                except (TypeError, ValueError):
+                    continue
+                if hi < 0 or hi > 23:
+                    continue
+                s = int(row.get("samples") or 0)
+                b = int(row.get("bright") or 0)
+                arr[hi] = round(min(1.0, b / s), 4) if s > 0 else 0.0
+
+            tot_pipeline = [
+                {"$match": {"date": date_str, "sensor_id": {"$in": list(ids)}}},
+                {
+                    "$group": {
+                        "_id": None,
+                        "sm": {"$sum": "$samples"},
+                        "br": {"$sum": "$bright_samples"},
+                    }
+                },
+            ]
+            tot_rows = list(sensor_hourly_collection.aggregate(tot_pipeline))
+            if tot_rows:
+                out["totals"][tk]["samples"] = int(tot_rows[0].get("sm") or 0)
+                out["totals"][tk]["brightSamples"] = int(tot_rows[0].get("br") or 0)
+        return jsonify({"success": True, "data": out})
+    except Exception as e:
+        print(f"⚠️ Failed hourly_graph: {e}")
+        return jsonify({"success": False, "message": "Failed to load hourly graph"}), 500
+
+
 @app.route('/api/usage/statistics')
 def get_usage_statistics():
     """Get weekly and monthly statistics EXCLUDING today (today is tracked live in frontend)"""
@@ -485,15 +673,20 @@ def get_usage_statistics():
     monthly_seconds = 0
     
     if usage_collection is not None:
-        # This week EXCLUDING today (frontend adds live dailySeconds)
+        # Only aggregate timer docs — exclude per-sensor daily_usage rows to avoid double-counting.
         week_records = list(usage_collection.find({
-            "date": {"$gte": week_start_str, "$lt": today_str}
+            "$and": [
+                {"date": {"$gte": week_start_str, "$lt": today_str}},
+                _daily_usage_aggregate_match(),
+            ]
         }))
         weekly_seconds = sum(r.get('onSeconds', 0) for r in week_records)
-        
-        # This month EXCLUDING today (frontend adds live dailySeconds)
+
         month_records = list(usage_collection.find({
-            "date": {"$gte": month_start_str, "$lt": today_str}
+            "$and": [
+                {"date": {"$gte": month_start_str, "$lt": today_str}},
+                _daily_usage_aggregate_match(),
+            ]
         }))
         monthly_seconds = sum(r.get('onSeconds', 0) for r in month_records)
     
@@ -507,6 +700,13 @@ def get_usage_statistics():
 
 VALID_ROOMS = ['living', 'bedroom']
 
+# Default sensor_id stored on room docs (same logical devices as SENSOR_ROOM_MAP / SENSOR_BADGE_GROUPS).
+ROOM_PRIMARY_SENSOR_ID = {
+    "living": "esp32_01",
+    "bedroom": "esp32_02",
+}
+
+
 @app.route('/api/room/<room_name>/save', methods=['POST'])
 def save_room_usage(room_name):
     """Save daily usage data for a specific room"""
@@ -518,16 +718,16 @@ def save_room_usage(room_name):
         return jsonify({"error": "Invalid data"}), 400
 
     sensor_id = (data.get('sensor_id') or '').strip() if isinstance(data, dict) else ''
+    if not sensor_id:
+        sensor_id = ROOM_PRIMARY_SENSOR_ID.get(room_name, "")
 
     room_data = {
         "date": data['date'],
         "onSeconds": data.get('onSeconds', 0),
         "avgLux": data.get('avgLux', 0),
-        "updatedAt": datetime.now().isoformat()
+        "updatedAt": datetime.now().isoformat(),
+        "sensor_id": sensor_id,
     }
-
-    if sensor_id:
-        room_data["sensor_id"] = sensor_id
     
     if room_name in room_collections and room_collections[room_name] is not None:
         room_collections[room_name].update_one(
@@ -861,7 +1061,7 @@ def log_device():
         return jsonify({"success": False, "message": "Failed to log device"}), 500
 
 
-# Documented API list (20 total: OpenAPI paths + Swagger UI; same as diagram / Info modal).
+# Documented API list (22 total: OpenAPI paths + Swagger UI; same as diagram / Info modal).
 DOCUMENTED_APIS = [
     ('GET', '/', 'Dashboard page'),
     ('GET', '/diagram', 'Architecture diagram page'),
@@ -871,6 +1071,8 @@ DOCUMENTED_APIS = [
     ('POST', '/api/v1/sensors/data', 'Submit lux sensor reading'),
     ('GET', '/api/v1/sensors/{sensor_id}/status', 'Sensor status by ID'),
     ('GET', '/api/v1/sensors/latest', 'Latest lux from daily_usage'),
+    ('GET', '/api/v1/sensors/badges', 'Per-sensor status for dashboard pills'),
+    ('GET', '/api/v1/sensors/hourly_graph', 'Hourly graph from sensor_hourly (query date)'),
     ('POST', '/api/usage/save', 'Save daily usage'),
     ('GET', '/api/usage/{date}', 'Get usage for date'),
     ('GET', '/api/usage/statistics', 'Weekly and monthly stats'),

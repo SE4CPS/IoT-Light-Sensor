@@ -684,6 +684,21 @@
             align-items: center;
         }
 
+        .sensor-badges-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header .sensor-badges-row .sensor-live-status {
+            min-width: 132px;
+            max-width: min(200px, 42vw);
+            padding: 8px 14px;
+            font-size: 14px;
+        }
+
         .header-right-spacer {
             flex: 1 1 0;
             min-width: 0;
@@ -923,7 +938,8 @@
             padding: 20px;
             margin-left: 0;
             width: 350px;
-            height: 280px;
+            min-height: 300px;
+            height: auto;
             position: relative;
             flex-shrink: 0;
         }
@@ -1051,6 +1067,7 @@
             width: 100%;
             height: 135px;
             border-bottom: 1px solid #4a5568;
+            cursor: crosshair;
         }
 
         .graph-canvas {
@@ -1082,6 +1099,62 @@
             color: #64748b;
             margin-top: 2px;
             width: 100%;
+        }
+
+        .today-graph-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 10px;
+            color: #cbd5e1;
+        }
+
+        .today-graph-legend .leg-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .today-graph-legend .leg-line {
+            width: 18px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .weekly-graph-value .hours.today-graph-avg {
+            color: #FDB841;
+            font-size: 15px;
+        }
+
+        .today-usage-graph-tooltip {
+            position: absolute;
+            pointer-events: none;
+            left: 0;
+            top: 0;
+            background: rgba(30, 34, 44, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: #e2e8f0;
+            z-index: 25;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            line-height: 1.45;
+            max-width: 200px;
+        }
+
+        .today-usage-graph-tooltip .tip-title {
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .today-usage-graph-tooltip .tip-row {
+            font-size: 10px;
+            color: #a0aec0;
         }
 
         .graph-x-axis span.today {
@@ -2885,6 +2958,10 @@
                 max-width: 100%;
             }
 
+            .header .sensor-badges-row .sensor-live-status {
+                max-width: 100%;
+            }
+
             .header-right-spacer {
                 display: none;
             }
@@ -4294,7 +4371,10 @@
                 <h1 class="title">UOP Light Sensor</h1>
             </div>
             <div class="header-center">
-                <div class="sensor-live-status unknown" id="sensorLiveStatus" role="status" aria-live="polite">Loading…</div>
+                <div class="sensor-badges-row" aria-label="Sensor status">
+                    <div class="sensor-live-status unknown" id="sensorLiveStatus1" role="status" aria-live="polite">Loading…</div>
+                    <div class="sensor-live-status unknown" id="sensorLiveStatus2" role="status" aria-live="polite">Loading…</div>
+                </div>
             </div>
             <div class="header-right-spacer" aria-hidden="true"></div>
         </header>
@@ -4389,10 +4469,16 @@
             <!-- Weekly Line Graph -->
             <div class="weekly-graph-container">
                 <div class="weekly-graph-header">
-                    <div class="weekly-graph-title">Today's Usage</div>
+                    <div>
+                        <div class="weekly-graph-title">Today's Usage</div>
+                        <div class="today-graph-legend" aria-hidden="true">
+                            <span class="leg-item"><span class="leg-line" style="background:#FDB841"></span> Sensor 1</span>
+                            <span class="leg-item"><span class="leg-line" style="background:#FF69B4"></span> Sensor 2</span>
+                        </div>
+                    </div>
                     <div class="weekly-graph-value">
                         <div class="date" id="graphDateLabel">Today</div>
-                        <div class="hours" id="graphHoursLabel">0h 0m</div>
+                        <div class="hours today-graph-avg" id="graphHoursLabel">—</div>
                     </div>
                 </div>
                 <div class="weekly-graph">
@@ -4421,7 +4507,7 @@
                         <div class="graph-grid-line" style="top: 80%"></div>
                         <div class="graph-grid-line" style="top: 90%"></div>
                         <div class="graph-grid-line" style="top: 100%"></div>
-                        <svg class="graph-canvas" id="weeklyGraphCanvas" viewBox="0 0 280 135" preserveAspectRatio="none">
+                        <svg class="graph-canvas" id="weeklyGraphCanvas" viewBox="0 0 280 135" preserveAspectRatio="xMidYMid meet">
                             <!-- Line and dots rendered by JS -->
                         </svg>
                     </div>
@@ -4899,11 +4985,11 @@
 
         let isEcoMode = false;
         let ecoInterval = null;
-        
+
         function simulateAmbientLight() {
             if (!isPowerOn || !isEcoMode) return;
             
-            // Fluctuate between 100-400 lux in Eco Mode
+            // Fluctuate between 100-400 lux in Eco Mode (UI only; sensor pills use real POST /api/v1/sensors/data)
             const minLux = 100;
             const maxLux = 400;
             const lux = Math.round(minLux + Math.random() * (maxLux - minLux));
@@ -5032,22 +5118,47 @@
             return (Date.now() - t) / 1000 > SENSOR_LUX_MAX_AGE_SEC;
         }
 
-        function updateSensorStatusBadge(payloadData) {
-            const statusEl = document.getElementById('sensorLiveStatus');
+        function setSensorBadgeOff(statusEl, label) {
             if (!statusEl) return;
+            statusEl.textContent = `${label} OFF`;
+            statusEl.className = 'sensor-live-status off-inactive';
+        }
 
-            const luxRaw = payloadData.lux;
+        function updateOneSensorBadge(statusEl, payloadSlice) {
+            if (!statusEl) return;
+            const label = payloadSlice.label || 'Sensor';
+            const luxRaw = payloadSlice.lux;
             const luxNum = Number(luxRaw);
             const hasActiveReading = luxRaw !== null && luxRaw !== undefined && luxRaw !== '' && Number.isFinite(luxNum);
-            const stale = isLuxReadingStale(payloadData.luxUpdatedAt);
-            const ambientOn = hasActiveReading && payloadData.lightsOn === true && !stale;
+            const stale = isLuxReadingStale(payloadSlice.luxUpdatedAt);
+            const ambientOn = hasActiveReading && payloadSlice.lightsOn === true && !stale;
 
             if (ambientOn) {
-                statusEl.textContent = 'Sensor ON';
+                statusEl.textContent = `${label} ON`;
                 statusEl.className = 'sensor-live-status on';
             } else {
-                statusEl.textContent = 'Sensor OFF';
-                statusEl.className = 'sensor-live-status off-inactive';
+                setSensorBadgeOff(statusEl, label);
+            }
+        }
+
+        async function syncSensorBadges() {
+            const el1 = document.getElementById('sensorLiveStatus1');
+            const el2 = document.getElementById('sensorLiveStatus2');
+            try {
+                const response = await fetch('/api/v1/sensors/badges');
+                const payload = await response.json();
+                if (!response.ok || !payload.success || !payload.data) {
+                    setSensorBadgeOff(el1, 'Sensor 1');
+                    setSensorBadgeOff(el2, 'Sensor 2');
+                    return;
+                }
+                const d = payload.data;
+                updateOneSensorBadge(el1, { ...d.sensor1, label: 'Sensor 1' });
+                updateOneSensorBadge(el2, { ...d.sensor2, label: 'Sensor 2' });
+            } catch (err) {
+                console.log('Sensor badges fetch error:', err);
+                setSensorBadgeOff(el1, 'Sensor 1');
+                setSensorBadgeOff(el2, 'Sensor 2');
             }
         }
 
@@ -5056,15 +5167,8 @@
                 const response = await fetch('/api/v1/sensors/latest');
                 const payload = await response.json();
                 if (!response.ok || !payload.success || !payload.data) {
-                    const statusEl = document.getElementById('sensorLiveStatus');
-                    if (statusEl) {
-                        statusEl.textContent = 'Sensor OFF';
-                        statusEl.className = 'sensor-live-status off-inactive';
-                    }
                     return;
                 }
-
-                updateSensorStatusBadge(payload.data);
 
                 const lux = Number(payload.data.lux);
                 if (!Number.isFinite(lux)) return;
@@ -5077,11 +5181,6 @@
                 }
             } catch (err) {
                 console.log('Latest sensor fetch error:', err);
-                const statusEl = document.getElementById('sensorLiveStatus');
-                if (statusEl) {
-                    statusEl.textContent = 'Sensor OFF';
-                    statusEl.className = 'sensor-live-status off-inactive';
-                }
             }
         }
 
@@ -5159,12 +5258,12 @@
             'IST': 'Asia/Kolkata'
         };
 
-        // Sensor identifiers
-        // - Daily usage is an aggregate across rooms, so keep it separate from per-room sensors.
-        const DAILY_SENSOR_ID = 'all-rooms';
+        // Sensor ↔ room matches app.py SENSOR_ROOM_MAP: esp32_01/sensor-1 → living, esp32_02/sensor-2 → bedroom.
+        // POST /api/v1/sensors/data writes lux to room_living / room_bedroom and to daily_usage per sensor_id.
+        const DAILY_SENSOR_ID = 'all-rooms'; // same as app DAILY_USAGE_AGGREGATE_SENSOR_ID — whole-dashboard timer only
         const ROOM_SENSOR_IDS = {
-            living: 'sensor-1',
-            bedroom: 'sensor-2'
+            living: 'esp32_01',
+            bedroom: 'esp32_02'
         };
         
         function getSelectedTimezone() {
@@ -5176,12 +5275,15 @@
             localStorage.setItem(TIMEZONE_STORAGE_KEY, timezone);
         }
         
+        function getIanaTimezone() {
+            const k = getSelectedTimezone();
+            return TIMEZONE_MAP[k] || k || 'UTC';
+        }
+
         // Helper function to get current date in selected timezone
         function getPSTDate() {
             const now = new Date();
-            const timezone = getSelectedTimezone();
-            const dateString = now.toLocaleDateString('en-CA', { timeZone: timezone });
-            return dateString; // Returns YYYY-MM-DD format
+            return now.toLocaleDateString('en-CA', { timeZone: getIanaTimezone() });
         }
 
         /** YYYY-MM-DD from a Date's local calendar (matches sidebar calendar selection). */
@@ -5513,7 +5615,9 @@
         loadDailyUsageHistory();
         startStatsTracking();
         syncLatestSensorReading();
+        syncSensorBadges();
         setInterval(syncLatestSensorReading, 5000);
+        setInterval(syncSensorBadges, 5000);
 
         // Set initial gauge value (light is off initially)
         updateGauge(0);
@@ -5522,145 +5626,258 @@
         updateStatsDisplay();
         updateDonutChart();
 
-        // ==================== WEEKLY LINE GRAPH ====================
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        
+        // ==================== TODAY'S USAGE (MongoDB sensor_hourly, dual line 0–24h) ====================
+        const HOURLY_GRAPH_REFRESH_MS = 60 * 1000;
+        const TODAY_GRAPH_COLORS = { s1: '#FDB841', s2: '#FF69B4' };
+
+        let todayUsageGraphTipEl = null;
+        let todayUsageGraphHandlersBound = false;
+
+        function setupTodayUsageGraphInteraction(graphCanvas, normS1, normS2, graphDateStr, opts = {}) {
+            const {
+                showLine1 = true,
+                showLine2 = true,
+                samples1 = 0,
+                samples2 = 0
+            } = opts;
+            const wrapper = graphCanvas.closest('.graph-canvas-wrapper');
+            if (!wrapper) return;
+
+            if (!todayUsageGraphTipEl) {
+                todayUsageGraphTipEl = document.createElement('div');
+                todayUsageGraphTipEl.id = 'todayUsageGraphTooltip';
+                todayUsageGraphTipEl.className = 'today-usage-graph-tooltip';
+                wrapper.appendChild(todayUsageGraphTipEl);
+            }
+
+            window.__todayGraphTipData = {
+                normS1,
+                normS2,
+                graphDateStr,
+                graphCanvas,
+                showLine1,
+                showLine2,
+                samples1,
+                samples2
+            };
+
+            if (todayUsageGraphHandlersBound) return;
+            todayUsageGraphHandlersBound = true;
+
+            const width = 280;
+            const height = 135;
+            const padding = 10;
+            const innerW = width - padding * 2;
+
+            const hourLabel = (hr) => {
+                const d = new Date();
+                d.setHours(hr, 0, 0, 0);
+                return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            };
+
+            const onMove = (e) => {
+                const d = window.__todayGraphTipData;
+                const canvas = d && d.graphCanvas;
+                const tip = todayUsageGraphTipEl;
+                if (!canvas || !tip || !wrapper.contains(canvas)) return;
+
+                const rect = canvas.getBoundingClientRect();
+                if (!rect.width) return;
+                const rx = ((e.clientX ?? e.pageX) - rect.left) / rect.width;
+                const xSvg = rx * width;
+                let hour = Math.round(((xSvg - padding) / innerW) * 23);
+                hour = Math.max(0, Math.min(23, hour));
+
+                const v1 = (d.normS1[hour] ?? 0);
+                const v2 = (d.normS2[hour] ?? 0);
+                const pct = (v) => `${Math.round(v * 100)}% bright`;
+                const row = (show, samples, v) => {
+                    if (!show) return samples <= 0 ? 'no readings' : 'no bright samples';
+                    return v > 0.02 ? pct(v) : '0% bright';
+                };
+                tip.innerHTML = `
+                    <div class="tip-title">${d.graphDateStr} · ${hourLabel(hour)}</div>
+                    <div class="tip-row" style="color:${TODAY_GRAPH_COLORS.s1}">Sensor 1: ${row(d.showLine1, d.samples1, v1)}</div>
+                    <div class="tip-row" style="color:${TODAY_GRAPH_COLORS.s2}">Sensor 2: ${row(d.showLine2, d.samples2, v2)}</div>
+                `;
+                tip.style.display = 'block';
+                const wrapRect = wrapper.getBoundingClientRect();
+                const lx = (e.clientX ?? e.pageX) - wrapRect.left;
+                const ly = (e.clientY ?? e.pageY) - wrapRect.top;
+                tip.style.transform = `translate(${Math.min(lx + 12, Math.max(0, wrapRect.width - 200))}px, ${Math.max(ly - 52, 6)}px)`;
+
+                let line = canvas.querySelector('.today-graph-crosshair');
+                if (!line) {
+                    line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('class', 'today-graph-crosshair');
+                    line.setAttribute('stroke', 'rgba(255,255,255,0.35)');
+                    line.setAttribute('stroke-width', '1');
+                    line.setAttribute('stroke-dasharray', '4 3');
+                    canvas.appendChild(line);
+                }
+                const cx = padding + (hour / 23) * innerW;
+                line.setAttribute('x1', cx);
+                line.setAttribute('x2', cx);
+                line.setAttribute('y1', padding);
+                line.setAttribute('y2', height - padding);
+                line.removeAttribute('display');
+            };
+
+            const onLeave = () => {
+                if (todayUsageGraphTipEl) todayUsageGraphTipEl.style.display = 'none';
+                const c = window.__todayGraphTipData && window.__todayGraphTipData.graphCanvas;
+                const line = c && c.querySelector('.today-graph-crosshair');
+                if (line) line.setAttribute('display', 'none');
+            };
+
+            wrapper.addEventListener('mousemove', onMove);
+            wrapper.addEventListener('mouseleave', onLeave);
+            wrapper.addEventListener('touchmove', (ev) => {
+                if (ev.touches[0]) onMove(ev.touches[0]);
+            }, { passive: true });
+            wrapper.addEventListener('touchend', onLeave);
+        }
+
+        function normalizeGraphSeries24(arr) {
+            const out = new Array(24).fill(0);
+            if (!arr || !Array.isArray(arr)) return out;
+            for (let i = 0; i < 24; i++) {
+                const n = Number(arr[i]);
+                out[i] = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
+            }
+            return out;
+        }
+
         async function loadWeeklyGraphData(targetDate = null) {
             const graphCanvas = document.getElementById('weeklyGraphCanvas');
             if (!graphCanvas) return;
-            
-            const today = new Date();
-            const todayPST = getPSTDate();
-            
-            // Use target date if provided, otherwise use today
-            const baseDate = targetDate ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 12, 0, 0) : today;
-            const baseDayIndex = baseDate.getDay(); // 0 = Sunday
-            
-            // Get dates for the week containing baseDate (Sunday to Saturday)
-            const weekDates = [];
-            
-            // Find Sunday of this week
-            const sunday = new Date(baseDate);
-            sunday.setDate(baseDate.getDate() - baseDayIndex);
-            
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(sunday);
-                date.setDate(sunday.getDate() + i);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${day}`;
-                // Check if date is in the future compared to actual today
-                const thisDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                const isFuture = thisDate > actualToday;
-                
-                weekDates.push({
-                    dateStr: dateStr,
-                    dayName: dayNames[i],
-                    isToday: dateStr === todayPST,
-                    isFuture: isFuture
-                });
-            }
-            
-            // Fetch data for each day (lux normalized to 0–1 for Y; X axis is 0–24 hours across the week)
-            const weekData = [];
-            for (const dateInfo of weekDates) {
-                if (dateInfo.isFuture) {
-                    weekData.push({ ...dateInfo, lux: null });
-                } else {
-                    try {
-                        const response = await fetch(`/api/usage/${dateInfo.dateStr}`);
-                        const data = await response.json();
-                        let lux = data.lux != null && data.lux !== '' ? Number(data.lux) : null;
-                        if (!Number.isFinite(lux)) lux = null;
-                        if (lux !== null) lux = Math.max(0, Math.min(800, lux));
-                        weekData.push({
-                            ...dateInfo,
-                            lux
-                        });
-                    } catch (e) {
-                        weekData.push({
-                            ...dateInfo,
-                            lux: null
-                        });
-                    }
-                }
-            }
-            
-            // X-axis: fixed 0–24 hour ticks (see HTML); no day labels
-            
-            // Header: selected week anchor date (dashboard timezone)
-            const tz = getSelectedTimezone();
-            const labelForDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 12, 0, 0);
-            const graphDateLabel = labelForDate.toLocaleDateString('en-US', {
-                timeZone: tz,
+
+            const baseDate = targetDate
+                ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 12, 0, 0)
+                : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 12, 0, 0);
+            const graphDateStr = getYmdFromDate(baseDate);
+
+            const graphDateLabel = baseDate.toLocaleDateString('en-US', {
+                timeZone: getIanaTimezone(),
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric'
             });
 
-            const luxSamples = weekData.filter(d => d.lux !== null && d.lux !== undefined).map(d => d.lux);
-            const avgLux = luxSamples.length
-                ? luxSamples.reduce((a, b) => a + b, 0) / luxSamples.length
-                : null;
-            
-            document.getElementById('graphDateLabel').textContent = graphDateLabel;
-            const avgNorm = avgLux !== null ? avgLux / 800 : null;
-            document.getElementById('graphHoursLabel').textContent =
-                avgNorm !== null ? `${avgNorm.toFixed(2)} avg` : '—';
+            let normS1 = new Array(24).fill(0);
+            let normS2 = new Array(24).fill(0);
+            let totals = {
+                sensor1: { samples: 0, brightSamples: 0 },
+                sensor2: { samples: 0, brightSamples: 0 }
+            };
+            try {
+                const res = await fetch(`/api/v1/sensors/hourly_graph?date=${encodeURIComponent(graphDateStr)}`);
+                const json = await res.json();
+                if (json.success && json.data) {
+                    normS1 = normalizeGraphSeries24(json.data.sensor1);
+                    normS2 = normalizeGraphSeries24(json.data.sensor2);
+                    if (json.data.totals) {
+                        totals = {
+                            sensor1: {
+                                samples: Number(json.data.totals.sensor1?.samples) || 0,
+                                brightSamples: Number(json.data.totals.sensor1?.brightSamples) || 0
+                            },
+                            sensor2: {
+                                samples: Number(json.data.totals.sensor2?.samples) || 0,
+                                brightSamples: Number(json.data.totals.sensor2?.brightSamples) || 0
+                            }
+                        };
+                    }
+                }
+            } catch (e) {
+                console.log('hourly_graph fetch error:', e);
+            }
 
-            // Draw line graph: X = hour position 0–24 (week samples spread), Y = normalized lux 0–1
+            const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+            const maxOf = (arr) => arr.reduce((m, v) => (v > m ? v : m), 0);
+            const max1 = maxOf(normS1);
+            const max2 = maxOf(normS2);
+            const MIN_FRAC = 1e-9;
+            const showLine1 = totals.sensor1.samples > 0 && max1 > MIN_FRAC;
+            const showLine2 = totals.sensor2.samples > 0 && max2 > MIN_FRAC;
+
+            const avgParts = [];
+            if (showLine1) avgParts.push(mean(normS1));
+            if (showLine2) avgParts.push(mean(normS2));
+            const combinedAvg = avgParts.length ? avgParts.reduce((a, b) => a + b, 0) / avgParts.length : 0;
+            const hasData = avgParts.length > 0;
+
+            document.getElementById('graphDateLabel').textContent = graphDateLabel;
+            document.getElementById('graphHoursLabel').textContent = hasData ? `${combinedAvg.toFixed(2)} avg` : '—';
+
             const width = 280;
             const height = 135;
-            const maxLux = 800;
             const padding = 10;
+            const bottomY = height - padding;
 
-            const validData = weekData.filter(d => d.lux !== null && d.lux !== undefined);
-            const n = validData.length;
-            const points = validData.map((day, i) => {
-                const t = n <= 1 ? 0 : i / (n - 1);
-                const hour = t * 24;
-                const x = padding + (hour / 24) * (width - padding * 2);
-                const norm = Math.max(0, Math.min(1, day.lux / maxLux));
-                const y = height - padding - (norm * (height - padding * 2));
-                return { x, y, lux: day.lux, hour, isToday: day.isToday };
-            });
-            
-            // Create smooth curve path
-            let pathD = '';
-            if (points.length > 0) {
-                pathD = `M ${points[0].x} ${points[0].y}`;
-                for (let i = 1; i < points.length; i++) {
-                    const prev = points[i - 1];
-                    const curr = points[i];
-                    const cpx = (prev.x + curr.x) / 2;
-                    pathD += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`;
+            function pointsFromNorm(normArr) {
+                return normArr.slice(0, 24).map((nv, h) => {
+                    const n = Number.isFinite(nv) ? Math.min(1, Math.max(0, nv)) : 0;
+                    const x = padding + (h / 23) * (width - padding * 2);
+                    const y = bottomY - n * (height - padding * 2);
+                    return { x, y, h, nv: n };
+                });
+            }
+
+            function linePath(pts) {
+                if (!pts.length) return '';
+                let d = `M ${pts[0].x} ${pts[0].y}`;
+                for (let i = 1; i < pts.length; i++) {
+                    d += ` L ${pts[i].x} ${pts[i].y}`;
                 }
+                return d;
             }
-            
-            // Create area fill path
-            let areaD = pathD;
-            if (points.length > 0) {
-                areaD += ` L ${points[points.length - 1].x} ${height - padding}`;
-                areaD += ` L ${points[0].x} ${height - padding} Z`;
+
+            function areaPath(pts) {
+                if (!pts.length) return '';
+                let d = `M ${pts[0].x} ${bottomY} L ${pts[0].x} ${pts[0].y}`;
+                for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
+                d += ` L ${pts[pts.length - 1].x} ${bottomY} Z`;
+                return d;
             }
-            
-            // Render SVG (using amber/orange color to match gauge)
-            const accentColor = '#f5a623';
+
+            const pts1 = pointsFromNorm(normS1);
+            const pts2 = pointsFromNorm(normS2);
+            const path1 = showLine1 ? linePath(pts1) : '';
+            const path2 = showLine2 ? linePath(pts2) : '';
+            const area1 = showLine1 ? areaPath(pts1) : '';
+            const area2 = showLine2 ? areaPath(pts2) : '';
+            const yel = TODAY_GRAPH_COLORS.s1;
+            const pnk = TODAY_GRAPH_COLORS.s2;
+
+            const layer1a = showLine1 && area1 ? `<path d="${area1}" fill="url(#todayUsageGrad1)" />` : '';
+            const layer1l = showLine1 && path1 ? `<path d="${path1}" fill="none" stroke="${yel}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` : '';
+            const layer2a = showLine2 && area2 ? `<path d="${area2}" fill="url(#todayUsageGrad2)" />` : '';
+            const layer2l = showLine2 && path2 ? `<path d="${path2}" fill="none" stroke="${pnk}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` : '';
+
             graphCanvas.innerHTML = `
                 <defs>
-                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.4"/>
-                        <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.05"/>
+                    <linearGradient id="todayUsageGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${yel}" stop-opacity="0.28"/>
+                        <stop offset="100%" stop-color="${yel}" stop-opacity="0.02"/>
+                    </linearGradient>
+                    <linearGradient id="todayUsageGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="${pnk}" stop-opacity="0.28"/>
+                        <stop offset="100%" stop-color="${pnk}" stop-opacity="0.02"/>
                     </linearGradient>
                 </defs>
-                <path d="${areaD}" fill="url(#lineGradient)" />
-                <path d="${pathD}" fill="none" stroke="${accentColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                ${points.map(p => `
-                    <circle cx="${p.x}" cy="${p.y}" r="${p.isToday ? 5 : 3}" fill="${p.isToday ? accentColor : '#fff'}" stroke="${accentColor}" stroke-width="2"/>
-                `).join('')}
+                ${layer1a}
+                ${layer2a}
+                ${layer1l}
+                ${layer2l}
             `;
+
+            setupTodayUsageGraphInteraction(graphCanvas, normS1, normS2, graphDateStr, {
+                showLine1,
+                showLine2,
+                samples1: totals.sensor1.samples,
+                samples2: totals.sensor2.samples
+            });
         }
         
         // Track the selected week date for the graph
@@ -5750,10 +5967,10 @@
         initUserDataViewSelectors();
         loadUserDataView();
         
-        // Update weekly graph every 10 seconds for live updates (use selected date if set)
+        // Refresh Today's Usage graph from MongoDB (use selected date if set)
         setInterval(() => {
             loadWeeklyGraphData(selectedWeekDate);
-        }, 10000);
+        }, HOURLY_GRAPH_REFRESH_MS);
 
         // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
         // Daily graph helpers
