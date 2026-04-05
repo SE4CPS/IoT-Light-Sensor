@@ -5,8 +5,8 @@
 #include <BH1750.h>
 #include <time.h>
 
-const char* ssid = "[ENTER_YOUR_WIFI]";
-const char* password = "[ENTER_YOUR_PASSWORD]";
+const char* ssid = "PacDeviceReg";
+const char* password = "register";
 
 // ----- Backend Info -----
 const char* serverURL = "https://iot-light-sensor.onrender.com/api/v1/sensors/data";
