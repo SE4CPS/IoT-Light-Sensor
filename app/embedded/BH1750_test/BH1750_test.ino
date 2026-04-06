@@ -9,7 +9,7 @@ const char* ssid = "PacDeviceReg";
 const char* password = "register";
 
 // ----- Backend Info -----
-const char* serverURL = "https://iot-light-sensor.onrender.com/api/v1/sensors/data";
+const char* serverURL = "https://iot-light-sensoruop.onrender.com/api/v1/sensors/data";
 const char* sensorId = "esp32_01";
 
 // ----- Sensor -----
@@ -116,5 +116,5 @@ Serial.println(payload);
   } else {
     Serial.println("WiFi not connected!");
   }
- delay(5000);
+ delay(300000); // 5 minutes
 }

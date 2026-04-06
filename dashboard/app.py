@@ -664,6 +664,7 @@ def get_usage_statistics():
     
     # Calculate week start as SUNDAY (Python weekday: Mon=0, Sun=6)
     # So days since Sunday = (weekday + 1) % 7
+
     days_since_sunday = (today.weekday() + 1) % 7
     week_start = today - timedelta(days=days_since_sunday)
     week_start_str = week_start.strftime('%Y-%m-%d')
@@ -997,9 +998,7 @@ def save_feedback():
         return jsonify({"success": False, "message": "MongoDB not available"}), 503
 
     data = request.json or {}
-    component = (data.get('component') or '').strip()
-    error_type = (data.get('error_type') or '').strip()
-    message = (data.get('message') or '').strip()
+    text = (data.get('text') or '').strip()
     if not text:
         return jsonify({"success": False, "message": "Feedback text is required"}), 400
 
@@ -1007,9 +1006,7 @@ def save_feedback():
     now_pst = datetime.now(pst)
 
     doc = {
-    	"component" : component,
-    	"error_type": error_type,
-        "message": message,
+        "text": text,
         "date": now_pst.strftime('%Y-%m-%d'),
         "time": now_pst.strftime('%H:%M:%S'),
         "timestamp": now_pst.isoformat(),

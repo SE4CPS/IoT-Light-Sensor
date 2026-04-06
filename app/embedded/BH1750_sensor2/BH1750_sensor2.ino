@@ -13,7 +13,7 @@ const char* ssid = "[ENTER_YOUR_WIFI]";
 const char* password = "[ENTER_YOUR_PASSWORD]";
 
 // ----- Backend Info -----
-const char* serverURL = "https://iot-light-sensor.onrender.com/api/v1/sensors/data";
+const char* serverURL = "https://iot-light-sensoruop.onrender.com/api/v1/sensors/data";
 const char* sensorId = "esp32_02";
 
 // ----- Sensor -----
@@ -95,5 +95,5 @@ void loop() {
   } else {
     Serial.println("WiFi not connected!");
   }
-  delay(5000);
+  delay(300000); // 5 minutes
 }

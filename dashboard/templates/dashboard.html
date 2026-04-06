@@ -5558,14 +5558,6 @@
             const todayPST = getPSTDate();
             const isSelectedToday = getYmdFromDate(selectedDate) === todayPST;
 
-            // Requested behavior: when current lights are OFF, today's donut should display 0.
-            if (isSelectedToday) {
-                const anyRoomOn = Object.values(roomConfig).some((room) => room.on);
-                if (!anyRoomOn) {
-                    usageSeconds = 0;
-                }
-            }
-
             const hours = usageSeconds / 3600;
             const maxHours = 24;
             const percentage = Math.min(hours / maxHours, 1);
@@ -5627,7 +5619,7 @@
         updateDonutChart();
 
         // ==================== TODAY'S USAGE (MongoDB sensor_hourly, dual line 0–24h) ====================
-        const HOURLY_GRAPH_REFRESH_MS = 60 * 1000;
+        const HOURLY_GRAPH_REFRESH_MS = 5 * 60 * 1000;
         const TODAY_GRAPH_COLORS = { s1: '#FDB841', s2: '#FF69B4' };
 
         let todayUsageGraphTipEl = null;
@@ -5794,12 +5786,8 @@
             }
 
             const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
-            const maxOf = (arr) => arr.reduce((m, v) => (v > m ? v : m), 0);
-            const max1 = maxOf(normS1);
-            const max2 = maxOf(normS2);
-            const MIN_FRAC = 1e-9;
-            const showLine1 = totals.sensor1.samples > 0 && max1 > MIN_FRAC;
-            const showLine2 = totals.sensor2.samples > 0 && max2 > MIN_FRAC;
+            const showLine1 = totals.sensor1.samples > 0;
+            const showLine2 = totals.sensor2.samples > 0;
 
             const avgParts = [];
             if (showLine1) avgParts.push(mean(normS1));
