@@ -4,117 +4,142 @@
 #include <Wire.h>
 #include <BH1750.h>
 #include <time.h>
+#include <SPIFFS.h>
+#include <ArduinoOTA.h>
 
-const char* ssid = "PacDeviceReg";
-const char* password = "register";
+#define BACKLOG_FILE "/data.txt"
+#define MAX_FILE_SIZE 50000
+#define WIFI_TIMEOUT 30000
 
-// ----- Backend Info -----
-const char* serverURL = "https://iot-light-sensoruop.onrender.com/api/v1/sensors/data";
-const char* sensorId = "esp32_01";
-
-// ----- Sensor -----
-BH1750 lightMeter;
-
-// ----- NTP / Time -----
+const char* ssid      = "PacDeviceReg";
+const char* password  = "register";
+const char* serverURL = "https://iot-light-sensor.onrender.com/api/v1/sensors/data";
+const char* logURL    = "https://iot-light-sensor.onrender.com/api/device/log";
+const char* sensorId  = "esp32_01";
 const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = 0;  // UTC
-const int   daylightOffset_sec = 0;
 
-// WiFi client for HTTPS
+BH1750 lightMeter;
 WiFiClientSecure client;
+bool backlogSent = false;
+
+// ----- WiFi -----
+
+bool connectWiFi(unsigned long timeoutMs = WIFI_TIMEOUT) {
+  if (WiFi.status() == WL_CONNECTED) return true;
+  Serial.printf("Connecting to %s\n", ssid);
+  WiFi.begin(ssid, password);
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start < timeoutMs) {
+    delay(500); Serial.print(".");
+  }
+  Serial.println(WiFi.status() == WL_CONNECTED ? "\nWiFi connected" : "\nWiFi connection failed");
+  return WiFi.status() == WL_CONNECTED;
+}
+
+// ----- Storage -----
+
+void storeReading(const String& payload) {
+  if (SPIFFS.exists(BACKLOG_FILE) && SPIFFS.open(BACKLOG_FILE, FILE_READ).size() > MAX_FILE_SIZE) {
+    Serial.println("Backlog full — clearing");
+    SPIFFS.remove(BACKLOG_FILE);
+  }
+  File f = SPIFFS.open(BACKLOG_FILE, FILE_APPEND);
+  if (f) { f.println(payload); f.close(); }
+}
+
+// ----- HTTP -----
+
+void logError(int code, const String& context) {
+  HTTPClient https;
+  https.begin(client, logURL);
+  https.addHeader("Content-Type", "application/json");
+  String body = "{\"sensor_id\":\"" + String(sensorId) +
+                "\",\"timestamp\":\"" + getISOTime() +
+                "\",\"error_code\":" + String(code) +
+                ",\"context\":\"" + context + "\"}";
+  https.POST(body);
+  https.end();
+}
+
+bool sendPayload(const String& payload) {
+  HTTPClient https;
+  https.begin(client, serverURL);
+  https.addHeader("Content-Type", "application/json");
+  int code = https.POST(payload);
+  https.end();
+  bool ok = code > 0 && code < 300;
+  if (!ok) logError(code, "sensors/data");
+  Serial.println(ok ? "Upload successful" : "Upload failed");
+  return ok;
+}
+
+void sendBacklog() {
+  if (!SPIFFS.exists(BACKLOG_FILE)) return;
+  File f = SPIFFS.open(BACKLOG_FILE, FILE_READ);
+  if (!f) return;
+  Serial.println("Sending backlog...");
+  String remaining = "";
+  while (f.available()) {
+    String line = f.readStringUntil('\n');
+    if (line.length() > 0 && !sendPayload(line)) remaining += line + "\n";
+  }
+  f.close();
+  SPIFFS.remove(BACKLOG_FILE);
+  if (remaining.length() > 0) {
+    File nf = SPIFFS.open(BACKLOG_FILE, FILE_WRITE);
+    if (nf) { nf.print(remaining); nf.close(); }
+    Serial.println("Backlog partially sent.");
+  } else {
+    Serial.println("Backlog cleared.");
+  }
+}
+
+// ----- Helpers -----
+
+String getISOTime() {
+  struct tm t;
+  if (!getLocalTime(&t)) return "1970-01-01T00:00:00Z";
+  char buf[30];
+  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &t);
+  return String(buf);
+}
+
+String buildPayload(float lux) {
+  return "{\"sensor_id\":\"" + String(sensorId) +
+         "\",\"timestamp\":\"" + getISOTime() +
+         "\",\"lux\":" + String(lux) + "}";
+}
+
+// ----- Setup / Loop -----
 
 void setup() {
-Serial.begin(115200);
-Wire.begin(21, 22);  // SDA, SCL
-
-
-//Connect to WiFi
-WiFi.begin(ssid, password);
-while (WiFi.status() != WL_CONNECTED) {
-  delay(500);
-  Serial.print(".");
-}
-Serial.println("\nConnected to WiFi");
-
-
-// Configure NTP
- configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-
-
- // Wait for time sync
- struct tm timeinfo;
- while (!getLocalTime(&timeinfo)) {
-   Serial.println("Waiting for NTP time sync...");
-   delay(1000);
- }
-
-// Initialize BH1750
-/*if (lightMeter.begin()) {
-  Serial.println("BH1750 started!");
-} else {
-  Serial.println("Error initializing BH1750");
-}
-*/
-
-if (!lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23)) {
-    Serial.println("Error initializing BH1750 — check wiring and address!");
-} else {
-    Serial.println("Error initializing BH1750");
-}
-
-// Skip certificate verification for testing (not recommended for production)
+  Serial.begin(115200);
+  Wire.begin(21, 22);
+  connectWiFi();
+  ArduinoOTA.begin();
+  if (!SPIFFS.begin(true))        { Serial.println("SPIFFS failed"); return; }
+  configTime(0, 0, ntpServer);
+  struct tm t;
+  while (!getLocalTime(&t))       { Serial.println("Waiting for NTP..."); delay(1000); }
+  if (!lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23))
+    Serial.println("BH1750 init failed");
+  else
+    Serial.println("BH1750 ready");
   client.setInsecure();
 }
 
-
-
-String getISOTime() {
-struct tm timeinfo;
-if (!getLocalTime(&timeinfo)) {
-  return "1970-01-01T00:00:00Z";
-}
-
-
-char buffer[30];
-strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
-return String(buffer);
-}
-
-
 void loop() {
-float lux = lightMeter.readLightLevel();
-String timestamp = getISOTime();
+  ArduinoOTA.handle(); 
+  connectWiFi();  // reconnects if needed, no-op if already connected
+  String payload = buildPayload(lightMeter.readLightLevel());
+  Serial.println(payload);
 
-
-// JSON payload
-String payload = "{";
-payload += "\"sensor_id\":\"" + String(sensorId) + "\",";
-payload += "\"timestamp\":\"" + String(timestamp) + "\",";
-payload += "\"lux\":" + String(lux);
-payload += "}";
-
-
-Serial.println("Sending payload:");
-Serial.println(payload);
-
-
-// Send HTTPS POST
- if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient https;
-    https.begin(client, serverURL); 
-    https.addHeader("Content-Type", "application/json");
-
-    int httpResponseCode = https.POST(payload);
-    if (httpResponseCode > 0) {
-      Serial.print("Response code: ");
-      Serial.println(httpResponseCode); 
-    } else {
-      Serial.print("Error sending data: ");
-      Serial.println(httpResponseCode);
-    }
-    https.end();
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!backlogSent) { sendBacklog(); backlogSent = true; }
+    if (!sendPayload(payload)) storeReading(payload);
   } else {
-    Serial.println("WiFi not connected!");
+    backlogSent = false;
+    storeReading(payload);
   }
- delay(300000); // 5 minutes
+  delay(5000);
 }
