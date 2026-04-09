@@ -170,6 +170,19 @@ LUX_LIGHTS_ON_THRESHOLD = 25.0
 # each device POST uses its own sensor_id so lux/onSeconds do not overwrite each other.
 DAILY_USAGE_AGGREGATE_SENSOR_ID = "all-rooms"
 
+# Dashboard login: allowed email domains (must match frontend validation).
+ALLOWED_USER_EMAIL_DOMAINS = frozenset(
+    {"gmail.com", "yahoo.com", "outlook.com", "u.pacific.edu"}
+)
+
+
+def _user_email_domain_allowed(email: str) -> bool:
+    e = (email or "").strip().lower()
+    if "@" not in e:
+        return False
+    domain = e.rsplit("@", 1)[-1]
+    return domain in ALLOWED_USER_EMAIL_DOMAINS
+
 
 def _daily_usage_aggregate_match():
     """Match Mongo docs that store the whole-dashboard onSeconds (User View “All Rooms”)."""
@@ -947,6 +960,11 @@ def user_login():
         return jsonify({"success": False, "message": "Email is required"}), 400
     if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
         return jsonify({"success": False, "message": "Invalid email id"}), 400
+    if not _user_email_domain_allowed(email):
+        return jsonify({
+            "success": False,
+            "message": "Use an allowed email domain: gmail.com, yahoo.com, outlook.com, or u.pacific.edu.",
+        }), 400
     if not isinstance(password, str) or not password.strip():
         return jsonify({"success": False, "message": "Password is required"}), 400
 
