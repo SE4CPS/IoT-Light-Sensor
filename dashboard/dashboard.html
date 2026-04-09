@@ -4613,10 +4613,14 @@
             const loginCancel = document.getElementById('loginCancel');
             const STORAGE_KEY = 'dashboardLoggedIn';
             const EMAIL_KEY = 'userEmail';
+            const ALLOWED_EMAIL_DOMAINS = new Set(['gmail.com', 'yahoo.com', 'outlook.com', 'u.pacific.edu']);
 
             function isValidEmail(email) {
-                // Simple, pragmatic check: no spaces, one "@", and a dot in the domain part.
-                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+                const normalized = String(email || '').trim().toLowerCase();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) return false;
+                const parts = normalized.split('@');
+                if (parts.length !== 2) return false;
+                return ALLOWED_EMAIL_DOMAINS.has(parts[1]);
             }
 
             function showLoginError(message) {
@@ -4744,7 +4748,7 @@
                         return;
                     }
                     if (!isValidEmail(email)) {
-                        showLoginError('Invalid email id');
+                        showLoginError('Use an allowed email domain: gmail.com, yahoo.com, outlook.com, or u.pacific.edu.');
                         return;
                     }
                     if (!password) {
@@ -4808,7 +4812,7 @@
                 loginEmail.addEventListener('blur', function() {
                     const email = (loginEmail.value || '').trim();
                     if (!email) return;
-                    if (!isValidEmail(email)) showLoginError('Invalid email id');
+                    if (!isValidEmail(email)) showLoginError('Use an allowed email domain: gmail.com, yahoo.com, outlook.com, or u.pacific.edu.');
                 });
             }
         })();
