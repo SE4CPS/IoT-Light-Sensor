@@ -9,9 +9,97 @@ import pytz
 from dotenv import load_dotenv
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+import time
+from collections import defaultdict
+import threading
 
 # Load environment variables from .env file
 load_dotenv()
+
+# ===== Rate Limiting =====
+
+class RateLimiter:
+    """In-memory rate limiter using a sliding window approach per IP address."""
+
+    def __init__(self, default_max_requests=60, default_window_seconds=60):
+        self.default_max_requests = default_max_requests
+        self.default_window_seconds = default_window_seconds
+        # {ip: [timestamp1, timestamp2, ...]}
+        self._requests = defaultdict(list)
+        self._lock = threading.Lock()
+
+    def _cleanup(self, ip, window_seconds):
+        """Remove timestamps outside the current window."""
+        cutoff = time.time() - window_seconds
+        self._requests[ip] = [
+            t for t in self._requests[ip] if t > cutoff
+        ]
+
+    def is_rate_limited(self, ip, max_requests=None, window_seconds=None):
+        """Check if the IP is over the limit. Returns (is_limited, remaining, retry_after)."""
+        max_req = max_requests or self.default_max_requests
+        window = window_seconds or self.default_window_seconds
+
+        with self._lock:
+            self._cleanup(ip, window)
+            current_count = len(self._requests[ip])
+
+            if current_count >= max_req:
+                oldest = self._requests[ip][0] if self._requests[ip] else time.time()
+                retry_after = int(oldest + window - time.time()) + 1
+                return True, 0, max(retry_after, 1)
+
+            self._requests[ip].append(time.time())
+            remaining = max_req - current_count - 1
+            return False, remaining, 0
+
+
+# Global rate limiter instance
+# Default: 60 requests per 60-second window per IP
+rate_limiter = RateLimiter(default_max_requests=60, default_window_seconds=60)
+
+
+def rate_limit(max_requests=None, window_seconds=None):
+    """Decorator to apply rate limiting to a Flask route.
+
+    Usage:
+        @app.route('/api/example')
+        @rate_limit(max_requests=30, window_seconds=60)
+        def example():
+            ...
+
+    If called without arguments, the global defaults are used:
+        @app.route('/api/example')
+        @rate_limit()
+        def example():
+            ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            ip = request.remote_addr or '127.0.0.1'
+            limited, remaining, retry_after = rate_limiter.is_rate_limited(
+                ip, max_requests, window_seconds
+            )
+            if limited:
+                response = jsonify({
+                    "error": "Rate limit exceeded",
+                    "message": "Too many requests. Please try again later.",
+                    "retry_after": retry_after
+                })
+                response.status_code = 429
+                response.headers['Retry-After'] = str(retry_after)
+                response.headers['X-RateLimit-Remaining'] = '0'
+                return response
+
+            resp = f(*args, **kwargs)
+            # Attach rate-limit headers to successful responses
+            if hasattr(resp, 'headers'):
+                resp.headers['X-RateLimit-Remaining'] = str(remaining)
+            return resp
+        return wrapper
+    return decorator
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
@@ -124,6 +212,7 @@ def diagram():
     return render_template('diagram.html')
 
 @app.route('/api/sensor')
+@rate_limit()
 def get_sensor_data():
     """Get current sensor reading"""
     lux = generate_sensor_reading()
@@ -143,10 +232,12 @@ def get_sensor_data():
     return jsonify(reading)
 
 @app.route('/api/history')
+@rate_limit()
 def get_history():
     return jsonify(sensor_history)
 
 @app.route('/api/stats')
+@rate_limit()
 def get_stats():
     if not sensor_history:
         return jsonify({"avg": 0, "min": 0, "max": 0, "readings": 0})
@@ -162,6 +253,7 @@ def get_stats():
 # ===== MongoDB Usage API =====
 
 @app.route('/api/usage/reset', methods=['POST'])
+@rate_limit()
 def reset_usage():
     """Reset all usage data"""
     if usage_collection is not None:
@@ -170,6 +262,7 @@ def reset_usage():
     return jsonify({"success": False, "message": "MongoDB not available"})
 
 @app.route('/api/usage/save', methods=['POST'])
+@rate_limit()
 def save_usage():
     """Save daily usage data"""
     data = request.json
@@ -194,6 +287,7 @@ def save_usage():
     return jsonify({"success": False, "message": "MongoDB not available"})
 
 @app.route('/api/usage/<date>')
+@rate_limit()
 def get_usage(date):
     """Get usage for a specific date"""
     if usage_collection is not None:
@@ -207,6 +301,7 @@ def get_usage(date):
     return jsonify({"date": date, "onSeconds": 0, "offSeconds": 86400})
 
 @app.route('/api/usage/statistics')
+@rate_limit()
 def get_usage_statistics():
     """Get weekly and monthly statistics EXCLUDING today (today is tracked live in frontend)"""
     # Use PST timezone to match frontend
@@ -248,6 +343,7 @@ def get_usage_statistics():
 VALID_ROOMS = ['living', 'bedroom', 'kitchen', 'bathroom', 'office', 'garage']
 
 @app.route('/api/room/<room_name>/save', methods=['POST'])
+@rate_limit()
 def save_room_usage(room_name):
     """Save daily usage data for a specific room"""
     if room_name not in VALID_ROOMS:
@@ -274,6 +370,7 @@ def save_room_usage(room_name):
     return jsonify({"success": False, "message": "MongoDB not available"})
 
 @app.route('/api/room/<room_name>/<date>')
+@rate_limit()
 def get_room_usage(room_name, date):
     """Get usage for a specific room on a specific date"""
     if room_name not in VALID_ROOMS:
@@ -291,6 +388,7 @@ def get_room_usage(room_name, date):
     return jsonify({"room": room_name, "date": date, "onSeconds": 0, "avgLux": 0})
 
 @app.route('/api/room/<room_name>/statistics')
+@rate_limit()
 def get_room_statistics(room_name):
     """Get weekly and monthly statistics for a specific room"""
     if room_name not in VALID_ROOMS:
@@ -328,6 +426,7 @@ def get_room_statistics(room_name):
     })
 
 @app.route('/api/rooms/all/<date>')
+@rate_limit()
 def get_all_rooms_usage(date):
     """Get usage for all rooms on a specific date"""
     result = {}
@@ -346,6 +445,7 @@ def get_all_rooms_usage(date):
     return jsonify({"date": date, "rooms": result})
 
 @app.route('/api/rooms/reset', methods=['POST'])
+@rate_limit()
 def reset_all_rooms():
     """Reset all room usage data"""
     for room_name in VALID_ROOMS:
@@ -356,6 +456,7 @@ def reset_all_rooms():
 # ===== Admin Access Logging =====
 
 @app.route('/api/admin/access', methods=['POST'])
+@rate_limit()
 def log_admin_access():
     """Log admin access details (username, time, metadata)"""
     if admin_collection is None:
@@ -382,6 +483,7 @@ def log_admin_access():
 # ===== Alert Logging (Lights on > 40 minutes) =====
 
 @app.route('/api/alerts', methods=['POST'])
+@rate_limit()
 def create_alert():
     """Create an alert when lights are on for longer than threshold (e.g., 40+ minutes)."""
     if alert_collection is None:
@@ -421,6 +523,7 @@ def create_alert():
 # ===== User Login / User Data (Dashboard access) =====
 
 @app.route('/api/user/login', methods=['POST'])
+@rate_limit(max_requests=10, window_seconds=60)
 def user_login():
     """Verify or create user: store email + hashed password in users collection.
     First login: save password (hashed). Later logins: verify password; if match, log in; else return Invalid password."""
@@ -468,6 +571,7 @@ def user_login():
 # ===== Device Logging (When Lights Are Turned On) =====
 
 @app.route('/api/device/log', methods=['POST'])
+@rate_limit()
 def log_device():
     """Log device details when room lights or gauge lights are turned on."""
     if device_collection is None:
