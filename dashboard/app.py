@@ -14,7 +14,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 
 # ================== CONFIG ==================
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
-
+print("updated logic")
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 MONGO_URI = os.getenv('MONGO_URI')
