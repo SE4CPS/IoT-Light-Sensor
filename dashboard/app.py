@@ -22,7 +22,7 @@ load_dotenv()
 class RateLimiter:
     """In-memory rate limiter using a sliding window approach per IP address."""
 
-    def __init__(self, default_max_requests=60, default_window_seconds=60):
+    def __init__(self, default_max_requests=120, default_window_seconds=60):
         self.default_max_requests = default_max_requests
         self.default_window_seconds = default_window_seconds
         # {ip: [timestamp1, timestamp2, ...]}
