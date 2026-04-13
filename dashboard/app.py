@@ -20,6 +20,9 @@ from dotenv import load_dotenv
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_swagger_ui import get_swaggerui_blueprint
+import time
+from collections import defaultdict
+import threading
 
 # ---------------------------------------------------------------------------
 # Configuration & Logging
@@ -73,6 +76,91 @@ ROOM_PRIMARY_SENSOR_ID = {
 # ---------------------------------------------------------------------------
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
+
+# ---------------------------------------------------------------------------
+# Rate Limiting
+# ---------------------------------------------------------------------------
+
+
+class RateLimiter:
+    """In-memory rate limiter using a sliding window approach per IP address."""
+
+    def __init__(self, default_max_requests=120, default_window_seconds=60):
+        self.default_max_requests = default_max_requests
+        self.default_window_seconds = default_window_seconds
+        self._requests = defaultdict(list)
+        self._lock = threading.Lock()
+
+    def _cleanup(self, ip, window_seconds):
+        """Remove timestamps outside the current window."""
+        cutoff = time.time() - window_seconds
+        self._requests[ip] = [
+            t for t in self._requests[ip] if t > cutoff
+        ]
+
+    def is_rate_limited(self, ip, max_requests=None, window_seconds=None):
+        """Check if the IP is over the limit. Returns (is_limited, remaining, retry_after)."""
+        max_req = max_requests or self.default_max_requests
+        window = window_seconds or self.default_window_seconds
+
+        with self._lock:
+            self._cleanup(ip, window)
+            current_count = len(self._requests[ip])
+
+            if current_count >= max_req:
+                oldest = self._requests[ip][0] if self._requests[ip] else time.time()
+                retry_after = int(oldest + window - time.time()) + 1
+                return True, 0, max(retry_after, 1)
+
+            self._requests[ip].append(time.time())
+            remaining = max_req - current_count - 1
+            return False, remaining, 0
+
+
+# Global rate limiter instance — 120 requests per 60-second window per IP
+rate_limiter = RateLimiter(default_max_requests=120, default_window_seconds=60)
+
+
+def rate_limit(max_requests=None, window_seconds=None):
+    """Decorator to apply rate limiting to a Flask route.
+
+    Usage:
+        @app.route('/api/example')
+        @rate_limit(max_requests=30, window_seconds=60)
+        def example():
+            ...
+
+    If called without arguments, the global defaults (120/60s) are used:
+        @app.route('/api/example')
+        @rate_limit()
+        def example():
+            ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            ip = request.remote_addr or "127.0.0.1"
+            limited, remaining, retry_after = rate_limiter.is_rate_limited(
+                ip, max_requests, window_seconds
+            )
+            if limited:
+                response = jsonify({
+                    "error": "Rate limit exceeded",
+                    "message": "Too many requests. Please try again later.",
+                    "retry_after": retry_after,
+                })
+                response.status_code = 429
+                response.headers["Retry-After"] = str(retry_after)
+                response.headers["X-RateLimit-Remaining"] = "0"
+                return response
+
+            resp = f(*args, **kwargs)
+            if hasattr(resp, "headers"):
+                resp.headers["X-RateLimit-Remaining"] = str(remaining)
+            return resp
+        return wrapper
+    return decorator
+
 
 # ---------------------------------------------------------------------------
 # MongoDB Connection
@@ -413,6 +501,7 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 
 @app.route("/swagger/swagger.yaml")
+@rate_limit()
 def swagger_spec():
     """Serve the OpenAPI YAML specification file."""
     from flask import send_file
@@ -453,6 +542,7 @@ def diagram():
 
 
 @app.route("/api/sensor")
+@rate_limit()
 @_safe_route
 def get_sensor_data():
     """Return a simulated sensor reading."""
@@ -470,6 +560,7 @@ def get_sensor_data():
 
 
 @app.route("/api/history")
+@rate_limit()
 @_safe_route
 def get_history():
     """Return the in-memory sensor reading history."""
@@ -477,6 +568,7 @@ def get_history():
 
 
 @app.route("/api/stats")
+@rate_limit()
 @_safe_route
 def get_stats():
     """Return min/max/avg statistics from the in-memory sensor history."""
@@ -492,6 +584,7 @@ def get_stats():
 
 
 @app.route("/api/v1/sensors/register", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("device_collection")
 def register_new_sensor():
@@ -502,6 +595,7 @@ def register_new_sensor():
 
 
 @app.route("/api/v1/sensors/data", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("usage_collection")
 @require_json("lux")
@@ -591,6 +685,7 @@ def submit_single_sensor_reading():
 
 
 @app.route("/api/v1/sensors/<sensor_id>/status", methods=["GET"])
+@rate_limit()
 @_safe_route
 def get_sensor_status_v1(sensor_id):
     """Return the latest cached status for a given sensor_id."""
@@ -607,6 +702,7 @@ def get_sensor_status_v1(sensor_id):
 
 
 @app.route("/api/v1/sensors/latest", methods=["GET"])
+@rate_limit()
 @_safe_route
 def get_latest_sensor_reading():
     """Latest lux plus today's on/off durations from daily_usage."""
@@ -681,6 +777,7 @@ def get_latest_sensor_reading():
 
 
 @app.route("/api/v1/sensors/badges", methods=["GET"])
+@rate_limit()
 @_safe_route
 @require_mongo("sensor_latest_collection")
 def get_sensor_badges():
@@ -714,6 +811,7 @@ def get_sensor_badges():
 
 
 @app.route("/api/v1/sensors/hourly_graph", methods=["GET"])
+@rate_limit()
 @_safe_route
 @require_mongo("sensor_hourly_collection")
 def get_hourly_sensor_graph():
@@ -767,6 +865,7 @@ def get_hourly_sensor_graph():
 
 
 @app.route("/api/usage/reset", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("usage_collection")
 def reset_usage():
@@ -782,6 +881,7 @@ def reset_usage():
 
 
 @app.route("/api/usage/save", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("usage_collection")
 @require_json("date")
@@ -806,6 +906,7 @@ def save_usage():
 
 
 @app.route("/api/usage/<date>")
+@rate_limit()
 @_safe_route
 def get_usage(date):
     """Get usage for a specific date."""
@@ -829,6 +930,7 @@ def get_usage(date):
 
 
 @app.route("/api/usage/statistics")
+@rate_limit()
 @_safe_route
 def get_usage_statistics():
     """Weekly and monthly on-seconds excluding today (tracked live in frontend)."""
@@ -862,6 +964,7 @@ def get_usage_statistics():
 
 
 @app.route("/api/room/<room_name>/save", methods=["POST"])
+@rate_limit()
 @_safe_route
 @validate_room
 @require_json("date")
@@ -889,6 +992,7 @@ def save_room_usage(room_name):
 
 
 @app.route("/api/room/<room_name>/<date>")
+@rate_limit()
 @_safe_route
 @validate_room
 def get_room_usage(room_name, date):
@@ -914,6 +1018,7 @@ def get_room_usage(room_name, date):
 
 
 @app.route("/api/room/<room_name>/statistics")
+@rate_limit()
 @_safe_route
 @validate_room
 def get_room_statistics(room_name):
@@ -937,6 +1042,7 @@ def get_room_statistics(room_name):
 
 
 @app.route("/api/rooms/all/<date>")
+@rate_limit()
 @_safe_route
 def get_all_rooms_usage(date):
     """Get usage for all rooms on a specific date."""
@@ -957,6 +1063,7 @@ def get_all_rooms_usage(date):
 
 
 @app.route("/api/rooms/reset", methods=["POST"])
+@rate_limit()
 @_safe_route
 def reset_all_rooms():
     """Clear only today's room documents (PST). Previous days are preserved."""
@@ -980,6 +1087,7 @@ def reset_all_rooms():
 
 
 @app.route("/api/admin/access", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("admin_collection")
 @require_json("username")
@@ -1026,6 +1134,7 @@ def log_admin_access():
 
 
 @app.route("/api/alerts", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("alert_collection")
 def create_alert():
@@ -1057,6 +1166,7 @@ def create_alert():
 
 
 @app.route("/api/user/login", methods=["POST"])
+@rate_limit(max_requests=10, window_seconds=60)
 @_safe_route
 @require_mongo("users_collection")
 @require_json("email", "password")
@@ -1108,6 +1218,7 @@ def user_login():
 
 
 @app.route("/api/feedback", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("feedback_collection")
 @require_json("text")
@@ -1134,6 +1245,7 @@ def save_feedback():
 
 
 @app.route("/api/device/log", methods=["POST"])
+@rate_limit()
 @_safe_route
 @require_mongo("device_collection")
 def log_device():
@@ -1166,6 +1278,7 @@ def log_device():
 
 
 @app.route("/api/page-logs", methods=["GET"])
+@rate_limit()
 @_safe_route
 @require_mongo("page_log_collection")
 def get_page_logs():
