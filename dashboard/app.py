@@ -56,8 +56,8 @@ class RateLimiter:
 
 
 # Global rate limiter instance
-# Default: 60 requests per 60-second window per IP
-rate_limiter = RateLimiter(default_max_requests=60, default_window_seconds=60)
+# Default: 120 requests per 60-second window per IP
+rate_limiter = RateLimiter(default_max_requests=120, default_window_seconds=60)
 
 
 def rate_limit(max_requests=None, window_seconds=None):
