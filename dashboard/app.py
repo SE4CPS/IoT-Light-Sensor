@@ -1277,7 +1277,6 @@ def create_alert():
 
 
 @app.route("/api/user/login", methods=["POST"])
-@rate_limit(max_requests=10, window_seconds=60)
 @_safe_route
 @require_mongo("users_collection")
 @require_json("email", "password")
