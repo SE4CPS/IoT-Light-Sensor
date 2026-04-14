@@ -1,31 +1,38 @@
 openapi: 3.0.3
 info:
   title: IoT Light Sensor API
-  description: 21 paths in this file. The full manifest in MongoDB collection API includes GET /api/docs (22 total).
   version: 1.0.0
+
 servers:
-  - url: https://iot-light-sensor.onrender.com
+  - url: https://iot-light-sensoruop.onrender.com
+    description: Production
+  # - url: http://127.0.0.1:5001
+  #   description: Local
+
 tags:
-  - name: Dashboard
-  - name: Sensors  
+  # - name: Dashboard
+  - name: Sensors
   - name: Usage Statistics
   - name: Room Management
   - name: Admin & Logging
+
 paths:
-  /:
-    get:
-      tags: [Dashboard]
-      summary: Dashboard home
-      responses:
-        '200':
-          description: OK
-  /diagram:
-    get:
-      tags: [Dashboard]
-      summary: System diagram
-      responses:
-        '200':
-          description: OK
+  # /:
+  #   get:
+  #     tags: [Dashboard]
+  #     summary: Dashboard home
+  #     responses:
+  #       '200':
+  #         description: OK
+
+  # /diagram:
+  #   get:
+  #     tags: [Dashboard]
+  #     summary: System diagram
+  #     responses:
+  #       '200':
+  #         description: OK
+
   /api/sensor:
     get:
       tags: [Sensors]
@@ -33,20 +40,49 @@ paths:
       responses:
         '200':
           description: OK
+
   /api/v1/sensors/register:
     post:
       tags: [Sensors]
       summary: Register sensor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         '201':
           description: Created
+        '500':
+          description: Failed to register
+
   /api/v1/sensors/data:
     post:
       tags: [Sensors]
       summary: Submit reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lux]
+              properties:
+                sensor_id:
+                  type: string
+                lux:
+                  type: number
       responses:
         '200':
           description: OK
+        '400':
+          description: Missing lux value
+        '503':
+          description: MongoDB not available
+        '500':
+          description: Failed to submit reading
+
   /api/v1/sensors/{sensor_id}/status:
     get:
       tags: [Sensors]
@@ -60,6 +96,9 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: No data for sensor
+
   /api/v1/sensors/latest:
     get:
       tags: [Sensors]
@@ -67,34 +106,45 @@ paths:
       responses:
         '200':
           description: OK
-  /api/v1/sensors/badges:
-    get:
-      tags: [Sensors]
-      summary: Per-sensor badge data (Sensor 1 / Sensor 2)
+        '404':
+          description: No readings found
+        '503':
+          description: MongoDB not available
+        '500':
+          description: Failed to fetch latest reading
+
+  /api/usage/reset:
+    post:
+      tags: [Usage Statistics]
+      summary: Reset usage
       responses:
         '200':
           description: OK
-  /api/v1/sensors/hourly_graph:
-    get:
-      tags: [Sensors]
-      summary: Hourly 0–1 series plus totals (samples, brightSamples) per logical sensor
-      parameters:
-        - name: date
-          in: query
-          required: true
-          schema:
-            type: string
-            example: '2026-04-05'
-      responses:
-        '200':
-          description: OK
+
   /api/usage/save:
     post:
       tags: [Usage Statistics]
       summary: Save usage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date]
+              properties:
+                date:
+                  type: string
+                onSeconds:
+                  type: integer
+                sensor_id:
+                  type: string
       responses:
         '200':
           description: OK
+        '400':
+          description: Invalid data
+
   /api/usage/{date}:
     get:
       tags: [Usage Statistics]
@@ -108,6 +158,7 @@ paths:
       responses:
         '200':
           description: OK
+
   /api/usage/statistics:
     get:
       tags: [Usage Statistics]
@@ -115,6 +166,7 @@ paths:
       responses:
         '200':
           description: OK
+
   /api/room/{room_name}/save:
     post:
       tags: [Room Management]
@@ -125,9 +177,28 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date]
+              properties:
+                date:
+                  type: string
+                onSeconds:
+                  type: integer
+                avgLux:
+                  type: number
+                sensor_id:
+                  type: string
       responses:
         '200':
           description: OK
+        '400':
+          description: Invalid room or invalid data
+
   /api/room/{room_name}/{date}:
     get:
       tags: [Room Management]
@@ -146,6 +217,9 @@ paths:
       responses:
         '200':
           description: OK
+        '400':
+          description: Invalid room
+
   /api/room/{room_name}/statistics:
     get:
       tags: [Room Management]
@@ -159,6 +233,9 @@ paths:
       responses:
         '200':
           description: OK
+        '400':
+          description: Invalid room
+
   /api/rooms/all/{date}:
     get:
       tags: [Room Management]
@@ -172,38 +249,143 @@ paths:
       responses:
         '200':
           description: OK
+
+  /api/rooms/reset:
+    post:
+      tags: [Room Management]
+      summary: Reset rooms
+      responses:
+        '200':
+          description: OK
+
   /api/admin/access:
     post:
       tags: [Admin & Logging]
       summary: Admin access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+                loginType:
+                  type: string
+                organizationName:
+                  type: string
       responses:
         '200':
           description: OK
+        '400':
+          description: Missing required fields
+        '503':
+          description: MongoDB not available
+        '500':
+          description: Failed to log admin access
+
   /api/alerts:
     post:
       tags: [Admin & Logging]
       summary: Create alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                room_id:
+                  type: string
+                durationSeconds:
+                  type: integer
+                type:
+                  type: string
+                date:
+                  type: string
       responses:
         '200':
           description: OK
+        '503':
+          description: MongoDB not available
+        '500':
+          description: Failed to create alert
+
   /api/user/login:
     post:
       tags: [Admin & Logging]
       summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
       responses:
         '200':
           description: OK
+        '400':
+          description: Invalid email or password missing
+        '401':
+          description: Invalid password
+        '503':
+          description: MongoDB not available
+        '500':
+          description: Login failed
+
   /api/feedback:
     post:
       tags: [Admin & Logging]
       summary: Feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
       responses:
         '200':
           description: OK
+        '400':
+          description: Feedback text is required
+        '503':
+          description: MongoDB not available
+        '500':
+          description: Failed to save feedback
+
   /api/device/log:
     post:
       tags: [Admin & Logging]
       summary: Device log
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action_type:
+                  type: string
+                room_id:
+                  type: string
+                room_name:
+                  type: string
       responses:
         '200':
           description: OK
+        '503':
+          description: MongoDB not available
+        '500':
+          description: Failed to log device

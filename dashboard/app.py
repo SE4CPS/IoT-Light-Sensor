@@ -77,6 +77,19 @@ ROOM_PRIMARY_SENSOR_ID = {
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
+
+@app.after_request
+def _no_cache_dashboard_and_usage_api(response):
+    """Avoid stale HTML/API on CDN/browser after deploy (Render, etc.)."""
+    try:
+        p = request.path
+        if p == "/" or p.startswith("/api/usage/"):
+            response.headers["Cache-Control"] = "no-store, max-age=0"
+    except Exception:
+        pass
+    return response
+
+
 # ---------------------------------------------------------------------------
 # Rate Limiting
 # ---------------------------------------------------------------------------
@@ -428,6 +441,79 @@ def _daily_usage_aggregate_match():
             {"sensor_id": {"$exists": False}},
         ]
     }
+
+
+def _coerce_lux_scalar(val):
+    """MongoDB may return Decimal128; JSON needs a float."""
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        return float(val)
+    if hasattr(val, "to_decimal"):
+        try:
+            return float(val.to_decimal())
+        except Exception:
+            pass
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
+def _latest_lux_for_date_from_per_sensor_daily_usage(date: str):
+    """
+    The aggregate daily_usage row (all-rooms) stores on/off seconds only.
+    POST /api/v1/sensors/data writes lux onto per-sensor_id rows for the same date.
+    Return (lux, luxUpdatedAt) from the newest per-sensor row, or (None, '').
+    """
+    if usage_collection is None:
+        return None, ""
+    try:
+        for doc in usage_collection.find(
+            {"date": date, "lux": {"$ne": None}},
+            sort=[("luxUpdatedAt", -1), ("updatedAt", -1), ("_id", -1)],
+        ):
+            sid = (doc.get("sensor_id") or "").strip()
+            if sid == DAILY_USAGE_AGGREGATE_SENSOR_ID:
+                continue
+            lux = _coerce_lux_scalar(doc.get("lux"))
+            if lux is None:
+                continue
+            return lux, (doc.get("luxUpdatedAt") or "")
+    except Exception as e:
+        logger.warning("_latest_lux_for_date_from_per_sensor_daily_usage: %s", e)
+    return None, ""
+
+
+def _latest_lux_from_room_collections_for_date(date: str):
+    """
+    Fallback when daily_usage has no per-sensor lux for this date: use room_living / room_bedroom
+    avgLux + luxUpdatedAt (same fields POST /api/v1/sensors/data updates).
+    """
+    best_lux = None
+    best_ts = ""
+    for room in ("living", "bedroom"):
+        coll = room_collections.get(room)
+        if coll is None:
+            continue
+        try:
+            doc = coll.find_one({"date": date})
+        except Exception as e:
+            logger.warning("room read %s: %s", room, e)
+            continue
+        if not doc:
+            continue
+        lux = _coerce_lux_scalar(doc.get("avgLux"))
+        if lux is None:
+            continue
+        ts = (doc.get("luxUpdatedAt") or doc.get("updatedAt") or "")
+        if best_ts == "" or (ts and ts > best_ts):
+            best_lux = lux
+            best_ts = ts
+        elif best_lux is None:
+            best_lux = lux
+            best_ts = ts
+    return best_lux, best_ts
 
 
 def _safe_route(func):
@@ -909,23 +995,48 @@ def save_usage():
 @rate_limit()
 @_safe_route
 def get_usage(date):
-    """Get usage for a specific date."""
-    empty = {"_id": "", "date": date, "sensor_id": "", "onSeconds": 0, "offSeconds": SECONDS_IN_DAY,
-             "lux": None, "updatedAt": "", "luxUpdatedAt": ""}
+    """Get usage for a specific date (aggregate row + lux from per-sensor / room fallbacks)."""
+    empty = {
+        "_id": "",
+        "date": date,
+        "sensor_id": "",
+        "onSeconds": 0,
+        "offSeconds": SECONDS_IN_DAY,
+        "lux": None,
+        "updatedAt": "",
+        "luxUpdatedAt": "",
+    }
     if usage_collection is None:
         return jsonify(empty)
-    record = usage_collection.find_one({"date": date})
+    record = usage_collection.find_one({"$and": [{"date": date}, _daily_usage_aggregate_match()]})
+    if not record:
+        record = usage_collection.find_one({"date": date})
     if not record:
         return jsonify(empty)
+    lux_val = _coerce_lux_scalar(record.get("lux"))
+    lux_updated = record.get("luxUpdatedAt") or ""
+    if lux_val is None:
+        lux_val, lux_updated = _latest_lux_for_date_from_per_sensor_daily_usage(date)
+    if lux_val is None:
+        lux_val, lux_updated = _latest_lux_from_room_collections_for_date(date)
+    elif not lux_updated:
+        alt_lux, alt_ts = _latest_lux_for_date_from_per_sensor_daily_usage(date)
+        if alt_ts:
+            lux_updated = alt_ts
+        if not lux_updated:
+            _, rts = _latest_lux_from_room_collections_for_date(date)
+            if rts:
+                lux_updated = rts
+    lux_val = _coerce_lux_scalar(lux_val)
     return jsonify({
         "_id": str(record.get("_id", "")),
         "date": record["date"],
         "sensor_id": record.get("sensor_id", ""),
         "onSeconds": record.get("onSeconds", 0),
         "offSeconds": record.get("offSeconds", 0),
-        "lux": record.get("lux"),
+        "lux": lux_val,
         "updatedAt": record.get("updatedAt", ""),
-        "luxUpdatedAt": record.get("luxUpdatedAt", ""),
+        "luxUpdatedAt": lux_updated or "",
     })
 
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>UOP Light Sensor</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,19 +25,31 @@
             box-sizing: border-box;
         }
 
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
         body {
             font-family: 'DM Sans', -apple-system, sans-serif;
             background: var(--bg-main);
             color: var(--text-primary);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
         }
 
 
         .sidebar {
             width: 240px;
+            max-width: min(240px, 100vw);
+            flex-shrink: 0;
             background: var(--bg-sidebar);
             padding: 32px 24px;
+            padding-left: max(24px, env(safe-area-inset-left, 0px));
             display: flex;
             flex-direction: column;
             border-right: 1px solid var(--border);
@@ -185,13 +197,15 @@
         }
 
         .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            display: flex;
+            flex-wrap: nowrap;
             gap: 2px;
             margin-bottom: 8px;
         }
 
         .calendar-weekday {
+            flex: 1 1 0;
+            min-width: 0;
             font-size: 10px;
             color: var(--text-muted);
             text-align: center;
@@ -199,12 +213,14 @@
         }
 
         .calendar-days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            display: flex;
+            flex-wrap: wrap;
             gap: 2px;
         }
 
         .calendar-day {
+            flex: 0 0 calc((100% - 12px) / 7);
+            max-width: calc((100% - 12px) / 7);
             aspect-ratio: 1;
             display: flex;
             align-items: center;
@@ -546,7 +562,12 @@
 
         .dashboard-wrap {
             display: flex;
+            flex: 0 0 0;
+            width: 0;
+            min-width: 0;
+            overflow: visible;
             min-height: 100vh;
+            min-height: 100dvh;
         }
 
         .sensor-stats {
@@ -656,8 +677,14 @@
 
         .main-content {
             flex: 1;
-            padding: 32px 48px;
-            padding-right: 260px;
+            min-width: 0;
+            width: 100%;
+            max-width: 1680px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: clamp(16px, 2.5vw, 32px) clamp(16px, 3vw, 48px);
+            padding-right: max(clamp(96px, 16vw, 280px), calc(env(safe-area-inset-right, 0px) + 72px));
+            padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
             display: flex;
             flex-direction: column;
         }
@@ -725,7 +752,7 @@
         }
 
         .title {
-            font-size: 28px;
+            font-size: clamp(1.15rem, 2.2vw + 0.6rem, 1.75rem);
             font-weight: 600;
             letter-spacing: -0.5px;
         }
@@ -758,8 +785,8 @@
         /* Profile section - fixed top-right (email + profile button) */
         .profile-section {
             position: fixed;
-            top: 24px;
-            right: 24px;
+            top: max(16px, env(safe-area-inset-top, 0px) + 8px);
+            right: max(16px, env(safe-area-inset-right, 0px) + 8px);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -782,14 +809,9 @@
 
         .profile-email.show {
             display: block;
-            }
-            
-            .profile-section {
-                top: 16px;
-                right: 16px;
-            }
-            
-            .profile-btn {
+        }
+
+        .profile-btn {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 50%;
@@ -878,15 +900,13 @@
 
         .gauge-main-row {
             display: flex;
-            align-items: center;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: stretch;
             justify-content: center;
-            flex-wrap: nowrap;
-            gap: 32px;
+            gap: clamp(16px, 2.5vw, 28px);
             width: 100%;
             max-width: 100%;
-            overflow-x: auto;
-            overflow-y: visible;
-            -webkit-overflow-scrolling: touch;
             box-sizing: border-box;
         }
 
@@ -937,21 +957,30 @@
             border-radius: 16px;
             padding: 20px;
             margin-left: 0;
-            width: 350px;
-            min-height: 300px;
+            flex: 1 1 min(100%, 320px);
+            min-width: min(100%, 260px);
+            max-width: min(100%, 420px);
+            width: auto;
+            min-height: 280px;
             height: auto;
             position: relative;
-            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .user-data-view-container {
             background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
             border-radius: 16px;
             padding: 16px;
-            width: 330px;
-            height: 280px;
+            flex: 1 1 min(100%, 300px);
+            min-width: min(100%, 240px);
+            max-width: min(100%, 400px);
+            width: auto;
+            min-height: 260px;
+            height: auto;
             position: relative;
-            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .user-data-selectors {
@@ -979,28 +1008,35 @@
         }
 
         .user-data-view-body {
+            flex: 1 1 auto;
+            min-height: 140px;
+            max-height: min(40vh, 280px);
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(113, 128, 150, 0.25);
             border-radius: 10px;
             padding: 10px;
-            height: 190px;
             overflow-y: auto;
         }
 
         .user-data-row {
-            display: grid;
-            grid-template-columns: 95px 1fr;
-            gap: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 6px 8px;
             font-size: 11px;
             margin-bottom: 6px;
         }
 
         .user-data-key {
+            flex: 0 0 auto;
+            min-width: 88px;
             color: #a0aec0;
             font-weight: 600;
         }
 
         .user-data-val {
+            flex: 1 1 0;
+            min-width: 0;
             color: #f7fafc;
             word-break: break-all;
         }
@@ -1036,7 +1072,9 @@
 
         .weekly-graph {
             position: relative;
+            flex: 1 1 auto;
             width: 100%;
+            min-height: 140px;
             height: 160px;
             padding-left: 42px;
             padding-bottom: 25px;
@@ -1242,13 +1280,16 @@
         /* Single ambient box containing gauge + lux slider */
         .gauge-ambient-box {
             display: flex;
+            flex: 1 1 min(100%, 520px);
+            min-width: min(100%, 280px);
+            max-width: 100%;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
+            flex-wrap: wrap;
             gap: 24px;
             background: linear-gradient(to bottom, rgba(28, 28, 32, 0.85) 0%, rgba(28, 28, 32, 0.9) 65%, rgba(28, 28, 32, 0.92) 100%);
             border-radius: 20px;
-            padding: 24px 44px 24px 24px;
+            padding: 24px clamp(16px, 3vw, 44px) 24px clamp(16px, 2vw, 24px);
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
@@ -1418,10 +1459,13 @@
  
         .mode-cards {
             display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
             justify-content: center;
+            align-items: stretch;
             gap: 16px;
             margin-top: 32px;
-            flex-wrap: wrap;
+            width: 100%;
         }
 
         .mode-card {
@@ -1434,7 +1478,10 @@
             cursor: pointer;
             transition: all 0.2s;
             border: 1px solid transparent;
-            min-width: 220px;
+            flex: 0 1 auto;
+            width: fit-content;
+            max-width: 100%;
+            min-width: 0;
         }
 
         .mode-card:hover {
@@ -1458,7 +1505,8 @@
         }
 
         .mode-card-content {
-            flex: 1;
+            flex: 0 1 auto;
+            min-width: 0;
         }
 
         .mode-card-title {
@@ -1509,11 +1557,14 @@
         /* Room Cards - Like Mode Cards */
         .room-cards {
             display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
             justify-content: center;
+            align-items: stretch;
             gap: 12px;
             padding: 16px 24px;
             margin-bottom: 10px;
-            flex-wrap: wrap;
+            width: 100%;
         }
 
         .room-card {
@@ -1526,7 +1577,10 @@
             cursor: pointer;
             transition: all 0.2s;
             border: 1px solid transparent;
-            min-width: 160px;
+            flex: 0 1 auto;
+            width: fit-content;
+            max-width: 100%;
+            min-width: 0;
         }
 
         .room-card:hover {
@@ -1550,7 +1604,8 @@
         }
 
         .room-card-content {
-            flex: 1;
+            flex: 0 1 auto;
+            min-width: 0;
         }
 
         .room-card-title {
@@ -1623,16 +1678,21 @@
 
         .stats-cards {
             display: flex;
-            justify-content: center;
-            gap: 24px;
+            flex-direction: row;
             flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            gap: 24px;
+            width: 100%;
         }
 
         .stat-card {
             background: var(--bg-card);
             border-radius: 16px;
             padding: 20px 28px;
-            min-width: 200px;
+            flex: 1 1 240px;
+            min-width: min(100%, 180px);
+            max-width: min(100%, 520px);
             text-align: center;
             border: 1px solid var(--border);
             transition: all 0.2s;
@@ -1840,8 +1900,54 @@
 
     
         @media (max-width: 1200px) {
-            .mode-cards {
-                grid-template-columns: repeat(2, 1fr);
+            .gauge-main-row {
+                justify-content: center;
+                gap: 20px;
+            }
+
+            .weekly-graph-container,
+            .user-data-view-container {
+                flex: 1 1 min(100%, 360px);
+                max-width: min(100%, 400px);
+            }
+
+            .gauge-wrapper {
+                width: min(380px, 92vw);
+                height: 250px;
+            }
+
+            .gauge-svg {
+                width: min(360px, 88vw);
+                height: 220px;
+            }
+
+            .gauge-bg {
+                width: min(340px, 82vw);
+                height: 200px;
+            }
+        }
+
+        /* Tablets & iPad portrait/landscape: stack graph row so nothing clips */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .gauge-main-row {
+                flex-direction: column;
+                align-items: center;
+                gap: 24px;
+            }
+
+            .weekly-graph-container,
+            .user-data-view-container {
+                width: min(100%, 600px);
+                max-width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .gauge-ambient-box {
+                flex-wrap: wrap;
+                justify-content: center;
+                max-width: 100%;
+                padding: 20px 24px;
             }
         }
 
@@ -1854,8 +1960,8 @@
         /* Customize Button - above login gate so it stays usable when logged out */
         .customize-btn {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            bottom: max(16px, env(safe-area-inset-bottom, 0px) + 8px);
+            right: max(16px, env(safe-area-inset-right, 0px) + 8px);
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 50%;
@@ -1941,9 +2047,16 @@
         }
 
         .wallpaper-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 16px;
+        }
+
+        .wallpaper-grid > * {
+            flex: 1 1 160px;
+            max-width: 100%;
+            min-width: 0;
         }
 
         .report-issue-box {
@@ -2224,12 +2337,16 @@
         }
 
         .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
             gap: 12px;
+            justify-content: flex-start;
         }
 
         .info-card {
+            flex: 1 1 200px;
+            min-width: min(100%, 180px);
+            max-width: 100%;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -2810,8 +2927,10 @@
         }
 
         @media (max-width: 600px) {
-            .wallpaper-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .wallpaper-grid > * {
+                flex: 1 1 calc(50% - 8px);
+                min-width: calc(50% - 8px);
+                max-width: calc(50% - 8px);
             }
         }
 
@@ -2820,8 +2939,8 @@
         /* Tablet Styles (768px - 1024px) */
         @media (max-width: 1024px) {
             .main-content {
-                padding: 24px 32px;
-                padding-right: 200px;
+                padding: 24px clamp(16px, 3vw, 32px);
+                padding-right: max(clamp(88px, 14vw, 220px), calc(env(safe-area-inset-right, 0px) + 64px));
             }
             
             .gauge-wrapper {
@@ -2840,8 +2959,10 @@
             }
             
             .room-card {
-                flex: 1 1 calc(33.333% - 8px);
-                min-width: 120px;
+                flex: 0 1 auto;
+                width: fit-content;
+                max-width: 100%;
+                min-width: 0;
             }
             
             .weekly-graph-container {
@@ -2855,6 +2976,18 @@
             body {
                 flex-direction: column;
                 overflow-x: hidden;
+            }
+
+            .dashboard-wrap {
+                min-height: 0;
+                height: 0;
+                flex: 0 0 0;
+            }
+
+            .gauge-container {
+                flex: 1 1 auto;
+                min-height: 0;
+                justify-content: flex-start;
             }
             
             .sidebar-overlay {
@@ -2917,17 +3050,22 @@
             .calendar-days {
                 gap: 4px;
             }
-            
+
             .calendar-day {
-                width: 32px;
-                height: 32px;
+                flex: 0 0 calc((100% - 24px) / 7);
+                max-width: calc((100% - 24px) / 7);
+                min-height: 32px;
+                aspect-ratio: 1;
                 font-size: 12px;
             }
             
             .main-content {
                 padding: 16px;
-                padding-right: 88px;
+                padding-left: max(16px, env(safe-area-inset-left, 0px));
+                padding-right: max(16px, env(safe-area-inset-right, 0px));
+                padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
                 width: 100%;
+                box-sizing: border-box;
             }
             
             .header {
@@ -2939,6 +3077,8 @@
             .header-left {
                 flex: 1 1 auto;
                 min-width: 0;
+                width: 100%;
+                justify-content: flex-start;
             }
             
             .header .title {
@@ -2952,6 +3092,7 @@
                 order: 3;
                 flex: 1 1 100%;
                 width: 100%;
+                justify-content: center;
             }
 
             .header .sensor-live-status {
@@ -2989,13 +3130,18 @@
             }
             
             .room-cards {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 8px;
                 padding: 12px 16px;
             }
             
             .room-card {
+                flex: 0 1 auto;
+                width: fit-content;
+                max-width: calc(50% - 4px);
                 min-width: 0;
                 padding: 12px;
             }
@@ -3009,24 +3155,37 @@
             }
             
             .gauge-ambient-box {
-                flex-direction: column;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: center;
+                justify-content: center;
                 width: 100%;
-                max-width: 340px;
-                padding: 16px 40px 16px 16px;
+                max-width: min(100%, 440px);
+                margin-left: auto;
+                margin-right: auto;
+                padding: 16px 14px 16px 16px;
                 gap: 16px;
+            }
+
+            .gauge-main-row {
+                width: 100%;
+                max-width: 100%;
+                margin-left: auto;
+                margin-right: auto;
             }
 
             .gauge-wrapper {
                 width: 100%;
-                max-width: 300px;
+                max-width: 260px;
                 height: 200px;
-                margin: 0 auto;
+                margin: 0;
+                flex: 0 0 auto;
             }
             
             .gauge-svg {
                 width: 100%;
-                max-width: 280px;
-                height: 160px;
+                max-width: 240px;
+                height: 150px;
             }
             
             .lux-number {
@@ -3062,9 +3221,12 @@
             }
             
             .roller-container {
-                width: 100%;
-                max-width: 300px;
-                margin: 0 auto;
+                width: auto;
+                max-width: none;
+                margin: 0;
+                height: 200px;
+                flex: 0 0 auto;
+                align-self: center;
             }
             
             .roller-track {
@@ -3094,13 +3256,16 @@
             
             .stats-cards {
                 display: flex;
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 12px;
+                width: 100%;
             }
             
             .stat-card {
-                flex: 1 1 0;
+                flex: 1 1 min(160px, calc(50% - 6px));
                 min-width: 0;
+                max-width: min(100%, 280px);
                 padding: 16px;
             }
             
@@ -3119,13 +3284,16 @@
             
             .mode-cards {
                 display: flex;
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 12px;
                 margin-top: 24px;
             }
             
             .mode-card {
-                flex: 1 1 0;
+                flex: 0 1 auto;
+                width: fit-content;
+                max-width: calc(50% - 6px);
                 min-width: 0;
                 padding: 16px;
             }
@@ -3162,8 +3330,13 @@
             }
             
             .wallpaper-grid {
-                grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
+            }
+
+            .wallpaper-grid > * {
+                flex: 1 1 calc(50% - 6px);
+                min-width: calc(50% - 6px);
+                max-width: calc(50% - 6px);
             }
             
             .bg-wallpaper {
@@ -3271,17 +3444,25 @@
             
             .main-content {
                 padding: 12px;
-                padding-right: 72px;
+                padding-left: max(12px, env(safe-area-inset-left, 0px));
+                padding-right: max(12px, env(safe-area-inset-right, 0px));
+                padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+                box-sizing: border-box;
             }
             
             /* Keep 2 room cards per row on small phones too */
             .room-cards {
-                grid-template-columns: 1fr 1fr;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 6px;
                 padding: 10px 12px;
             }
             
             .room-card {
+                flex: 0 1 auto;
+                width: fit-content;
+                max-width: calc(50% - 3px);
                 padding: 10px;
                 min-width: 0;
             }
@@ -3295,7 +3476,13 @@
             }
             
             .gauge-wrapper {
-                max-width: 280px;
+                max-width: 220px;
+            }
+            
+            .gauge-ambient-box {
+                max-width: min(100%, 380px);
+                padding: 14px 10px 14px 12px;
+                gap: 14px;
             }
             
             .power-btn {
@@ -3346,15 +3533,18 @@
                 font-size: 9px;
             }
             
-            /* Eco + Sleep in one row on mobile */
+            /* Eco + Sleep: compact width, wrap if needed */
             .mode-cards {
                 display: flex;
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 8px;
             }
             
             .mode-card {
-                flex: 1 1 0;
+                flex: 0 1 auto;
+                width: fit-content;
+                max-width: calc(50% - 4px);
                 min-width: 0;
                 padding: 12px;
             }
@@ -3378,13 +3568,16 @@
             }
             
             .stats-cards {
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 8px;
+                width: 100%;
             }
             
             .stat-card {
-                flex: 1 1 0;
+                flex: 1 1 min(140px, calc(50% - 4px));
                 min-width: 0;
+                max-width: min(100%, 260px);
                 padding: 12px;
             }
             
@@ -3401,8 +3594,10 @@
                 font-size: 10px;
             }
             
-            .wallpaper-grid {
-                grid-template-columns: 1fr;
+            .wallpaper-grid > * {
+                flex: 1 1 100%;
+                min-width: 100%;
+                max-width: 100%;
             }
             
             .info-modal-content {
@@ -3483,8 +3678,8 @@
             }
         }
 
-        /* Landscape Mobile */
-        @media (max-width: 900px) and (orientation: landscape) {
+        /* Landscape tablet (not phones — avoids breaking slide-out sidebar <768px) */
+        @media (max-width: 900px) and (min-width: 768px) and (orientation: landscape) {
             .sidebar {
                 flex-direction: row;
                 max-height: 120px;
@@ -3772,6 +3967,102 @@
             <button class="login-cancel" id="loginCancel">Cancel</button>
         </div>
     </div>
+
+    <!-- Mobile sidebar overlay (tap to close) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" type="button" aria-label="Close menu">×</button>
+        <div class="mode-badge">
+            <span class="mode-icon" id="modeIcon">🌙</span>
+            <span id="timeMode">Night</span>
+        </div>
+        
+        <div class="time-display" id="currentTime">21:00</div>
+        <div class="date-display" id="currentDate">Monday 2026/01/26</div>
+        
+        <!-- Mini Calendar -->
+        <div class="mini-calendar">
+            <div class="calendar-header">
+                <span class="calendar-month" id="calendarMonth">January 2026</span>
+                <div class="calendar-nav">
+                    <button class="calendar-nav-btn" id="prevMonth">‹</button>
+                    <button class="calendar-nav-btn" id="nextMonth">›</button>
+                </div>
+            </div>
+            <div class="calendar-weekdays">
+                <div class="calendar-weekday">S</div>
+                <div class="calendar-weekday">M</div>
+                <div class="calendar-weekday">T</div>
+                <div class="calendar-weekday">W</div>
+                <div class="calendar-weekday">T</div>
+                <div class="calendar-weekday">F</div>
+                <div class="calendar-weekday">S</div>
+            </div>
+            <div class="calendar-days" id="calendarDays">
+                <!-- Days will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Donut Chart - Lights On Hours -->
+        <div class="donut-section">
+            <div class="donut-container">
+                <svg class="donut-svg" viewBox="0 0 100 100">
+                    <defs>
+                        <linearGradient id="donutGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#f5a623"/>
+                            <stop offset="50%" stop-color="#f5a623"/>
+                            <stop offset="100%" stop-color="#f5a623"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="donut-track" cx="50" cy="50" r="40"/>
+                    <circle class="donut-fill" id="donutFill" cx="50" cy="50" r="40"
+                            stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                </svg>
+                <div class="donut-center">
+                    <div class="donut-value" id="donutValue">0h</div>
+                    <div class="donut-unit" id="donutUnit">today</div>
+                </div>
+            </div>
+            
+            <!-- Usage Warning -->
+            <div class="usage-warning" id="usageWarning">
+                <span class="warning-icon">⚠️</span>
+                <span class="warning-text">High usage! Lights on 40+ minutes</span>
+            </div>
+        </div>
+
+        <!-- Room Duration Bar Chart -->
+        <div class="room-bars-section">
+            <div class="room-bars-title">Room Usage (Today)</div>
+            <div class="room-bar-item" id="bar-item-living" data-room="room-living">
+                <span class="room-bar-label">Living</span>
+                <div class="room-bar-track">
+                    <div class="room-bar-fill" id="bar-living"></div>
+                </div>
+                <span class="room-bar-value" id="val-living">0m</span>
+            </div>
+            <div class="room-bar-item" id="bar-item-bedroom" data-room="room-bedroom">
+                <span class="room-bar-label">Bedroom</span>
+                <div class="room-bar-track">
+                    <div class="room-bar-fill" id="bar-bedroom"></div>
+                </div>
+                <span class="room-bar-value" id="val-bedroom">0m</span>
+            </div>
+        </div>
+        
+        <div class="brightness-section">
+            <div class="section-label">
+                <span>☀️</span>
+                <span>Light Brightness</span>
+                <span class="brightness-value" id="brightnessPercent">0%</span>
+            </div>
+            <div class="brightness-bar">
+                <div class="brightness-fill" id="brightnessFill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+    </aside>
 
     <div class="dashboard-wrap" id="dashboardWrap">
     <!-- Screensaver Overlay -->
@@ -4262,103 +4553,7 @@
             </div>
         </div>
     </div>
-  
-    <!-- Mobile sidebar overlay (tap to close) -->
-    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
-
-    <aside class="sidebar" id="sidebar">
-        <button class="sidebar-close-btn" id="sidebarCloseBtn" type="button" aria-label="Close menu">×</button>
-        <div class="mode-badge">
-            <span class="mode-icon" id="modeIcon">🌙</span>
-            <span id="timeMode">Night</span>
-        </div>
-        
-        <div class="time-display" id="currentTime">21:00</div>
-        <div class="date-display" id="currentDate">Monday 2026/01/26</div>
-        
-        <!-- Mini Calendar -->
-        <div class="mini-calendar">
-            <div class="calendar-header">
-                <span class="calendar-month" id="calendarMonth">January 2026</span>
-                <div class="calendar-nav">
-                    <button class="calendar-nav-btn" id="prevMonth">‹</button>
-                    <button class="calendar-nav-btn" id="nextMonth">›</button>
-                </div>
-            </div>
-            <div class="calendar-weekdays">
-                <div class="calendar-weekday">S</div>
-                <div class="calendar-weekday">M</div>
-                <div class="calendar-weekday">T</div>
-                <div class="calendar-weekday">W</div>
-                <div class="calendar-weekday">T</div>
-                <div class="calendar-weekday">F</div>
-                <div class="calendar-weekday">S</div>
-            </div>
-            <div class="calendar-days" id="calendarDays">
-                <!-- Days will be generated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Donut Chart - Lights On Hours -->
-        <div class="donut-section">
-            <div class="donut-container">
-                <svg class="donut-svg" viewBox="0 0 100 100">
-                    <defs>
-                        <linearGradient id="donutGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#f5a623"/>
-                            <stop offset="50%" stop-color="#f5a623"/>
-                            <stop offset="100%" stop-color="#f5a623"/>
-                        </linearGradient>
-                    </defs>
-                    <circle class="donut-track" cx="50" cy="50" r="40"/>
-                    <circle class="donut-fill" id="donutFill" cx="50" cy="50" r="40"
-                            stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
-                </svg>
-                <div class="donut-center">
-                    <div class="donut-value" id="donutValue">0h</div>
-                    <div class="donut-unit" id="donutUnit">today</div>
-                </div>
-            </div>
-            
-            <!-- Usage Warning -->
-            <div class="usage-warning" id="usageWarning">
-                <span class="warning-icon">⚠️</span>
-                <span class="warning-text">High usage! Lights on 40+ minutes</span>
-            </div>
-        </div>
-
-        <!-- Room Duration Bar Chart -->
-        <div class="room-bars-section">
-            <div class="room-bars-title">Room Usage (Today)</div>
-            <div class="room-bar-item" id="bar-item-living" data-room="room-living">
-                <span class="room-bar-label">Living</span>
-                <div class="room-bar-track">
-                    <div class="room-bar-fill" id="bar-living"></div>
-                </div>
-                <span class="room-bar-value" id="val-living">0m</span>
-            </div>
-            <div class="room-bar-item" id="bar-item-bedroom" data-room="room-bedroom">
-                <span class="room-bar-label">Bedroom</span>
-                <div class="room-bar-track">
-                    <div class="room-bar-fill" id="bar-bedroom"></div>
-                </div>
-                <span class="room-bar-value" id="val-bedroom">0m</span>
-            </div>
-        </div>
-        
-        <div class="brightness-section">
-            <div class="section-label">
-                <span>☀️</span>
-                <span>Light Brightness</span>
-                <span class="brightness-value" id="brightnessPercent">0%</span>
-            </div>
-            <div class="brightness-bar">
-                <div class="brightness-fill" id="brightnessFill" style="width: 0%"></div>
-            </div>
-        </div>
-        
-    </aside>
-
+    </div>
 
     <main class="main-content">
         <header class="header">
@@ -4385,7 +4580,7 @@
                 <div class="room-card-icon">🛋️</div>
                 <div class="room-card-content">
                     <div class="room-card-title">Living Room</div>
-                    <div class="room-card-subtitle">Main area</div>
+                    
                 </div>
                 <div class="room-toggle"></div>
             </div>
@@ -4393,7 +4588,7 @@
                 <div class="room-card-icon">🛏️</div>
                 <div class="room-card-content">
                     <div class="room-card-title">Bedroom</div>
-                    <div class="room-card-subtitle">Rest area</div>
+                    
                 </div>
                 <div class="room-toggle"></div>
             </div>
@@ -4556,7 +4751,7 @@
                 <div class="mode-card-icon">🌿</div>
                 <div class="mode-card-content">
                     <div class="mode-card-title">Eco Mode</div>
-                    <div class="mode-card-subtitle">Power saving</div>
+                    
                 </div>
                 <div class="mode-toggle" id="toggleEco"></div>
             </div>
@@ -4565,7 +4760,7 @@
                 <div class="mode-card-icon">🌙</div>
                 <div class="mode-card-content">
                     <div class="mode-card-title">Sleep Mode</div>
-                    <div class="mode-card-subtitle">Dimmed lights</div>
+                    
                 </div>
                 <div class="mode-toggle" id="toggleSleep"></div>
             </div>
