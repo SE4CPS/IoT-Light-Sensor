@@ -6,3 +6,4 @@ python-dotenv==1.2.1
 gunicorn==21.2.0
 certifi
 pytz
+pytest>=7.4.0
