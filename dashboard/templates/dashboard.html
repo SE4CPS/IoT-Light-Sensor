@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>UOP Light Sensor</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/today-usage-chart.js"></script>
     <style>
         :root {
             --bg-main: #0d0d0f;
@@ -4677,47 +4679,10 @@
                     </div>
                 </div>
                 <div class="weekly-graph">
-                    <div class="graph-y-axis">
-                        <span>1.0</span>
-                        <span>0.9</span>
-                        <span>0.8</span>
-                        <span>0.7</span>
-                        <span>0.6</span>
-                        <span>0.5</span>
-                        <span>0.4</span>
-                        <span>0.3</span>
-                        <span>0.2</span>
-                        <span>0.1</span>
-                        <span>0.0</span>
-                    </div>
                     <div class="graph-canvas-wrapper">
-                        <div class="graph-grid-line" style="top: 0%"></div>
-                        <div class="graph-grid-line" style="top: 10%"></div>
-                        <div class="graph-grid-line" style="top: 20%"></div>
-                        <div class="graph-grid-line" style="top: 30%"></div>
-                        <div class="graph-grid-line" style="top: 40%"></div>
-                        <div class="graph-grid-line" style="top: 50%"></div>
-                        <div class="graph-grid-line" style="top: 60%"></div>
-                        <div class="graph-grid-line" style="top: 70%"></div>
-                        <div class="graph-grid-line" style="top: 80%"></div>
-                        <div class="graph-grid-line" style="top: 90%"></div>
-                        <div class="graph-grid-line" style="top: 100%"></div>
-                        <svg class="graph-canvas" id="weeklyGraphCanvas" viewBox="0 0 280 135" preserveAspectRatio="xMidYMid meet">
-                            <!-- Line and dots rendered by JS -->
-                        </svg>
+                        <canvas class="graph-canvas" id="weeklyUsageChart"></canvas>
                     </div>
-                    <div class="graph-x-axis-wrap">
-                        <div class="graph-x-axis" id="graphXAxis">
-                            <span>0</span>
-                            <span>4</span>
-                            <span>8</span>
-                            <span>12</span>
-                            <span>16</span>
-                            <span>20</span>
-                            <span>24</span>
-                        </div>
-                        <div class="graph-x-axis-note">Hours (0–24)</div>
-                    </div>
+                    <div class="graph-x-axis-note">Hours (0–24)</div>
                 </div>
             </div>
 
@@ -5821,112 +5786,9 @@
         const HOURLY_GRAPH_REFRESH_MS = 5 * 60 * 1000;
         const TODAY_GRAPH_COLORS = { s1: '#FDB841', s2: '#FF69B4' };
 
-        let todayUsageGraphTipEl = null;
-        let todayUsageGraphHandlersBound = false;
-
-        function setupTodayUsageGraphInteraction(graphCanvas, normS1, normS2, graphDateStr, opts = {}) {
-            const {
-                showLine1 = true,
-                showLine2 = true,
-                samples1 = 0,
-                samples2 = 0
-            } = opts;
-            const wrapper = graphCanvas.closest('.graph-canvas-wrapper');
-            if (!wrapper) return;
-
-            if (!todayUsageGraphTipEl) {
-                todayUsageGraphTipEl = document.createElement('div');
-                todayUsageGraphTipEl.id = 'todayUsageGraphTooltip';
-                todayUsageGraphTipEl.className = 'today-usage-graph-tooltip';
-                wrapper.appendChild(todayUsageGraphTipEl);
-            }
-
-            window.__todayGraphTipData = {
-                normS1,
-                normS2,
-                graphDateStr,
-                graphCanvas,
-                showLine1,
-                showLine2,
-                samples1,
-                samples2
-            };
-
-            if (todayUsageGraphHandlersBound) return;
-            todayUsageGraphHandlersBound = true;
-
-            const width = 280;
-            const height = 135;
-            const padding = 10;
-            const innerW = width - padding * 2;
-
-            const hourLabel = (hr) => {
-                const d = new Date();
-                d.setHours(hr, 0, 0, 0);
-                return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            };
-
-            const onMove = (e) => {
-                const d = window.__todayGraphTipData;
-                const canvas = d && d.graphCanvas;
-                const tip = todayUsageGraphTipEl;
-                if (!canvas || !tip || !wrapper.contains(canvas)) return;
-
-                const rect = canvas.getBoundingClientRect();
-                if (!rect.width) return;
-                const rx = ((e.clientX ?? e.pageX) - rect.left) / rect.width;
-                const xSvg = rx * width;
-                let hour = Math.round(((xSvg - padding) / innerW) * 23);
-                hour = Math.max(0, Math.min(23, hour));
-
-                const v1 = (d.normS1[hour] ?? 0);
-                const v2 = (d.normS2[hour] ?? 0);
-                const pct = (v) => `${Math.round(v * 100)}% bright`;
-                const row = (show, samples, v) => {
-                    if (!show) return samples <= 0 ? 'no readings' : 'no bright samples';
-                    return v > 0.02 ? pct(v) : '0% bright';
-                };
-                tip.innerHTML = `
-                    <div class="tip-title">${d.graphDateStr} · ${hourLabel(hour)}</div>
-                    <div class="tip-row" style="color:${TODAY_GRAPH_COLORS.s1}">Sensor 1: ${row(d.showLine1, d.samples1, v1)}</div>
-                    <div class="tip-row" style="color:${TODAY_GRAPH_COLORS.s2}">Sensor 2: ${row(d.showLine2, d.samples2, v2)}</div>
-                `;
-                tip.style.display = 'block';
-                const wrapRect = wrapper.getBoundingClientRect();
-                const lx = (e.clientX ?? e.pageX) - wrapRect.left;
-                const ly = (e.clientY ?? e.pageY) - wrapRect.top;
-                tip.style.transform = `translate(${Math.min(lx + 12, Math.max(0, wrapRect.width - 200))}px, ${Math.max(ly - 52, 6)}px)`;
-
-                let line = canvas.querySelector('.today-graph-crosshair');
-                if (!line) {
-                    line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    line.setAttribute('class', 'today-graph-crosshair');
-                    line.setAttribute('stroke', 'rgba(255,255,255,0.35)');
-                    line.setAttribute('stroke-width', '1');
-                    line.setAttribute('stroke-dasharray', '4 3');
-                    canvas.appendChild(line);
-                }
-                const cx = padding + (hour / 23) * innerW;
-                line.setAttribute('x1', cx);
-                line.setAttribute('x2', cx);
-                line.setAttribute('y1', padding);
-                line.setAttribute('y2', height - padding);
-                line.removeAttribute('display');
-            };
-
-            const onLeave = () => {
-                if (todayUsageGraphTipEl) todayUsageGraphTipEl.style.display = 'none';
-                const c = window.__todayGraphTipData && window.__todayGraphTipData.graphCanvas;
-                const line = c && c.querySelector('.today-graph-crosshair');
-                if (line) line.setAttribute('display', 'none');
-            };
-
-            wrapper.addEventListener('mousemove', onMove);
-            wrapper.addEventListener('mouseleave', onLeave);
-            wrapper.addEventListener('touchmove', (ev) => {
-                if (ev.touches[0]) onMove(ev.touches[0]);
-            }, { passive: true });
-            wrapper.addEventListener('touchend', onLeave);
+        function initTodayUsageChart() {
+            if (!window.TodayUsageChartHelper) return null;
+            return window.TodayUsageChartHelper.init('weeklyUsageChart', TODAY_GRAPH_COLORS);
         }
 
         function normalizeGraphSeries24(arr) {
@@ -5940,9 +5802,6 @@
         }
 
         async function loadWeeklyGraphData(targetDate = null) {
-            const graphCanvas = document.getElementById('weeklyGraphCanvas');
-            if (!graphCanvas) return;
-
             const baseDate = targetDate
                 ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 12, 0, 0)
                 : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 12, 0, 0);
@@ -5996,75 +5855,10 @@
 
             document.getElementById('graphDateLabel').textContent = graphDateLabel;
             document.getElementById('graphHoursLabel').textContent = hasData ? `${combinedAvg.toFixed(2)} avg` : '—';
+            const chart = initTodayUsageChart();
+            if (!chart) return;
 
-            const width = 280;
-            const height = 135;
-            const padding = 10;
-            const bottomY = height - padding;
-
-            function pointsFromNorm(normArr) {
-                return normArr.slice(0, 24).map((nv, h) => {
-                    const n = Number.isFinite(nv) ? Math.min(1, Math.max(0, nv)) : 0;
-                    const x = padding + (h / 23) * (width - padding * 2);
-                    const y = bottomY - n * (height - padding * 2);
-                    return { x, y, h, nv: n };
-                });
-            }
-
-            function linePath(pts) {
-                if (!pts.length) return '';
-                let d = `M ${pts[0].x} ${pts[0].y}`;
-                for (let i = 1; i < pts.length; i++) {
-                    d += ` L ${pts[i].x} ${pts[i].y}`;
-                }
-                return d;
-            }
-
-            function areaPath(pts) {
-                if (!pts.length) return '';
-                let d = `M ${pts[0].x} ${bottomY} L ${pts[0].x} ${pts[0].y}`;
-                for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
-                d += ` L ${pts[pts.length - 1].x} ${bottomY} Z`;
-                return d;
-            }
-
-            const pts1 = pointsFromNorm(normS1);
-            const pts2 = pointsFromNorm(normS2);
-            const path1 = showLine1 ? linePath(pts1) : '';
-            const path2 = showLine2 ? linePath(pts2) : '';
-            const area1 = showLine1 ? areaPath(pts1) : '';
-            const area2 = showLine2 ? areaPath(pts2) : '';
-            const yel = TODAY_GRAPH_COLORS.s1;
-            const pnk = TODAY_GRAPH_COLORS.s2;
-
-            const layer1a = showLine1 && area1 ? `<path d="${area1}" fill="url(#todayUsageGrad1)" />` : '';
-            const layer1l = showLine1 && path1 ? `<path d="${path1}" fill="none" stroke="${yel}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` : '';
-            const layer2a = showLine2 && area2 ? `<path d="${area2}" fill="url(#todayUsageGrad2)" />` : '';
-            const layer2l = showLine2 && path2 ? `<path d="${path2}" fill="none" stroke="${pnk}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` : '';
-
-            graphCanvas.innerHTML = `
-                <defs>
-                    <linearGradient id="todayUsageGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="${yel}" stop-opacity="0.28"/>
-                        <stop offset="100%" stop-color="${yel}" stop-opacity="0.02"/>
-                    </linearGradient>
-                    <linearGradient id="todayUsageGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="${pnk}" stop-opacity="0.28"/>
-                        <stop offset="100%" stop-color="${pnk}" stop-opacity="0.02"/>
-                    </linearGradient>
-                </defs>
-                ${layer1a}
-                ${layer2a}
-                ${layer1l}
-                ${layer2l}
-            `;
-
-            setupTodayUsageGraphInteraction(graphCanvas, normS1, normS2, graphDateStr, {
-                showLine1,
-                showLine2,
-                samples1: totals.sensor1.samples,
-                samples2: totals.sensor2.samples
-            });
+            window.TodayUsageChartHelper.update(normS1, normS2, showLine1, showLine2);
         }
         
         // Track the selected week date for the graph
