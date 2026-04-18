@@ -184,6 +184,7 @@ usage_collection = None
 readings_collection = None
 sensor_latest_collection = None
 sensor_hourly_collection = None
+sensor_5min_collection = None
 room_collections = {}
 admin_collection = None
 organization_collection = None
@@ -199,7 +200,7 @@ page_log_collection = None  # NEW: Exception / page-event logging
 def _init_mongo():
     """Initialize MongoDB connection and all collection references."""
     global db, usage_collection, readings_collection, sensor_latest_collection
-    global sensor_hourly_collection, room_collections, admin_collection
+    global sensor_hourly_collection, sensor_5min_collection, room_collections, admin_collection
     global organization_collection, alert_collection, device_collection
     global user_data_collection, users_collection, feedback_collection
     global api_collection, page_log_collection
@@ -222,6 +223,7 @@ def _init_mongo():
         readings_collection = db["readings"]
         sensor_latest_collection = db["sensor_latest"]
         sensor_hourly_collection = db["sensor_hourly"]
+        sensor_5min_collection = db["sensor_5min"]
         room_collections = {r: db[f"room_{r}"] for r in VALID_ROOMS}
         admin_collection = db["admin_access"]
         organization_collection = db["Organization"]
@@ -744,6 +746,24 @@ def submit_single_sensor_reading():
             upsert=True,
         )
 
+    # sensor_5min bucket
+    if sensor_id and sensor_5min_collection is not None:
+        bucket_5min = int(now_pst.hour) * 12 + int(now_pst.minute // 5)
+        inc_doc_5min = {"samples": 1}
+        if lux_value >= LUX_LIGHTS_ON_THRESHOLD:
+            inc_doc_5min["bright_samples"] = 1
+        sensor_5min_collection.update_one(
+            {"date": today, "bucket": bucket_5min, "sensor_id": sensor_id},
+            {
+                "$inc": inc_doc_5min,
+                "$set": {
+                    "luxLast": lux_value,
+                    "updatedAt": datetime.utcnow().isoformat(),
+                },
+            },
+            upsert=True,
+        )
+
     # Room collection update
     room_name = SENSOR_ROOM_MAP.get(sensor_id) if sensor_id else None
     if room_name and room_name in room_collections and room_collections[room_name] is not None:
@@ -899,43 +919,45 @@ def get_sensor_badges():
 @app.route("/api/v1/sensors/hourly_graph", methods=["GET"])
 @rate_limit()
 @_safe_route
-@require_mongo("sensor_hourly_collection")
+@require_mongo("sensor_5min_collection")
 def get_hourly_sensor_graph():
-    """24-point series (0–1) per logical sensor from sensor_hourly collection."""
+    """288-point series (5-minute buckets) per logical sensor."""
     date_str = (request.args.get("date") or "").strip()
     if not date_str or not re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
         return jsonify({"success": False, "message": "Missing or invalid date (YYYY-MM-DD)"}), 400
 
+    points_per_day = 288  # 24h * 12 buckets/hour
     out = {
-        "sensor1": [0.0] * 24,
-        "sensor2": [0.0] * 24,
+        "sensor1": [0.0] * points_per_day,
+        "sensor2": [0.0] * points_per_day,
         "totals": {
             "sensor1": {"samples": 0, "brightSamples": 0},
             "sensor2": {"samples": 0, "brightSamples": 0},
         },
+        "granularityMinutes": 5,
     }
 
     for group_key, ids in SENSOR_BADGE_GROUPS:
         tk = "sensor1" if group_key == "sensor1" else "sensor2"
         arr = out[tk]
 
-        # Hourly breakdown
-        for row in sensor_hourly_collection.aggregate([
+        # 5-minute breakdown only (no hourly expansion fallback)
+        for row in sensor_5min_collection.aggregate([
             {"$match": {"date": date_str, "sensor_id": {"$in": list(ids)}}},
-            {"$group": {"_id": "$hour", "samples": {"$sum": "$samples"}, "bright": {"$sum": "$bright_samples"}}},
+            {"$group": {"_id": "$bucket", "samples": {"$sum": "$samples"}, "bright": {"$sum": "$bright_samples"}}},
         ]):
-            h = row.get("_id")
+            b = row.get("_id")
             try:
-                hi = int(h)
+                bi = int(b)
             except (TypeError, ValueError):
                 continue
-            if 0 <= hi <= 23:
+            if 0 <= bi < points_per_day:
                 s = int(row.get("samples") or 0)
-                b = int(row.get("bright") or 0)
-                arr[hi] = round(min(1.0, b / s), 4) if s > 0 else 0.0
+                br = int(row.get("bright") or 0)
+                arr[bi] = round(min(1.0, br / s), 4) if s > 0 else 0.0
 
         # Daily totals
-        for tot in sensor_hourly_collection.aggregate([
+        for tot in sensor_5min_collection.aggregate([
             {"$match": {"date": date_str, "sensor_id": {"$in": list(ids)}}},
             {"$group": {"_id": None, "sm": {"$sum": "$samples"}, "br": {"$sum": "$bright_samples"}}},
         ]):
@@ -1417,7 +1439,7 @@ DOCUMENTED_APIS = [
     ("GET", "/api/v1/sensors/{sensor_id}/status", "Sensor status by ID"),
     ("GET", "/api/v1/sensors/latest", "Latest lux from daily_usage"),
     ("GET", "/api/v1/sensors/badges", "Per-sensor status for dashboard pills"),
-    ("GET", "/api/v1/sensors/hourly_graph", "Hourly graph from sensor_hourly"),
+    ("GET", "/api/v1/sensors/hourly_graph", "Daily usage graph (288 x 5-minute buckets from sensor_5min)"),
     ("POST", "/api/usage/save", "Save daily usage"),
     ("GET", "/api/usage/{date}", "Get usage for date"),
     ("GET", "/api/usage/statistics", "Weekly and monthly stats"),
