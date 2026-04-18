@@ -47,6 +47,9 @@ API_COLLECTION_NAME = "API"
 VALID_ROOMS = frozenset(["living", "bedroom"])
 SECONDS_IN_DAY = 86_400
 LUX_LIGHTS_ON_THRESHOLD = 25.0
+# Dashboard pills only: avoid flicker when lux hovers near 25 (Schmitt trigger).
+LUX_BADGE_HYST_HIGH = float(os.getenv("LUX_BADGE_HYST_HIGH", "32"))
+LUX_BADGE_HYST_LOW = float(os.getenv("LUX_BADGE_HYST_LOW", "18"))
 DAILY_USAGE_AGGREGATE_SENSOR_ID = "all-rooms"
 TIMEZONE = "America/Los_Angeles"
 MAX_SENSOR_HISTORY = 50
@@ -65,6 +68,12 @@ SENSOR_BADGE_GROUPS = (
     ("sensor1", ("sensor-1", "esp32_01")),
     ("sensor2", ("sensor-2", "esp32_02")),
 )
+
+BADGE_GROUP_ROOM = {"sensor1": "living", "sensor2": "bedroom"}
+
+# Last smoothed ON/OFF per logical sensor (dashboard badges only; in-process state).
+_badge_lights_smooth: dict[str, bool | None] = {}
+_badge_smooth_lock = threading.Lock()
 
 ROOM_PRIMARY_SENSOR_ID = {
     "living": "esp32_01",
@@ -131,7 +140,11 @@ class RateLimiter:
 
 
 # Global rate limiter instance — 120 requests per 60-second window per IP
-rate_limiter = RateLimiter(default_max_requests=120, default_window_seconds=60)
+# Dashboard polling + periodic saves can exceed 120/min with multiple tabs; keep a sane ceiling.
+rate_limiter = RateLimiter(
+    default_max_requests=int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "400")),
+    default_window_seconds=int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")),
+)
 
 
 def rate_limit(max_requests=None, window_seconds=None):
@@ -460,6 +473,61 @@ def _coerce_lux_scalar(val):
         return float(val)
     except (TypeError, ValueError):
         return None
+
+
+def _parse_lux_timestamp(iso_str: str):
+    """Parse luxUpdatedAt for chronological ordering (handles trailing Z)."""
+    if not iso_str or not isinstance(iso_str, str):
+        return None
+    t = iso_str.strip()
+    if t.endswith("Z"):
+        t = t[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(t)
+    except ValueError:
+        return None
+
+
+def _newest_sensor_latest_among_ids(ids):
+    """Pick freshest sensor_latest row among legacy aliases (by parsed luxUpdatedAt)."""
+    if sensor_latest_collection is None or not ids:
+        return None
+    docs = list(sensor_latest_collection.find({"sensor_id": {"$in": list(ids)}}))
+    if not docs:
+        return None
+
+    def _sort_key(doc):
+        ts = _parse_lux_timestamp((doc or {}).get("luxUpdatedAt") or "")
+        if ts is not None:
+            return (0, ts, str((doc or {}).get("_id")))
+        return (1, (doc or {}).get("luxUpdatedAt") or "", str((doc or {}).get("_id")))
+
+    return max(docs, key=_sort_key)
+
+
+def _lights_on_badge_smoothed(group_key: str, lux):
+    """
+    Schmitt-style ON/OFF for dashboard pills so lux hovering near 25 does not flicker.
+    Uses in-process state (one worker); resets on process restart.
+    """
+    v = _coerce_lux_scalar(lux)
+    if v is None:
+        return None
+    with _badge_smooth_lock:
+        prev = _badge_lights_smooth.get(group_key)
+        if prev is None:
+            on = v >= LUX_LIGHTS_ON_THRESHOLD
+            _badge_lights_smooth[group_key] = on
+            return on
+        if prev:
+            if v < LUX_BADGE_HYST_LOW:
+                _badge_lights_smooth[group_key] = False
+                return False
+            return True
+        if v >= LUX_BADGE_HYST_HIGH:
+            _badge_lights_smooth[group_key] = True
+            return True
+        return False
 
 
 def _latest_lux_for_date_from_per_sensor_daily_usage(date: str):
@@ -891,20 +959,20 @@ def get_sensor_badges():
     data = {}
     for key, ids in SENSOR_BADGE_GROUPS:
         label = "Sensor 1" if key == "sensor1" else "Sensor 2"
-        docs = list(sensor_latest_collection.find({"sensor_id": {"$in": list(ids)}}))
-        best = max(docs, key=lambda d: d.get("luxUpdatedAt", ""), default=None)
+        room = BADGE_GROUP_ROOM.get(key)
+        primary = ROOM_PRIMARY_SENSOR_ID.get(room) if room else None
+        best = None
+        if primary and sensor_latest_collection is not None:
+            best = sensor_latest_collection.find_one({"sensor_id": primary})
+        if not best:
+            best = _newest_sensor_latest_among_ids(ids)
 
         if not best:
             data[key] = {"label": label, "sensor_id": "", "lux": None, "lightsOn": None, "luxUpdatedAt": ""}
             continue
 
         lux = best.get("lux")
-        lights_on = None
-        if lux is not None:
-            try:
-                lights_on = float(lux) >= LUX_LIGHTS_ON_THRESHOLD
-            except (TypeError, ValueError):
-                pass
+        lights_on = _lights_on_badge_smoothed(key, lux)
 
         data[key] = {
             "label": label,
