@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>UOP Light Sensor</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/today-usage-chart.js"></script>
     <style>
         :root {
             --bg-main: #0d0d0f;
@@ -910,13 +912,32 @@
             box-sizing: border-box;
         }
 
-        .roller-container {
+        /* Left column: lux gauge, then User View directly below */
+        .gauge-user-column {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            height: 280px;
+            align-items: stretch;
+            gap: 16px;
+            flex: 0 1 auto;
+            min-width: min(100%, 260px);
+            max-width: none;
+            width: auto;
+            align-self: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .gauge-user-column > .gauge-ambient-box {
+            flex: 0 0 auto;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .gauge-user-column > .user-data-view-container {
+            flex: 0 1 auto;
+            width: 100%;
+            max-width: none;
+            min-width: 0;
         }
 
         .sensor-live-status {
@@ -951,17 +972,36 @@
             border: 1px solid rgba(248, 113, 113, 0.5);
         }
 
-        /* Weekly Line Graph */
+        /* Today's Usage column: card + mode toggles below (outside the card, not inside it) */
+        .weekly-graph-column {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            flex: 1 1 min(100%, 520px);
+            min-width: min(100%, 260px);
+            max-width: min(100%, 520px);
+            width: auto;
+            min-height: 0;
+            align-self: stretch;
+            position: relative;
+            z-index: 2;
+        }
+
+        .weekly-graph-column > .weekly-graph-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+        }
+
+        /* Weekly Line Graph — stretches with .gauge-main-row to match gauge card height */
         .weekly-graph-container {
             background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
             border-radius: 16px;
             padding: 20px;
             margin-left: 0;
-            flex: 1 1 min(100%, 320px);
-            min-width: min(100%, 260px);
-            max-width: min(100%, 420px);
-            width: auto;
-            min-height: 280px;
+            width: 100%;
+            min-height: 0;
             height: auto;
             position: relative;
             display: flex;
@@ -1046,6 +1086,9 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 10px;
+            flex: 0 0 auto;
+            position: relative;
+            z-index: 2;
         }
 
         .weekly-graph-title {
@@ -1074,10 +1117,13 @@
             position: relative;
             flex: 1 1 auto;
             width: 100%;
-            min-height: 140px;
-            height: 160px;
-            padding-left: 42px;
-            padding-bottom: 25px;
+            min-height: 0;
+            height: auto;
+            padding-left: 0;
+            padding-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .weekly-graph .graph-y-axis {
@@ -1103,9 +1149,11 @@
         .graph-canvas-wrapper {
             position: relative;
             width: 100%;
-            height: 135px;
-            border-bottom: 1px solid #4a5568;
-            cursor: crosshair;
+            flex: 1 1 auto;
+            min-height: 120px;
+            height: auto;
+            border-bottom: none;
+            cursor: default;
         }
 
         .graph-canvas {
@@ -1131,14 +1179,6 @@
             max-width: 44px;
         }
 
-        .graph-x-axis-note {
-            text-align: center;
-            font-size: 10px;
-            color: #64748b;
-            margin-top: 2px;
-            width: 100%;
-        }
-
         .today-graph-legend {
             display: flex;
             flex-wrap: wrap;
@@ -1147,6 +1187,8 @@
             margin-top: 6px;
             font-size: 10px;
             color: #cbd5e1;
+            position: relative;
+            z-index: 3;
         }
 
         .today-graph-legend .leg-item {
@@ -1159,6 +1201,30 @@
             width: 18px;
             height: 3px;
             border-radius: 2px;
+        }
+
+        .today-graph-legend .leg-item--toggle {
+            background: transparent;
+            border: none;
+            padding: 2px 6px;
+            margin: 0;
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .today-graph-legend .leg-item--toggle:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .today-graph-legend .leg-item--toggle:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .today-graph-legend .leg-item--toggle.leg-item--active {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .weekly-graph-value .hours.today-graph-avg {
@@ -1209,80 +1275,13 @@
             opacity: 0.3;
         }
 
-        .roller-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .roller-track {
-            position: relative;
-            width: 8px;
-            height: 200px;
-            background: var(--bg-card);
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .roller-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(to top, var(--accent), #f5a623cc);
-            border-radius: 4px;
-            transition: height 0.1s ease;
-            box-shadow: 0 0 12px var(--accent-glow);
-        }
-
-        .roller-thumb {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 24px;
-            height: 24px;
-            background: var(--accent);
-            border-radius: 50%;
-            cursor: grab;
-            box-shadow: 0 0 16px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.3);
-            transition: transform 0.1s ease;
-        }
-
-        .roller-thumb:hover {
-            transform: translateX(-50%) scale(1.1);
-        }
-
-        .roller-thumb:active {
-            cursor: grabbing;
-            transform: translateX(-50%) scale(0.95);
-        }
-
-        .roller-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent);
-        }
-
-        .roller-ticks {
-            position: absolute;
-            right: -36px;
-            top: 0;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #f5a623;
-            font-weight: 600;
-        }
-
-        /* Single ambient box containing gauge + lux slider */
+        /* Single ambient box containing gauge */
         .gauge-ambient-box {
             display: flex;
             flex: 1 1 min(100%, 520px);
             min-width: min(100%, 280px);
             max-width: 100%;
+            align-self: flex-start;
             align-items: center;
             justify-content: center;
             flex-wrap: wrap;
@@ -1302,17 +1301,50 @@
         }
 
         .gauge-wrapper {
+            --gauge-dome-offset: 36px;
             position: relative;
             width: 420px;
-            height: 280px;
+            height: 300px;
             overflow: hidden;
             flex-shrink: 0;
             border-radius: 16px;
         }
 
+        .gauge-room-select {
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+            min-width: 160px;
+            max-width: calc(100% - 24px);
+            padding: 6px 28px 6px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            background-color: rgba(26, 28, 34, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+
+        .gauge-room-select:hover {
+            border-color: rgba(245, 166, 35, 0.45);
+        }
+
+        .gauge-room-select:focus {
+            outline: none;
+            border-color: rgba(245, 166, 35, 0.65);
+            box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+        }
+
         .gauge-bg {
             position: absolute;
-            top: 20px;
+            top: calc(20px + var(--gauge-dome-offset));
             left: 50%;
             transform: translateX(-50%);
             width: 380px;
@@ -1323,7 +1355,7 @@
 
         .gauge-svg {
             position: absolute;
-            top: 0;
+            top: var(--gauge-dome-offset);
             left: 50%;
             transform: translateX(-50%);
             width: 400px;
@@ -1368,21 +1400,6 @@
             margin-left: 4px;
         }
 
-        .gauge-range {
-            position: absolute;
-            bottom: 60px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 40px 0 25px;
-        }
-
-        .range-value {
-            font-size: 18px;
-            color: var(--text-muted);
-        }
-
- 
         .gauge-controls {
             position: absolute;
             bottom: 0;
@@ -1592,6 +1609,12 @@
             background: rgba(245, 166, 35, 0.08);
         }
 
+        .room-card.sensor-ambient-on {
+            border-color: rgba(253, 184, 65, 0.7);
+            background: rgba(253, 184, 65, 0.14);
+            box-shadow: 0 0 22px rgba(253, 184, 65, 0.28);
+        }
+
         .room-card-icon {
             width: 40px;
             height: 40px;
@@ -1617,39 +1640,6 @@
         .room-card-subtitle {
             font-size: 11px;
             color: var(--text-muted);
-        }
-
-        .room-toggle {
-            width: 40px;
-            height: 24px;
-            border-radius: 12px;
-            background: var(--bg-main);
-            border: 1px solid var(--border);
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .room-toggle::after {
-            content: '';
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            transition: all 0.3s;
-        }
-
-        .room-card.active .room-toggle {
-            background: var(--accent);
-            border-color: var(--accent);
-        }
-
-        .room-card.active .room-toggle::after {
-            left: 19px;
-            background: white;
         }
 
         .stats-section {
@@ -1905,15 +1895,20 @@
                 gap: 20px;
             }
 
-            .weekly-graph-container,
-            .user-data-view-container {
+            .weekly-graph-column {
                 flex: 1 1 min(100%, 360px);
-                max-width: min(100%, 400px);
+                max-width: min(100%, 520px);
+            }
+
+            .gauge-user-column {
+                flex: 0 1 auto;
+                max-width: none;
             }
 
             .gauge-wrapper {
                 width: min(380px, 92vw);
-                height: 250px;
+                height: 268px;
+                --gauge-dome-offset: 30px;
             }
 
             .gauge-svg {
@@ -1935,8 +1930,8 @@
                 gap: 24px;
             }
 
-            .weekly-graph-container,
-            .user-data-view-container {
+            .weekly-graph-column,
+            .gauge-user-column {
                 width: min(100%, 600px);
                 max-width: 100%;
                 margin-left: auto;
@@ -2904,6 +2899,11 @@
             background: rgba(245, 166, 35, 0.08);
         }
 
+        body.has-wallpaper .room-card.sensor-ambient-on {
+            background: rgba(253, 184, 65, 0.14);
+            box-shadow: 0 0 24px rgba(253, 184, 65, 0.32);
+        }
+
         /* Keep only the gauge itself solid, not the container */
         body.has-wallpaper .gauge-wrapper {
             background: rgba(13, 13, 15, 0.85);
@@ -2945,7 +2945,8 @@
             
             .gauge-wrapper {
                 width: 280px;
-                height: 200px;
+                height: 220px;
+                --gauge-dome-offset: 22px;
             }
             
             .gauge-svg {
@@ -2965,7 +2966,8 @@
                 min-width: 0;
             }
             
-            .weekly-graph-container {
+            .weekly-graph-column,
+            .gauge-user-column {
                 margin-left: 0;
                 margin-top: 0;
             }
@@ -3177,7 +3179,8 @@
             .gauge-wrapper {
                 width: 100%;
                 max-width: 260px;
-                height: 200px;
+                height: 218px;
+                --gauge-dome-offset: 20px;
                 margin: 0;
                 flex: 0 0 auto;
             }
@@ -3190,11 +3193,6 @@
             
             .lux-number {
                 font-size: 48px;
-            }
-            
-            .gauge-range {
-                font-size: 11px;
-                padding: 0 20px 0 15px;
             }
             
             .gauge-controls {
@@ -3218,19 +3216,6 @@
             
             .control-btn.range-btn {
                 font-size: 16px;
-            }
-            
-            .roller-container {
-                width: auto;
-                max-width: none;
-                margin: 0;
-                height: 200px;
-                flex: 0 0 auto;
-                align-self: center;
-            }
-            
-            .roller-track {
-                height: 200px;
             }
             
             .room-bars-section {
@@ -3375,16 +3360,19 @@
                 overflow-x: visible;
             }
 
-            .weekly-graph-container {
+            .weekly-graph-column {
                 width: 100%;
                 max-width: 100%;
                 margin-left: 0;
                 margin-top: 0;
                 align-self: stretch;
+            }
+
+            .weekly-graph-column > .weekly-graph-container {
                 padding: 14px;
                 border-radius: 12px;
                 height: auto;
-                min-height: 220px;
+                min-height: 0;
             }
 
             .weekly-graph-header {
@@ -3404,9 +3392,15 @@
             }
 
             .weekly-graph {
-                height: 140px;
-                padding-left: 34px;
-                padding-bottom: 20px;
+                flex: 1 1 auto;
+                min-height: 0;
+                height: auto;
+                padding-left: 0;
+                padding-bottom: 0;
+            }
+
+            .weekly-graph .graph-canvas-wrapper {
+                min-height: 100px;
             }
 
             .weekly-graph .graph-y-axis {
@@ -3424,10 +3418,13 @@
                 font-size: 10px;
             }
 
-            .user-data-view-container {
+            .gauge-user-column {
                 width: 100%;
                 max-width: 100%;
-                height: auto;
+                align-self: stretch;
+            }
+
+            .gauge-user-column > .user-data-view-container {
                 min-height: 240px;
             }
         }
@@ -3508,14 +3505,20 @@
                 gap: 16px;
             }
             
-            .weekly-graph-container {
+            .weekly-graph-column > .weekly-graph-container {
                 padding: 12px;
             }
             
             .weekly-graph {
-                height: 120px;
-                padding-left: 30px;
-                padding-bottom: 18px;
+                flex: 1 1 auto;
+                min-height: 0;
+                height: auto;
+                padding-left: 0;
+                padding-bottom: 0;
+            }
+
+            .weekly-graph .graph-canvas-wrapper {
+                min-height: 88px;
             }
 
             .weekly-graph .graph-y-axis {
@@ -3692,7 +3695,8 @@
             
             .gauge-wrapper {
                 width: 250px;
-                height: 180px;
+                height: 198px;
+                --gauge-dome-offset: 18px;
             }
         }
 
@@ -4043,7 +4047,7 @@
                 <span class="room-bar-value" id="val-living">0m</span>
             </div>
             <div class="room-bar-item" id="bar-item-bedroom" data-room="room-bedroom">
-                <span class="room-bar-label">Bedroom</span>
+                <span class="room-bar-label">Bed Room</span>
                 <div class="room-bar-track">
                     <div class="room-bar-fill" id="bar-bedroom"></div>
                 </div>
@@ -4448,7 +4452,7 @@
                     <select id="adminDailyRoomSelect" class="admin-select">
                         <option value="all">All Rooms (Daily Usage)</option>
                         <option value="living">Living Room</option>
-                        <option value="bedroom">Bedroom</option>
+                        <option value="bedroom">Bed Room</option>
                     </select>
                 </div>
                 <div class="admin-graph-container">
@@ -4582,22 +4586,26 @@
                     <div class="room-card-title">Living Room</div>
                     
                 </div>
-                <div class="room-toggle"></div>
             </div>
             <div class="room-card" id="room-bedroom">
                 <div class="room-card-icon">🛏️</div>
                 <div class="room-card-content">
-                    <div class="room-card-title">Bedroom</div>
+                    <div class="room-card-title">Bed Room</div>
                     
                 </div>
-                <div class="room-toggle"></div>
             </div>
         </div>
 
         <div class="gauge-container">
             <div class="gauge-main-row">
+            <div class="gauge-user-column">
             <div class="gauge-ambient-box">
             <div class="gauge-wrapper">
+                <select id="gaugeRoomSelect" class="gauge-room-select" aria-label="Room for gauge">
+                    <option value="all">All Rooms</option>
+                    <option value="living">Living Room</option>
+                    <option value="bedroom">Bed Room</option>
+                </select>
                 <!-- Sunlight Detection Popup -->
                 <div class="gauge-bg"></div>
                 
@@ -4618,11 +4626,6 @@
                 
                 <div class="gauge-value">
                     <span class="lux-number" id="luxValue">0</span><span class="lux-unit">lux</span>
-                </div>
-                
-                <div class="gauge-range">
-                    <span class="range-value">0</span>
-                    <span class="range-value">800</span>
                 </div>
                 
                 <div class="gauge-controls">
@@ -4646,79 +4649,6 @@
                 </div>
             </div>
 
-            <div class="roller-container">
-                <div class="roller-track" id="rollerTrack">
-                    <div class="roller-fill" id="rollerFill"></div>
-                    <div class="roller-thumb" id="rollerThumb"></div>
-                    <div class="roller-ticks">
-                        <span>800</span>
-                        <span>600</span>
-                        <span>400</span>
-                        <span>200</span>
-                        <span>0</span>
-                    </div>
-                </div>
-            </div>
-            </div>
-
-            <!-- Weekly Line Graph -->
-            <div class="weekly-graph-container">
-                <div class="weekly-graph-header">
-                    <div>
-                        <div class="weekly-graph-title">Today's Usage</div>
-                        <div class="today-graph-legend" aria-hidden="true">
-                            <span class="leg-item"><span class="leg-line" style="background:#FDB841"></span> Sensor 1</span>
-                            <span class="leg-item"><span class="leg-line" style="background:#FF69B4"></span> Sensor 2</span>
-                        </div>
-                    </div>
-                    <div class="weekly-graph-value">
-                        <div class="date" id="graphDateLabel">Today</div>
-                        <div class="hours today-graph-avg" id="graphHoursLabel">—</div>
-                    </div>
-                </div>
-                <div class="weekly-graph">
-                    <div class="graph-y-axis">
-                        <span>1.0</span>
-                        <span>0.9</span>
-                        <span>0.8</span>
-                        <span>0.7</span>
-                        <span>0.6</span>
-                        <span>0.5</span>
-                        <span>0.4</span>
-                        <span>0.3</span>
-                        <span>0.2</span>
-                        <span>0.1</span>
-                        <span>0.0</span>
-                    </div>
-                    <div class="graph-canvas-wrapper">
-                        <div class="graph-grid-line" style="top: 0%"></div>
-                        <div class="graph-grid-line" style="top: 10%"></div>
-                        <div class="graph-grid-line" style="top: 20%"></div>
-                        <div class="graph-grid-line" style="top: 30%"></div>
-                        <div class="graph-grid-line" style="top: 40%"></div>
-                        <div class="graph-grid-line" style="top: 50%"></div>
-                        <div class="graph-grid-line" style="top: 60%"></div>
-                        <div class="graph-grid-line" style="top: 70%"></div>
-                        <div class="graph-grid-line" style="top: 80%"></div>
-                        <div class="graph-grid-line" style="top: 90%"></div>
-                        <div class="graph-grid-line" style="top: 100%"></div>
-                        <svg class="graph-canvas" id="weeklyGraphCanvas" viewBox="0 0 280 135" preserveAspectRatio="xMidYMid meet">
-                            <!-- Line and dots rendered by JS -->
-                        </svg>
-                    </div>
-                    <div class="graph-x-axis-wrap">
-                        <div class="graph-x-axis" id="graphXAxis">
-                            <span>0</span>
-                            <span>4</span>
-                            <span>8</span>
-                            <span>12</span>
-                            <span>16</span>
-                            <span>20</span>
-                            <span>24</span>
-                        </div>
-                        <div class="graph-x-axis-note">Hours (0–24)</div>
-                    </div>
-                </div>
             </div>
 
             <div class="user-data-view-container">
@@ -4728,7 +4658,7 @@
                     <select id="userDataRoomSelect" class="user-data-select">
                         <option value="all">All Rooms</option>
                         <option value="living">Living Room</option>
-                        <option value="bedroom">Bedroom</option>
+                        <option value="bedroom">Bed Room</option>
                     </select>
                 </div>
                 <div class="user-data-view-title">User View (MongoDB Data)</div>
@@ -4744,27 +4674,37 @@
             </div>
             </div>
 
+            <!-- Today's Usage card + mode toggles below (outside the card) -->
+            <div class="weekly-graph-column">
+                <div class="weekly-graph-container">
+                    <div class="weekly-graph-header">
+                        <div>
+                            <div class="weekly-graph-title">Today's Usage</div>
+                            <div class="today-graph-legend" role="group" aria-label="Today usage series">
+                                <button type="button" class="leg-item leg-item--toggle" id="todayGraphLegendS1" data-sensor="1" aria-pressed="false">
+                                    <span class="leg-line" style="background:#FDB841" aria-hidden="true"></span> Living_Room
+                                </button>
+                                <button type="button" class="leg-item leg-item--toggle" id="todayGraphLegendS2" data-sensor="2" aria-pressed="false">
+                                    <span class="leg-line" style="background:#FF69B4" aria-hidden="true"></span> Bed_Room
+                                </button>
+                            </div>
+                        </div>
+                        <div class="weekly-graph-value">
+                            <div class="date" id="graphDateLabel">Today</div>
+                            <div class="hours today-graph-avg" id="graphHoursLabel">—</div>
+                        </div>
+                    </div>
+                    <div class="weekly-graph">
+                        <div class="graph-canvas-wrapper">
+                            <canvas class="graph-canvas" id="weeklyUsageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
         </div>
 
-        <div class="mode-cards">
-            <div class="mode-card" data-mode="eco">
-                <div class="mode-card-icon">🌿</div>
-                <div class="mode-card-content">
-                    <div class="mode-card-title">Eco Mode</div>
-                    
-                </div>
-                <div class="mode-toggle" id="toggleEco"></div>
-            </div>
-            
-            <div class="mode-card" data-mode="sleep">
-                <div class="mode-card-icon">🌙</div>
-                <div class="mode-card-content">
-                    <div class="mode-card-title">Sleep Mode</div>
-                    
-                </div>
-                <div class="mode-toggle" id="toggleSleep"></div>
-            </div>
-        </div>
         <div class="stats-section">
             <div class="stats-header">
                 <span class="stats-icon">📊</span>
@@ -5052,210 +4992,30 @@
         }
 
 
-        let currentLux = 500;
+        /** Arc fills at this lux (sensor/User View can exceed 800). */
+        const GAUGE_ARC_MAX_LUX = 20000;
+
+        let currentLux = 0;
         function updateGauge(lux) {
-            currentLux = lux;
-            const maxLux = 800;
-            const percentage = Math.min(lux / maxLux, 1);
+            const n = Number(lux);
+            const v = Number.isFinite(n) ? Math.max(0, n) : 0;
+            currentLux = v;
+            const percentage = Math.min(v / GAUGE_ARC_MAX_LUX, 1);
             const arcLength = 471;
             const offset = arcLength * (1 - percentage);
             
             document.getElementById('gaugeFill').style.strokeDashoffset = offset;
-            document.getElementById('luxValue').textContent = Math.round(lux);
+            document.getElementById('luxValue').textContent = String(Math.round(v));
             
-     
             const brightnessPercent = Math.round(percentage * 100);
             document.getElementById('brightnessFill').style.width = `${brightnessPercent}%`;
             document.getElementById('brightnessPercent').textContent = `${brightnessPercent}%`;
-            
-            updateRollerPosition(lux);
         }
 
-        const rollerTrack = document.getElementById('rollerTrack');
-        const rollerThumb = document.getElementById('rollerThumb');
-        const rollerFill = document.getElementById('rollerFill');
-        let isDragging = false;
-
-        function updateRollerPosition(lux) {
-            const percentage = lux / 800;
-            const trackHeight = rollerTrack.offsetHeight;
-            const thumbPosition = trackHeight - (percentage * trackHeight);
-            
-            rollerThumb.style.top = `${thumbPosition - 12}px`;
-            rollerFill.style.height = `${percentage * 100}%`;
-        }
-
-        function handleRollerInteraction(e) {
-            if (!isPowerOn) return; 
-            
-            const rect = rollerTrack.getBoundingClientRect();
-            const y = e.clientY || (e.touches && e.touches[0].clientY);
-            const relativeY = y - rect.top;
-            const percentage = 1 - Math.max(0, Math.min(1, relativeY / rect.height));
-            const lux = Math.round(percentage * 800);
-            
-            updateGauge(lux);
-        }
-
-        rollerTrack.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            handleRollerInteraction(e);
-        });
-
-        rollerThumb.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            e.stopPropagation();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                handleRollerInteraction(e);
-            }
-        });
-
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-
-
-        rollerTrack.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            handleRollerInteraction(e);
-        });
-
-        document.addEventListener('touchmove', (e) => {
-            if (isDragging) {
-                handleRollerInteraction(e);
-            }
-        });
-
-        document.addEventListener('touchend', () => {
-            isDragging = false;
-        });
-
-
-        function handleModeToggle(card, toggle) {
-            const mode = card.dataset.mode;
-            const isActive = toggle.classList.toggle('active');
-            card.classList.toggle('active');
-            
-            if (mode === 'eco') {
-                if (isActive) {
-                    if (isSleepMode) {
-                        stopSleepMode();
-                        document.querySelector('[data-mode="sleep"] .mode-toggle')?.classList.remove('active');
-                        document.querySelector('[data-mode="sleep"]')?.classList.remove('active');
-                    }
-                    startEcoMode();
-                } else {
-                    stopEcoMode();
-                }
-            } else if (mode === 'sleep') {
-                if (isActive) {
-                    startSleepMode();
-                } else {
-                    stopSleepMode();
-                }
-            }
-        }
-
-        document.querySelectorAll('.mode-toggle').forEach(toggle => {
-            toggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const card = toggle.closest('.mode-card');
-                handleModeToggle(card, toggle);
-            });
-        });
-
-        document.querySelectorAll('.mode-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('mode-toggle')) {
-                    const toggle = card.querySelector('.mode-toggle');
-                    handleModeToggle(card, toggle);
-                }
-            });
-        });
-
-        
-        let isPowerOn = false;  // Start with light OFF
-        let savedLux = 25;      // Default brightness when turned on
+        let isPowerOn = false;
         let latestSensorLux = 0;
-        
-
-        let isEcoMode = false;
-        let ecoInterval = null;
-
-        function simulateAmbientLight() {
-            if (!isPowerOn || !isEcoMode) return;
-            
-            // Fluctuate between 100-400 lux in Eco Mode (UI only; sensor pills use real POST /api/v1/sensors/data)
-            const minLux = 100;
-            const maxLux = 400;
-            const lux = Math.round(minLux + Math.random() * (maxLux - minLux));
-            
-            updateGauge(lux);
-        }
-        
-        function startEcoMode() {
-            isEcoMode = true;
-            simulateAmbientLight(); 
-            ecoInterval = setInterval(simulateAmbientLight, 5000); 
-            
- 
-            rollerTrack.style.opacity = '0.3';
-            rollerTrack.style.pointerEvents = 'none';
-        }
-        
-        function stopEcoMode() {
-            isEcoMode = false;
-            if (ecoInterval) {
-                clearInterval(ecoInterval);
-                ecoInterval = null;
-            }
-            
-   
-            if (isPowerOn && !isSleepMode) {
-                rollerTrack.style.opacity = '1';
-                rollerTrack.style.pointerEvents = 'auto';
-            }
-        }
-
-  
-        let isSleepMode = false;
-        let preSleepLux = 25;
-        const SLEEP_LUX = 50; 
-
-        function startSleepMode() {
-            isSleepMode = true;
-            
-
-            if (isEcoMode) {
-                stopEcoMode();
-                document.getElementById('toggleEco')?.classList.remove('active');
-                document.querySelector('[data-mode="eco"]')?.classList.remove('active');
-            }
-            
- 
-            preSleepLux = currentLux > SLEEP_LUX ? currentLux : 400;
-            updateGauge(SLEEP_LUX);
-            
-
-            rollerTrack.style.opacity = '0.3';
-            rollerTrack.style.pointerEvents = 'none';
-        }
-
-        function stopSleepMode() {
-            isSleepMode = false;
-            
-
-            updateGauge(preSleepLux);
-            
-
-            if (isPowerOn) {
-                rollerTrack.style.opacity = '1';
-                rollerTrack.style.pointerEvents = 'auto';
-            }
-        }
+        let lastBadgeLivingOn = false;
+        let lastBadgeBedroomOn = false;
 
         document.getElementById('powerBtn').addEventListener('click', function() {
             const wasPowerOn = isPowerOn;
@@ -5263,48 +5023,14 @@
             this.classList.toggle('active');
             
             if (!isPowerOn) {
-                // Turn off - save current state and turn off all rooms
-                savedLux = currentLux;
-                if (ecoInterval) {
-                    clearInterval(ecoInterval);
-                    ecoInterval = null;
-                }
-                
-                // Turn off all rooms when main power is off
                 for (const roomId in roomConfig) {
                     roomConfig[roomId].on = false;
                     updateRoomUI(roomId, false);
                 }
-                
-                updateGauge(0);
-                rollerTrack.style.opacity = '0.3';
-                rollerTrack.style.pointerEvents = 'none';
-            } else {
-                // Log device details when gauge/power is turned ON
-                if (!wasPowerOn) {
-                    logDeviceDetails('gauge_light_on');
-                }
-                
-                // Turn on - check modes and rooms
-                if (isEcoMode) {
-                    ecoInterval = setInterval(simulateAmbientLight, 5000);
-                    simulateAmbientLight();
-                } else if (isSleepMode) {
-                    updateGauge(SLEEP_LUX);
-                    rollerTrack.style.opacity = '0.3';
-                    rollerTrack.style.pointerEvents = 'none';
-                } else {
-                    // Check if any rooms are on, otherwise use saved lux
-                    const totalBrightness = calculateTotalBrightness();
-                    if (totalBrightness > 0) {
-                        updateGauge(totalBrightness);
-                    } else {
-                        updateGauge(latestSensorLux || savedLux || 25);
-                    }
-                    rollerTrack.style.opacity = '1';
-                    rollerTrack.style.pointerEvents = 'auto';
-                }
+            } else if (!wasPowerOn) {
+                logDeviceDetails('gauge_light_on');
             }
+            syncGaugeFromUserViewMongo();
         });
 
         /** If lux timestamp is older than this (seconds), treat sensor as not live → OFF (red). */
@@ -5323,6 +5049,12 @@
             statusEl.className = 'sensor-live-status off-inactive';
         }
 
+        function setRoomAmbientFromSensor(roomCardId, isOn) {
+            const card = document.getElementById(roomCardId);
+            if (!card) return;
+            card.classList.toggle('sensor-ambient-on', !!isOn);
+        }
+
         function updateOneSensorBadge(statusEl, payloadSlice) {
             if (!statusEl) return;
             const label = payloadSlice.label || 'Sensor';
@@ -5338,6 +5070,60 @@
             } else {
                 setSensorBadgeOff(statusEl, label);
             }
+            return ambientOn;
+        }
+
+        let lastSensorBadgeData = null;
+
+        /** Same YYYY-MM-DD as User View (MongoDB) month/day selectors + sidebar calendar year. */
+        function getUserDataViewDateStr() {
+            const monthSelect = document.getElementById('userDataMonthSelect');
+            const dateSelect = document.getElementById('userDataDateSelect');
+            if (!monthSelect || !dateSelect) return getPSTDate();
+            const mi = parseInt(monthSelect.value, 10);
+            const di = parseInt(dateSelect.value, 10);
+            if (!Number.isFinite(mi) || !Number.isFinite(di)) return getPSTDate();
+            const y = calendarDate.getFullYear();
+            const m = String(mi + 1).padStart(2, '0');
+            const d = String(di).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        /**
+         * Gauge lux = same API + fields as User View (userDataRoomSelect + month/day + calendar year).
+         * all → GET /api/usage/{date} → lux; living|bedroom → GET /api/room/{room}/{date} → avgLux
+         */
+        async function syncGaugeFromUserViewMongo() {
+            const roomSelect = document.getElementById('userDataRoomSelect');
+            if (!roomSelect) {
+                updateGauge(0);
+                return;
+            }
+            const room = roomSelect.value;
+            const dateStr = getUserDataViewDateStr();
+            const endpoint = room === 'all' ? `/api/usage/${dateStr}` : `/api/room/${room}/${dateStr}`;
+            try {
+                const res = await fetch(endpoint);
+                if (!res.ok) {
+                    updateGauge(0);
+                    return;
+                }
+                const data = await res.json();
+                const raw = room === 'all' ? data.lux : data.avgLux;
+                const lux = Number(raw);
+                if (!Number.isFinite(lux)) {
+                    updateGauge(0);
+                    return;
+                }
+                latestSensorLux = lux;
+                updateGauge(lux);
+            } catch (e) {
+                updateGauge(0);
+            }
+        }
+
+        function refreshGaugeFromSensors() {
+            syncGaugeFromUserViewMongo();
         }
 
         async function syncSensorBadges() {
@@ -5347,17 +5133,36 @@
                 const response = await fetch('/api/v1/sensors/badges');
                 const payload = await response.json();
                 if (!response.ok || !payload.success || !payload.data) {
-                    setSensorBadgeOff(el1, 'Sensor 1');
-                    setSensorBadgeOff(el2, 'Sensor 2');
+                    lastSensorBadgeData = null;
+                    lastBadgeLivingOn = false;
+                    lastBadgeBedroomOn = false;
+                    setSensorBadgeOff(el1, 'Living_Room');
+                    setSensorBadgeOff(el2, 'Bed_Room');
+                    setRoomAmbientFromSensor('room-living', false);
+                    setRoomAmbientFromSensor('room-bedroom', false);
+                    await syncGaugeFromUserViewMongo();
                     return;
                 }
                 const d = payload.data;
-                updateOneSensorBadge(el1, { ...d.sensor1, label: 'Sensor 1' });
-                updateOneSensorBadge(el2, { ...d.sensor2, label: 'Sensor 2' });
+                lastSensorBadgeData = d;
+                const livingOn = updateOneSensorBadge(el1, { ...d.sensor1, label: 'Living_Room' });
+                const bedroomOn = updateOneSensorBadge(el2, { ...d.sensor2, label: 'Bed_Room' });
+                lastBadgeLivingOn = !!livingOn;
+                lastBadgeBedroomOn = !!bedroomOn;
+                setRoomAmbientFromSensor('room-living', livingOn);
+                setRoomAmbientFromSensor('room-bedroom', bedroomOn);
+
+                await syncGaugeFromUserViewMongo();
             } catch (err) {
                 console.log('Sensor badges fetch error:', err);
-                setSensorBadgeOff(el1, 'Sensor 1');
-                setSensorBadgeOff(el2, 'Sensor 2');
+                lastSensorBadgeData = null;
+                lastBadgeLivingOn = false;
+                lastBadgeBedroomOn = false;
+                setSensorBadgeOff(el1, 'Living_Room');
+                setSensorBadgeOff(el2, 'Bed_Room');
+                setRoomAmbientFromSensor('room-living', false);
+                setRoomAmbientFromSensor('room-bedroom', false);
+                syncGaugeFromUserViewMongo();
             }
         }
 
@@ -5372,12 +5177,8 @@
                 const lux = Number(payload.data.lux);
                 if (!Number.isFinite(lux)) return;
 
-                latestSensorLux = Math.max(0, Math.min(800, Math.round(lux)));
-
-                // Use backend latest lux when dashboard is powered on and no room/mode overrides are active.
-                if (isPowerOn && !isEcoMode && !isSleepMode && calculateTotalBrightness() === 0) {
-                    updateGauge(latestSensorLux);
-                }
+                latestSensorLux = Math.max(0, lux);
+                // Gauge uses User View room row (avgLux) + badge ON; do not override here.
             } catch (err) {
                 console.log('Latest sensor fetch error:', err);
             }
@@ -5805,134 +5606,106 @@
         loadStats();
         loadDailyUsageHistory();
         startStatsTracking();
+        initUserDataViewSelectors();
+        loadUserDataView();
         syncLatestSensorReading();
         syncSensorBadges();
         setInterval(syncLatestSensorReading, 5000);
         setInterval(syncSensorBadges, 5000);
 
-        // Set initial gauge value (light is off initially)
-        updateGauge(0);
+        document.getElementById('gaugeRoomSelect')?.addEventListener('change', () => {
+            const gs = document.getElementById('gaugeRoomSelect');
+            const ur = document.getElementById('userDataRoomSelect');
+            if (gs && ur && ['all', 'living', 'bedroom'].includes(gs.value)) {
+                ur.value = gs.value;
+                loadUserDataView();
+            }
+        });
         
         // Display initial statistics
         updateStatsDisplay();
         updateDonutChart();
 
-        // ==================== TODAY'S USAGE (MongoDB sensor_hourly, dual line 0–24h) ====================
-        const HOURLY_GRAPH_REFRESH_MS = 5 * 60 * 1000;
+        // ==================== TODAY'S USAGE (MongoDB 5-minute buckets, dual line 0–24h) ====================
+        const TODAY_USAGE_GRAPH_REFRESH_MS = 5 * 60 * 1000;
         const TODAY_GRAPH_COLORS = { s1: '#FDB841', s2: '#FF69B4' };
 
-        let todayUsageGraphTipEl = null;
-        let todayUsageGraphHandlersBound = false;
+        let todayGraphLegendMode = 'both';
+        let todayUsageGraphCache = null;
 
-        function setupTodayUsageGraphInteraction(graphCanvas, normS1, normS2, graphDateStr, opts = {}) {
-            const {
-                showLine1 = true,
-                showLine2 = true,
-                samples1 = 0,
-                samples2 = 0
-            } = opts;
-            const wrapper = graphCanvas.closest('.graph-canvas-wrapper');
-            if (!wrapper) return;
-
-            if (!todayUsageGraphTipEl) {
-                todayUsageGraphTipEl = document.createElement('div');
-                todayUsageGraphTipEl.id = 'todayUsageGraphTooltip';
-                todayUsageGraphTipEl.className = 'today-usage-graph-tooltip';
-                wrapper.appendChild(todayUsageGraphTipEl);
-            }
-
-            window.__todayGraphTipData = {
-                normS1,
-                normS2,
-                graphDateStr,
-                graphCanvas,
-                showLine1,
-                showLine2,
-                samples1,
-                samples2
-            };
-
-            if (todayUsageGraphHandlersBound) return;
-            todayUsageGraphHandlersBound = true;
-
-            const width = 280;
-            const height = 135;
-            const padding = 10;
-            const innerW = width - padding * 2;
-
-            const hourLabel = (hr) => {
-                const d = new Date();
-                d.setHours(hr, 0, 0, 0);
-                return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            };
-
-            const onMove = (e) => {
-                const d = window.__todayGraphTipData;
-                const canvas = d && d.graphCanvas;
-                const tip = todayUsageGraphTipEl;
-                if (!canvas || !tip || !wrapper.contains(canvas)) return;
-
-                const rect = canvas.getBoundingClientRect();
-                if (!rect.width) return;
-                const rx = ((e.clientX ?? e.pageX) - rect.left) / rect.width;
-                const xSvg = rx * width;
-                let hour = Math.round(((xSvg - padding) / innerW) * 23);
-                hour = Math.max(0, Math.min(23, hour));
-
-                const v1 = (d.normS1[hour] ?? 0);
-                const v2 = (d.normS2[hour] ?? 0);
-                const pct = (v) => `${Math.round(v * 100)}% bright`;
-                const row = (show, samples, v) => {
-                    if (!show) return samples <= 0 ? 'no readings' : 'no bright samples';
-                    return v > 0.02 ? pct(v) : '0% bright';
-                };
-                tip.innerHTML = `
-                    <div class="tip-title">${d.graphDateStr} · ${hourLabel(hour)}</div>
-                    <div class="tip-row" style="color:${TODAY_GRAPH_COLORS.s1}">Sensor 1: ${row(d.showLine1, d.samples1, v1)}</div>
-                    <div class="tip-row" style="color:${TODAY_GRAPH_COLORS.s2}">Sensor 2: ${row(d.showLine2, d.samples2, v2)}</div>
-                `;
-                tip.style.display = 'block';
-                const wrapRect = wrapper.getBoundingClientRect();
-                const lx = (e.clientX ?? e.pageX) - wrapRect.left;
-                const ly = (e.clientY ?? e.pageY) - wrapRect.top;
-                tip.style.transform = `translate(${Math.min(lx + 12, Math.max(0, wrapRect.width - 200))}px, ${Math.max(ly - 52, 6)}px)`;
-
-                let line = canvas.querySelector('.today-graph-crosshair');
-                if (!line) {
-                    line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    line.setAttribute('class', 'today-graph-crosshair');
-                    line.setAttribute('stroke', 'rgba(255,255,255,0.35)');
-                    line.setAttribute('stroke-width', '1');
-                    line.setAttribute('stroke-dasharray', '4 3');
-                    canvas.appendChild(line);
-                }
-                const cx = padding + (hour / 23) * innerW;
-                line.setAttribute('x1', cx);
-                line.setAttribute('x2', cx);
-                line.setAttribute('y1', padding);
-                line.setAttribute('y2', height - padding);
-                line.removeAttribute('display');
-            };
-
-            const onLeave = () => {
-                if (todayUsageGraphTipEl) todayUsageGraphTipEl.style.display = 'none';
-                const c = window.__todayGraphTipData && window.__todayGraphTipData.graphCanvas;
-                const line = c && c.querySelector('.today-graph-crosshair');
-                if (line) line.setAttribute('display', 'none');
-            };
-
-            wrapper.addEventListener('mousemove', onMove);
-            wrapper.addEventListener('mouseleave', onLeave);
-            wrapper.addEventListener('touchmove', (ev) => {
-                if (ev.touches[0]) onMove(ev.touches[0]);
-            }, { passive: true });
-            wrapper.addEventListener('touchend', onLeave);
+        function getTodayGraphVisibility(mode, hasS1, hasS2) {
+            if (mode === 's1') return { showLine1: hasS1, showLine2: false };
+            if (mode === 's2') return { showLine1: false, showLine2: hasS2 };
+            return { showLine1: hasS1, showLine2: hasS2 };
         }
 
-        function normalizeGraphSeries24(arr) {
-            const out = new Array(24).fill(0);
+        function updateTodayGraphLegendUI() {
+            if (!todayUsageGraphCache) return;
+            const { hasS1, hasS2 } = todayUsageGraphCache;
+            const btn1 = document.getElementById('todayGraphLegendS1');
+            const btn2 = document.getElementById('todayGraphLegendS2');
+            if (!btn1 || !btn2) return;
+            btn1.disabled = !hasS1;
+            btn2.disabled = !hasS2;
+            const solo1 = todayGraphLegendMode === 's1' && hasS1;
+            const solo2 = todayGraphLegendMode === 's2' && hasS2;
+            btn1.setAttribute('aria-pressed', solo1 ? 'true' : 'false');
+            btn2.setAttribute('aria-pressed', solo2 ? 'true' : 'false');
+            btn1.classList.toggle('leg-item--active', solo1);
+            btn2.classList.toggle('leg-item--active', solo2);
+        }
+
+        function applyTodayUsageGraphFromCache() {
+            if (!todayUsageGraphCache) return;
+            const { normS1, normS2, hasS1, hasS2, graphDateLabel } = todayUsageGraphCache;
+            const { showLine1, showLine2 } = getTodayGraphVisibility(todayGraphLegendMode, hasS1, hasS2);
+
+            const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+            const avgParts = [];
+            if (showLine1) avgParts.push(mean(normS1));
+            if (showLine2) avgParts.push(mean(normS2));
+            const combinedAvg = avgParts.length ? avgParts.reduce((a, b) => a + b, 0) / avgParts.length : 0;
+            const hasData = avgParts.length > 0;
+
+            document.getElementById('graphDateLabel').textContent = graphDateLabel;
+            document.getElementById('graphHoursLabel').textContent = hasData ? `${combinedAvg.toFixed(2)} avg` : '—';
+            const chart = initTodayUsageChart();
+            if (!chart) {
+                updateTodayGraphLegendUI();
+                return;
+            }
+            window.TodayUsageChartHelper.update(normS1, normS2, showLine1, showLine2);
+            updateTodayGraphLegendUI();
+        }
+
+        function initTodayGraphLegend() {
+            const btn1 = document.getElementById('todayGraphLegendS1');
+            const btn2 = document.getElementById('todayGraphLegendS2');
+            if (!btn1 || !btn2) return;
+            btn1.addEventListener('click', () => {
+                if (!todayUsageGraphCache || !todayUsageGraphCache.hasS1) return;
+                todayGraphLegendMode = todayGraphLegendMode === 's1' ? 'both' : 's1';
+                applyTodayUsageGraphFromCache();
+            });
+            btn2.addEventListener('click', () => {
+                if (!todayUsageGraphCache || !todayUsageGraphCache.hasS2) return;
+                todayGraphLegendMode = todayGraphLegendMode === 's2' ? 'both' : 's2';
+                applyTodayUsageGraphFromCache();
+            });
+        }
+
+        function initTodayUsageChart() {
+            if (!window.TodayUsageChartHelper) return null;
+            return window.TodayUsageChartHelper.init('weeklyUsageChart', TODAY_GRAPH_COLORS);
+        }
+
+        const GRAPH_POINTS_PER_DAY = 24 * 12;
+
+        function normalizeGraphSeries(arr) {
+            const out = new Array(GRAPH_POINTS_PER_DAY).fill(0);
             if (!arr || !Array.isArray(arr)) return out;
-            for (let i = 0; i < 24; i++) {
+            const upper = Math.min(arr.length, GRAPH_POINTS_PER_DAY);
+            for (let i = 0; i < upper; i++) {
                 const n = Number(arr[i]);
                 out[i] = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
             }
@@ -5940,9 +5713,6 @@
         }
 
         async function loadWeeklyGraphData(targetDate = null) {
-            const graphCanvas = document.getElementById('weeklyGraphCanvas');
-            if (!graphCanvas) return;
-
             const baseDate = targetDate
                 ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 12, 0, 0)
                 : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 12, 0, 0);
@@ -5955,8 +5725,8 @@
                 year: 'numeric'
             });
 
-            let normS1 = new Array(24).fill(0);
-            let normS2 = new Array(24).fill(0);
+            let normS1 = new Array(GRAPH_POINTS_PER_DAY).fill(0);
+            let normS2 = new Array(GRAPH_POINTS_PER_DAY).fill(0);
             let totals = {
                 sensor1: { samples: 0, brightSamples: 0 },
                 sensor2: { samples: 0, brightSamples: 0 }
@@ -5965,8 +5735,8 @@
                 const res = await fetch(`/api/v1/sensors/hourly_graph?date=${encodeURIComponent(graphDateStr)}`);
                 const json = await res.json();
                 if (json.success && json.data) {
-                    normS1 = normalizeGraphSeries24(json.data.sensor1);
-                    normS2 = normalizeGraphSeries24(json.data.sensor2);
+                    normS1 = normalizeGraphSeries(json.data.sensor1);
+                    normS2 = normalizeGraphSeries(json.data.sensor2);
                     if (json.data.totals) {
                         totals = {
                             sensor1: {
@@ -5981,90 +5751,22 @@
                     }
                 }
             } catch (e) {
-                console.log('hourly_graph fetch error:', e);
+                console.log('today usage graph fetch error:', e);
             }
 
-            const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
-            const showLine1 = totals.sensor1.samples > 0;
-            const showLine2 = totals.sensor2.samples > 0;
+            const hasS1 = totals.sensor1.samples > 0;
+            const hasS2 = totals.sensor2.samples > 0;
 
-            const avgParts = [];
-            if (showLine1) avgParts.push(mean(normS1));
-            if (showLine2) avgParts.push(mean(normS2));
-            const combinedAvg = avgParts.length ? avgParts.reduce((a, b) => a + b, 0) / avgParts.length : 0;
-            const hasData = avgParts.length > 0;
+            todayGraphLegendMode = 'both';
+            todayUsageGraphCache = {
+                normS1,
+                normS2,
+                hasS1,
+                hasS2,
+                graphDateLabel
+            };
 
-            document.getElementById('graphDateLabel').textContent = graphDateLabel;
-            document.getElementById('graphHoursLabel').textContent = hasData ? `${combinedAvg.toFixed(2)} avg` : '—';
-
-            const width = 280;
-            const height = 135;
-            const padding = 10;
-            const bottomY = height - padding;
-
-            function pointsFromNorm(normArr) {
-                return normArr.slice(0, 24).map((nv, h) => {
-                    const n = Number.isFinite(nv) ? Math.min(1, Math.max(0, nv)) : 0;
-                    const x = padding + (h / 23) * (width - padding * 2);
-                    const y = bottomY - n * (height - padding * 2);
-                    return { x, y, h, nv: n };
-                });
-            }
-
-            function linePath(pts) {
-                if (!pts.length) return '';
-                let d = `M ${pts[0].x} ${pts[0].y}`;
-                for (let i = 1; i < pts.length; i++) {
-                    d += ` L ${pts[i].x} ${pts[i].y}`;
-                }
-                return d;
-            }
-
-            function areaPath(pts) {
-                if (!pts.length) return '';
-                let d = `M ${pts[0].x} ${bottomY} L ${pts[0].x} ${pts[0].y}`;
-                for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
-                d += ` L ${pts[pts.length - 1].x} ${bottomY} Z`;
-                return d;
-            }
-
-            const pts1 = pointsFromNorm(normS1);
-            const pts2 = pointsFromNorm(normS2);
-            const path1 = showLine1 ? linePath(pts1) : '';
-            const path2 = showLine2 ? linePath(pts2) : '';
-            const area1 = showLine1 ? areaPath(pts1) : '';
-            const area2 = showLine2 ? areaPath(pts2) : '';
-            const yel = TODAY_GRAPH_COLORS.s1;
-            const pnk = TODAY_GRAPH_COLORS.s2;
-
-            const layer1a = showLine1 && area1 ? `<path d="${area1}" fill="url(#todayUsageGrad1)" />` : '';
-            const layer1l = showLine1 && path1 ? `<path d="${path1}" fill="none" stroke="${yel}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` : '';
-            const layer2a = showLine2 && area2 ? `<path d="${area2}" fill="url(#todayUsageGrad2)" />` : '';
-            const layer2l = showLine2 && path2 ? `<path d="${path2}" fill="none" stroke="${pnk}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` : '';
-
-            graphCanvas.innerHTML = `
-                <defs>
-                    <linearGradient id="todayUsageGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="${yel}" stop-opacity="0.28"/>
-                        <stop offset="100%" stop-color="${yel}" stop-opacity="0.02"/>
-                    </linearGradient>
-                    <linearGradient id="todayUsageGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="${pnk}" stop-opacity="0.28"/>
-                        <stop offset="100%" stop-color="${pnk}" stop-opacity="0.02"/>
-                    </linearGradient>
-                </defs>
-                ${layer1a}
-                ${layer2a}
-                ${layer1l}
-                ${layer2l}
-            `;
-
-            setupTodayUsageGraphInteraction(graphCanvas, normS1, normS2, graphDateStr, {
-                showLine1,
-                showLine2,
-                samples1: totals.sensor1.samples,
-                samples2: totals.sensor2.samples
-            });
+            applyTodayUsageGraphFromCache();
         }
         
         // Track the selected week date for the graph
@@ -6129,11 +5831,21 @@
             const dateStr = `${y}-${m}-${d}`;
             const room = roomSelect.value;
 
+            const gaugeSel = document.getElementById('gaugeRoomSelect');
+            if (gaugeSel) gaugeSel.value = room;
+
             try {
                 const endpoint = room === 'all' ? `/api/usage/${dateStr}` : `/api/room/${room}/${dateStr}`;
                 const res = await fetch(endpoint);
                 const data = await res.json();
                 const luxValue = room === 'all' ? (data.lux ?? '-') : (data.avgLux ?? '-');
+                const luxNum = room === 'all' ? Number(data.lux) : Number(data.avgLux);
+                if (Number.isFinite(luxNum)) {
+                    latestSensorLux = luxNum;
+                    updateGauge(luxNum);
+                } else {
+                    updateGauge(0);
+                }
                 body.innerHTML = `
                     <div class="user-data-row"><span class="user-data-key">room</span><span class="user-data-val">${room === 'all' ? 'all' : room}</span></div>
                     <div class="user-data-row"><span class="user-data-key">date</span><span class="user-data-val">${data.date || '-'}</span></div>
@@ -6146,18 +5858,18 @@
                 `;
             } catch (e) {
                 body.innerHTML = `<div class="user-data-row"><span class="user-data-key">error</span><span class="user-data-val">Failed to load data</span></div>`;
+                updateGauge(0);
             }
         }
         
         // Load weekly graph on page load
+        initTodayGraphLegend();
         loadWeeklyGraphData();
-        initUserDataViewSelectors();
-        loadUserDataView();
         
         // Refresh Today's Usage graph from MongoDB (use selected date if set)
         setInterval(() => {
             loadWeeklyGraphData(selectedWeekDate);
-        }, HOURLY_GRAPH_REFRESH_MS);
+        }, TODAY_USAGE_GRAPH_REFRESH_MS);
 
         // ==================== ADMIN MONTHLY GRAPH (Info Modal) ====================
         // Daily graph helpers
@@ -6231,7 +5943,7 @@
             const roomLabelMap = {
                 all: 'All Rooms',
                 living: 'Living Room',
-                bedroom: 'Bedroom'
+                bedroom: 'Bed Room'
             };
             const roomLabel = roomLabelMap[selectedRoom] || 'All Rooms';
             document.getElementById('adminDailyGraphDateLabel').textContent = `Day ${selectedDay} • ${currentYear} • ${roomLabel}`;
@@ -6459,7 +6171,7 @@
         // Room Light Status Management - Each room has 0-800 lux range and tracks duration
         const roomConfig = {
             'room-living': { on: false, brightness: 720, name: 'Living Room', duration: 0, alertSent: false },
-            'room-bedroom': { on: false, brightness: 400, name: 'Bedroom', duration: 0, alertSent: false }
+            'room-bedroom': { on: false, brightness: 400, name: 'Bed Room', duration: 0, alertSent: false }
         };
 
         // Log device details when lights are turned on
@@ -6539,6 +6251,10 @@
             }
         }
 
+        /** Room duration POSTs were every 1s (2 rooms) → ~120 req/min and tripped the API rate limit. */
+        const ROOM_MONGO_SAVE_INTERVAL_MS = 15000;
+        let lastRoomMongoSaveMs = 0;
+
         // Track room durations - called every second
         function trackRoomDurations() {
             const ALERT_THRESHOLD_SECONDS = 40 * 60; // 40 minutes
@@ -6567,9 +6283,13 @@
             }
             updateRoomBars();
             
-            // Save to MongoDB every 1 second
-            saveRoomDurations();
-            saveAllRoomsToMongoDB();
+            saveRoomDurations(); // localStorage only — cheap every second
+
+            const now = Date.now();
+            if (now - lastRoomMongoSaveMs >= ROOM_MONGO_SAVE_INTERVAL_MS) {
+                lastRoomMongoSaveMs = now;
+                saveAllRoomsToMongoDB();
+            }
         }
 
         // Start room duration tracking interval
@@ -6580,40 +6300,6 @@
             saveRoomDurations();
             saveAllRoomsToMongoDB();
         });
-
-        // Calculate total brightness - average of all active rooms (0-800 range)
-        function calculateTotalBrightness() {
-            let total = 0;
-            let activeCount = 0;
-            
-            for (const roomId in roomConfig) {
-                if (roomConfig[roomId].on) {
-                    total += roomConfig[roomId].brightness;
-                    activeCount++;
-                }
-            }
-            
-            if (activeCount === 0) return 0;
-            
-            // Average the brightness of active rooms (stays in 0-800 range)
-            return Math.round(total / activeCount);
-        }
-
-        // Update gauge based on active rooms
-        function updateGaugeFromRooms() {
-            if (!isPowerOn) {
-                updateGauge(0);
-                return;
-            }
-            
-            const totalBrightness = calculateTotalBrightness();
-            if (totalBrightness > 0) {
-                updateGauge(totalBrightness);
-            } else {
-                // No rooms on, show minimum
-                updateGauge(0);
-            }
-        }
 
         function updateRoomUI(roomId, isOn) {
             const card = document.getElementById(roomId);
@@ -6702,17 +6388,12 @@
                 const anyRoomOn = Object.values(roomConfig).some(r => r.on);
                 
                 if (anyRoomOn && !isPowerOn) {
-                    // Turn on main power if a room is turned on
                     isPowerOn = true;
                     document.getElementById('powerBtn').classList.add('active');
-                    rollerTrack.style.opacity = '1';
-                    rollerTrack.style.pointerEvents = 'auto';
-                    // Log device details when gauge/power is turned on via room
                     logDeviceDetails('gauge_light_on');
                 }
                 
-                // Update gauge based on rooms
-                updateGaugeFromRooms();
+                refreshGaugeFromSensors();
             });
         });
 
