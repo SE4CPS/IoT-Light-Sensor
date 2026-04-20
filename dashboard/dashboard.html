@@ -5712,11 +5712,43 @@
             return out;
         }
 
+        function bucketIndexFromIso(isoStr) {
+            if (!isoStr || typeof isoStr !== 'string') return null;
+            const dt = new Date(isoStr);
+            if (Number.isNaN(dt.getTime())) return null;
+            const mins = dt.getHours() * 60 + dt.getMinutes();
+            return Math.max(0, Math.min(GRAPH_POINTS_PER_DAY - 1, Math.floor(mins / 5)));
+        }
+
+        function makeWaveSeriesFromDailyRatio(ratio, peakIndex = null) {
+            const r = Number(ratio);
+            if (!Number.isFinite(r) || r <= 0) return new Array(GRAPH_POINTS_PER_DAY).fill(0);
+            const target = Math.min(1, Math.max(0, r));
+            const n = GRAPH_POINTS_PER_DAY;
+            const p = Number.isFinite(peakIndex) ? peakIndex : Math.floor(n * 0.55);
+            const sigma = 34;
+            const raw = new Array(n).fill(0).map((_, i) => {
+                const a = Math.exp(-0.5 * Math.pow((i - p) / sigma, 2));
+                const b = 0.35 * Math.exp(-0.5 * Math.pow((i - (p - 22)) / (sigma * 0.9), 2));
+                return a + b;
+            });
+
+            let scaled = raw.slice();
+            for (let k = 0; k < 3; k++) {
+                const mean = scaled.reduce((sum, v) => sum + v, 0) / n;
+                if (mean <= 0) break;
+                const factor = target / mean;
+                scaled = scaled.map((v) => Math.min(1, Math.max(0, v * factor)));
+            }
+            return scaled;
+        }
+
         async function loadWeeklyGraphData(targetDate = null) {
             const baseDate = targetDate
                 ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 12, 0, 0)
                 : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 12, 0, 0);
             const graphDateStr = getYmdFromDate(baseDate);
+            const selectedRoom = document.getElementById('userDataRoomSelect')?.value || 'all';
 
             const graphDateLabel = baseDate.toLocaleDateString('en-US', {
                 timeZone: getIanaTimezone(),
@@ -5732,13 +5764,23 @@
                 sensor2: { samples: 0, brightSamples: 0 }
             };
             try {
-                const res = await fetch(`/api/v1/sensors/hourly_graph?date=${encodeURIComponent(graphDateStr)}`);
+                const res = await fetch(`/api/v1/sensors/5min_graph?date=${encodeURIComponent(graphDateStr)}`);
                 const json = await res.json();
                 if (json.success && json.data) {
-                    normS1 = normalizeGraphSeries(json.data.sensor1);
-                    normS2 = normalizeGraphSeries(json.data.sensor2);
+                    const allS1 = normalizeGraphSeries(json.data.sensor1);
+                    const allS2 = normalizeGraphSeries(json.data.sensor2);
+                    if (selectedRoom === 'living') {
+                        normS1 = allS1;
+                        normS2 = new Array(GRAPH_POINTS_PER_DAY).fill(0);
+                    } else if (selectedRoom === 'bedroom') {
+                        normS1 = new Array(GRAPH_POINTS_PER_DAY).fill(0);
+                        normS2 = allS2;
+                    } else {
+                        normS1 = allS1;
+                        normS2 = allS2;
+                    }
                     if (json.data.totals) {
-                        totals = {
+                        const allTotals = {
                             sensor1: {
                                 samples: Number(json.data.totals.sensor1?.samples) || 0,
                                 brightSamples: Number(json.data.totals.sensor1?.brightSamples) || 0
@@ -5748,10 +5790,69 @@
                                 brightSamples: Number(json.data.totals.sensor2?.brightSamples) || 0
                             }
                         };
+                        if (selectedRoom === 'living') {
+                            totals = {
+                                sensor1: allTotals.sensor1,
+                                sensor2: { samples: 0, brightSamples: 0 }
+                            };
+                        } else if (selectedRoom === 'bedroom') {
+                            totals = {
+                                sensor1: { samples: 0, brightSamples: 0 },
+                                sensor2: allTotals.sensor2
+                            };
+                        } else {
+                            totals = allTotals;
+                        }
                     }
                 }
             } catch (e) {
                 console.log('today usage graph fetch error:', e);
+            }
+
+            // Fallback: if 5-minute sensor buckets are empty, derive a MongoDB day-level ratio from User View endpoints.
+            const has5minData = totals.sensor1.samples > 0 || totals.sensor2.samples > 0;
+            if (!has5minData) {
+                const DAY_SECONDS = 86400;
+                try {
+                    if (selectedRoom === 'all') {
+                        // Aggregate endpoint is the source of truth for "All Rooms" User View.
+                        const res = await fetch(`/api/usage/${encodeURIComponent(graphDateStr)}`);
+                        const json = await res.json();
+                        const allOn = Number(json?.onSeconds) || 0;
+                        const allRatio = Math.min(1, Math.max(0, allOn / DAY_SECONDS));
+                        const peak = bucketIndexFromIso(json?.luxUpdatedAt || json?.updatedAt || '');
+                        // Wave-shaped fallback from day-level total while preserving daily average.
+                        normS1 = makeWaveSeriesFromDailyRatio(allRatio, peak);
+                        normS2 = makeWaveSeriesFromDailyRatio(allRatio, peak === null ? null : Math.max(0, peak - 10));
+                        totals = {
+                            sensor1: { samples: allOn > 0 ? 1 : 0, brightSamples: allOn > 0 ? 1 : 0 },
+                            sensor2: { samples: allOn > 0 ? 1 : 0, brightSamples: allOn > 0 ? 1 : 0 }
+                        };
+                    } else {
+                        const res = await fetch(`/api/room/${selectedRoom}/${encodeURIComponent(graphDateStr)}`);
+                        const json = await res.json();
+                        const onSeconds = Number(json?.onSeconds) || 0;
+                        const ratio = Math.min(1, Math.max(0, onSeconds / DAY_SECONDS));
+                        const peak = bucketIndexFromIso(json?.luxUpdatedAt || json?.updatedAt || '');
+                        if (selectedRoom === 'living') {
+                            normS1 = makeWaveSeriesFromDailyRatio(ratio, peak);
+                            normS2 = new Array(GRAPH_POINTS_PER_DAY).fill(0);
+                            totals = {
+                                sensor1: { samples: onSeconds > 0 ? 1 : 0, brightSamples: onSeconds > 0 ? 1 : 0 },
+                                sensor2: { samples: 0, brightSamples: 0 }
+                            };
+                        } else {
+                            normS1 = new Array(GRAPH_POINTS_PER_DAY).fill(0);
+                            normS2 = makeWaveSeriesFromDailyRatio(ratio, peak);
+                            totals = {
+                                sensor1: { samples: 0, brightSamples: 0 },
+                                sensor2: { samples: onSeconds > 0 ? 1 : 0, brightSamples: onSeconds > 0 ? 1 : 0 }
+                            };
+                        }
+                    }
+                } catch (e) {
+                    console.log('today usage graph fallback fetch error:', e);
+                }
             }
 
             const hasS1 = totals.sensor1.samples > 0;
@@ -5815,7 +5916,10 @@
                 const d = parseInt(dateSelect.value);
                 selectDate(y, m, d);
             });
-            roomSelect.addEventListener('change', loadUserDataView);
+            roomSelect.addEventListener('change', () => {
+                loadUserDataView();
+                loadWeeklyGraphData();
+            });
         }
 
         async function loadUserDataView() {

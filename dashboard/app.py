@@ -984,7 +984,8 @@ def get_sensor_badges():
     return jsonify({"success": True, "data": data})
 
 
-@app.route("/api/v1/sensors/hourly_graph", methods=["GET"])
+@app.route("/api/v1/sensors/hourly_graph", methods=["GET"])  # backward-compatible alias
+@app.route("/api/v1/sensors/5min_graph", methods=["GET"])
 @rate_limit()
 @_safe_route
 @require_mongo("sensor_5min_collection")
@@ -1507,7 +1508,8 @@ DOCUMENTED_APIS = [
     ("GET", "/api/v1/sensors/{sensor_id}/status", "Sensor status by ID"),
     ("GET", "/api/v1/sensors/latest", "Latest lux from daily_usage"),
     ("GET", "/api/v1/sensors/badges", "Per-sensor status for dashboard pills"),
-    ("GET", "/api/v1/sensors/hourly_graph", "Daily usage graph (288 x 5-minute buckets from sensor_5min)"),
+    ("GET", "/api/v1/sensors/5min_graph", "Daily usage graph (288 x 5-minute buckets from sensor_5min)"),
+    ("GET", "/api/v1/sensors/hourly_graph", "Legacy alias for 5-minute dashboard graph endpoint"),
     ("POST", "/api/usage/save", "Save daily usage"),
     ("GET", "/api/usage/{date}", "Get usage for date"),
     ("GET", "/api/usage/statistics", "Weekly and monthly stats"),
