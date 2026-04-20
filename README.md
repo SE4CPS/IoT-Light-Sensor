@@ -27,22 +27,12 @@ This repository contains a small, end to end indoor monitoring system that track
 
 ## 📡 Embedded Hardware
 
- The sensor node is built around an **ESP32 microcontroller**       (SparkFun ESP32 Thing) mounted on a half-size breadboard and       connected via I²C to a **BH1750 ambient light sensor** (V322       breakout board). The BH1750 measures illuminance in lux with       16-bit resolution and communicates over four jumper wires (VCC,  
-  GND, SDA, SCL).
+ESP32 (SparkFun Thing) on a half-size breadboard connected via I²C to a BH1750 ambient light sensor (V322). Measures lux at 16-bit resolution over VCC, GND, SDA, SCL.
 
-  | | | |
-  |:---:|:---:|:---:|
-  | ![BH1750 sensor close-up](embedded-1.jpg) | ![Single-node      
-  assembly](embedded-2.jpg) | ![Dual-node
-  deployment](embedded-3.jpg) |
-  | **1.** Close-up of the BH1750 sensor module seated on its      
-  mounting surface, showing the sensor window and I²C header pins  
-  with color-coded jumper wires attached. | **2.** Single-node     
-  assembly: ESP32 on breadboard with jumper wires routed to the    
-  BH1750 connector, ready for firmware upload via USB. | **3.**    
-  Dual-node deployment: two identical ESP32 + BH1750 assemblies    
-  powered from a single USB wall adapter, representing the
-  two-sensor configuration used for the weekend long-run tests.
+| | | |
+|:---:|:---:|:---:|
+| ![BH1750 sensor](embedded-1.jpg) | ![Single node](embedded-2.jpg) | ![Dual node](embedded-3.jpg) |
+| BH1750 module with I²C header pins and color-coded jumper wires. | ESP32 on breadboard wired to BH1750, ready for USB firmware upload. | Two-sensor deployment powered from a single USB wall adapter — used for weekend long-run tests. |
 
 ---
 
