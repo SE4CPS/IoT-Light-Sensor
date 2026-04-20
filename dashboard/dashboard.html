@@ -1081,6 +1081,11 @@
             word-break: break-all;
         }
 
+        .user-data-val--lux-highlight {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
         .weekly-graph-header {
             display: flex;
             justify-content: space-between;
@@ -5944,6 +5949,7 @@
                 const data = await res.json();
                 const luxValue = room === 'all' ? (data.lux ?? '-') : (data.avgLux ?? '-');
                 const luxNum = room === 'all' ? Number(data.lux) : Number(data.avgLux);
+                const luxHighlightClass = Number.isFinite(luxNum) && luxNum !== 0 ? 'user-data-val--lux-highlight' : '';
                 if (Number.isFinite(luxNum)) {
                     latestSensorLux = luxNum;
                     updateGauge(luxNum);
@@ -5956,7 +5962,7 @@
                     <div class="user-data-row"><span class="user-data-key">onSeconds</span><span class="user-data-val">${data.onSeconds ?? '-'}</span></div>
                     <div class="user-data-row"><span class="user-data-key">offSeconds</span><span class="user-data-val">${data.offSeconds ?? '-'}</span></div>
                     <div class="user-data-row"><span class="user-data-key">sensor_id</span><span class="user-data-val">${data.sensor_id || '-'}</span></div>
-                    <div class="user-data-row"><span class="user-data-key">${room === 'all' ? 'lux' : 'avgLux'}</span><span class="user-data-val">${luxValue}</span></div>
+                    <div class="user-data-row"><span class="user-data-key">${room === 'all' ? 'lux' : 'avgLux'}</span><span class="user-data-val ${luxHighlightClass}">${luxValue}</span></div>
                     <div class="user-data-row"><span class="user-data-key">updatedAt</span><span class="user-data-val">${data.updatedAt || '-'}</span></div>
                     <div class="user-data-row"><span class="user-data-key">luxUpdatedAt</span><span class="user-data-val">${data.luxUpdatedAt || '-'}</span></div>
                 `;
