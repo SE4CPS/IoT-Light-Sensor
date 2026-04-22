@@ -5615,8 +5615,8 @@
         loadUserDataView();
         syncLatestSensorReading();
         syncSensorBadges();
-        setInterval(syncLatestSensorReading, 5000);
-        setInterval(syncSensorBadges, 5000);
+        setInterval(syncLatestSensorReading, 2000);
+        setInterval(syncSensorBadges, 2000);
 
         document.getElementById('gaugeRoomSelect')?.addEventListener('change', () => {
             const gs = document.getElementById('gaugeRoomSelect');
