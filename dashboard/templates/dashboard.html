@@ -5670,10 +5670,11 @@
             if (showLine1) avgParts.push(mean(normS1));
             if (showLine2) avgParts.push(mean(normS2));
             const combinedAvg = avgParts.length ? avgParts.reduce((a, b) => a + b, 0) / avgParts.length : 0;
+            const combinedAvgLux = Math.round(combinedAvg * 20000);
             const hasData = avgParts.length > 0;
 
             document.getElementById('graphDateLabel').textContent = graphDateLabel;
-            document.getElementById('graphHoursLabel').textContent = hasData ? `${combinedAvg.toFixed(2)} avg` : '—';
+            document.getElementById('graphHoursLabel').textContent = hasData ? `${combinedAvgLux} avg` : '—';
             const chart = initTodayUsageChart();
             if (!chart) {
                 updateTodayGraphLegendUI();

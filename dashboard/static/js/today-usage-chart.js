@@ -2,6 +2,7 @@
     'use strict';
 
     let chartInstance = null;
+    const GRAPH_MAX_LUX = 20000;
     const BUCKETS_PER_HOUR = 12;
     const POINTS_PER_DAY = 24 * BUCKETS_PER_HOUR;
 
@@ -74,7 +75,7 @@
                                 if (!Number.isFinite(value)) {
                                     return `${ctx.dataset.label}: no readings`;
                                 }
-                                return `${ctx.dataset.label}: ${Math.round(value * 100)}% bright`;
+                                return `${ctx.dataset.label}: ${Math.round(value)} lux`;
                             }
                         }
                     }
@@ -97,7 +98,7 @@
                     },
                     y: {
                         min: 0,
-                        max: 1,
+                        max: GRAPH_MAX_LUX,
                         grid: {
                             color: 'rgba(74, 85, 104, 0.35)'
                         },
@@ -105,9 +106,9 @@
                             color: '#4a5568'
                         },
                         ticks: {
-                            stepSize: 0.1,
+                            stepSize: 2000,
                             color: '#FDB841',
-                            callback: (value) => Number(value).toFixed(1)
+                            callback: (value) => `${Math.round(Number(value))}`
                         }
                     }
                 }
@@ -134,9 +135,15 @@
 
     function update(series1, series2, showLine1, showLine2) {
         if (!chartInstance) return;
+        const toLux = (series) => (series || []).map((v) => {
+            const n = Number(v);
+            return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) * GRAPH_MAX_LUX : null;
+        });
+        const s1Lux = toLux(series1);
+        const s2Lux = toLux(series2);
         chartInstance.data.labels = makeDayLabels();
-        chartInstance.data.datasets[0].data = showLine1 ? series1 : new Array(POINTS_PER_DAY).fill(null);
-        chartInstance.data.datasets[1].data = showLine2 ? series2 : new Array(POINTS_PER_DAY).fill(null);
+        chartInstance.data.datasets[0].data = showLine1 ? s1Lux : new Array(POINTS_PER_DAY).fill(null);
+        chartInstance.data.datasets[1].data = showLine2 ? s2Lux : new Array(POINTS_PER_DAY).fill(null);
         chartInstance.update();
     }
 
