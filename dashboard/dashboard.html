@@ -6334,6 +6334,49 @@
             'room-living': 'living',
             'room-bedroom': 'bedroom'
         };
+        let roomUsageDayKey = getPSTDate();
+
+        function getCappedRoomDurationSeconds(rawSeconds) {
+            const raw = Math.max(0, Math.round(Number(rawSeconds) || 0));
+            const cap = Math.max(0, Math.round(Number(dailySeconds) || 0));
+            return Math.min(raw, cap);
+        }
+
+        function resetRoomUsageForNewDay(newDayKey) {
+            roomUsageDayKey = newDayKey;
+            for (const roomId in roomConfig) {
+                if (!roomConfig[roomId]) continue;
+                roomConfig[roomId].duration = 0;
+                roomConfig[roomId].alertSent = false;
+            }
+            saveRoomDurations();
+            updateRoomBars();
+        }
+
+        async function syncRoomUsageFromMongoToday() {
+            const today = getPSTDate();
+            if (today !== roomUsageDayKey) {
+                resetRoomUsageForNewDay(today);
+            }
+            const tasks = Object.entries(roomApiNames).map(async ([roomId, apiName]) => {
+                try {
+                    const res = await fetch(`/api/room/${apiName}/${today}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const on = Number(data?.onSeconds);
+                    if (Number.isFinite(on) && roomConfig[roomId]) {
+                        const incoming = Math.max(0, Math.round(on));
+                        // Monotonic room usage: ON duration should never decrease within the same day.
+                        const monotonic = Math.max(roomConfig[roomId].duration || 0, incoming);
+                        roomConfig[roomId].duration = getCappedRoomDurationSeconds(monotonic);
+                    }
+                } catch (e) {
+                    console.log(`Room usage fetch error (${apiName}):`, e);
+                }
+            });
+            await Promise.all(tasks);
+            updateRoomBars();
+        }
 
         // Save room data to MongoDB
         function saveRoomToMongoDB(roomId) {
@@ -6343,10 +6386,11 @@
             const todayPST = getPSTDate();
             const room = roomConfig[roomId];
             const sensorId = ROOM_SENSOR_IDS[apiName] || '';
+            const cappedDuration = getCappedRoomDurationSeconds(room.duration);
             
             postJsonWithCheck(`/api/room/${apiName}/save`, {
                 date: todayPST,
-                onSeconds: room.duration,
+                onSeconds: cappedDuration,
                 avgLux: room.brightness,
                 sensor_id: sensorId
             }, `Room save (${apiName})`)
@@ -6369,11 +6413,16 @@
         // Track room durations - called every second
         function trackRoomDurations() {
             const ALERT_THRESHOLD_SECONDS = 40 * 60; // 40 minutes
+            const today = getPSTDate();
+            if (today !== roomUsageDayKey) {
+                resetRoomUsageForNewDay(today);
+            }
             
             for (const roomId in roomConfig) {
                 const room = roomConfig[roomId];
                 if (room.on) {
                     room.duration++;
+                    room.duration = getCappedRoomDurationSeconds(room.duration);
                     
                     // If duration crosses threshold and alert not yet sent, log alert
                     if (!room.alertSent && room.duration >= ALERT_THRESHOLD_SECONDS) {
@@ -6450,8 +6499,9 @@
             // Find max duration for scaling (min 1 hour for reference)
             let maxDuration = 3600; // 1 hour minimum scale
             for (const roomId in roomConfig) {
-                if (roomConfig[roomId].duration > maxDuration) {
-                    maxDuration = roomConfig[roomId].duration;
+                const capped = getCappedRoomDurationSeconds(roomConfig[roomId].duration);
+                if (capped > maxDuration) {
+                    maxDuration = capped;
                 }
             }
             
@@ -6462,7 +6512,7 @@
                 const barValue = document.getElementById(`val-${barKey}`);
                 
                 if (barFill && barValue && barItem) {
-                    const duration = roomConfig[roomId].duration;
+                    const duration = getCappedRoomDurationSeconds(roomConfig[roomId].duration);
                     const isOn = roomConfig[roomId].on;
                     
                     // Scale bar width based on duration (relative to max or 1 hour)
@@ -6520,6 +6570,8 @@
             updateRoomBars();
         }
         initializeRoomStatus();
+        syncRoomUsageFromMongoToday();
+        setInterval(syncRoomUsageFromMongoToday, 5000);
 
 
         setInterval(() => {
