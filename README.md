@@ -76,6 +76,27 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 - **CI/CD**: GitHub Actions
 
 ---
+## Database and Storage
+
+### Collections:
+- sensor_hourly : This collection fetch the snsor data and store it in below fields:
+- _id : Uniue ids of record
+- date : Date for data store
+- hour : From how many hours sensor has capture the values from ast off
+- sensor_id : We have two sensors: it shows name of each sesnors 
+- luxLast : Lux values in float
+- samples : Number of samples in above hours
+- updatedAt : Database stored date time in utc
+
+- Page_Logs :
+- user_data :
+
+### Triggers
+- trg_INS_daily_usage : 
+  
+- User_Data_Trg_INS
+
+---
 
 ## 📝 License
 
