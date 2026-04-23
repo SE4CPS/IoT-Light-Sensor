@@ -138,6 +138,39 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 
 ---
 
+## Database and Storage
+
+### Collections:
+- sensor_hourly : This collection fetch the snsor data and store it in below fields:
+- _id : Uniue ids of record
+- date : Date for stored data
+- hour : From how many hours sensor has capture the values from last off
+- sensor_id : We have two sensors: it shows name of each sesnors 
+- luxLast : Lux values in float
+- samples : Number of samples in above hours
+- updatedAt : Database stored date time in utc
+
+- Page_Logs : Captures the exceptions from page, example structure is:
+  
+- user_data : Stores the login user details in below format:
+ 
+- _id : Uniue ids of record
+- email : Login email address
+- loggedInAt : UTC time for login
+- ip : User IP address
+- userAgent : Device and operating system name.
+- checksum : AUto generated checksum using SHA-256 algorithm
+- uuid : uniuqe id
+
+
+### Triggers
+
+- trg_INS_daily_usage : This trigger fires when new insert goes to daily_usage collection  
+- User_Data_Trg_INS : This trigger fires when new user login to the system
+
+---
+
+
 ## 🏗️ Tech Stack
 
 - **Backend**: Flask 3.1.3, Python 3.9+
