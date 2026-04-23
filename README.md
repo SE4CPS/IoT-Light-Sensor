@@ -142,26 +142,11 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 
 ### Collections And Fields:
 - sensor_hourly : This collection fetch the snsor data and store it in below fields:
-- _id : Uniue ids of record 
-- date : Date for stored data
-- hour : From how many hours sensor has capture the values from last off
-- sensor_id : We have two sensors: it shows name of each sesnors 
-- luxLast : Lux values in float
-- samples : Number of samples in above hours
-- updatedAt : Database stored date time in utc
+<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/82d740ae-6fee-462c-9b5a-12afae43a4c4" />
 
-- Page_Logs : Captures the exceptions from page, example structure is:
-  
 - user_data : Stores the login user details in below format:
  
-- _id : Uniue ids of record
-- email : Login email address
-- loggedInAt : UTC time for login
-- ip : User IP address
-- userAgent : Device and operating system name.
-- checksum : AUto generated checksum using SHA-256 algorithm
-- uuid : uniuqe id
-
+<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/7500abc0-852a-4a90-a75f-d871b3ad38de" />
 
 ### Triggers
 
