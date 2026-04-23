@@ -139,9 +139,10 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 ---
 
 ## Database and Storage
+The system use MongoDB database, MongoDB allows low cost storage with transactional triggers on INSERT and UPDATE operations. We set triggers on sensor_hourly and user_data collections.
 
 ### Collections And Fields:
-- sensor_hourly : This collection fetch the snsor data and store it in below fields:
+- sensor_hourly : This collection fetch the lux value from the room and store it in below formats:
 <img width="500" height="200" alt="image" src="https://github.com/user-attachments/assets/82d740ae-6fee-462c-9b5a-12afae43a4c4" />
 
 - user_data : Stores the login user details in below format:
