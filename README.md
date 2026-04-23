@@ -142,11 +142,13 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 
 ### Collections And Fields:
 - sensor_hourly : This collection fetch the snsor data and store it in below fields:
-<img width="400" height="200" alt="image" src="https://github.com/user-attachments/assets/82d740ae-6fee-462c-9b5a-12afae43a4c4" />
+<img width="500" height="200" alt="image" src="https://github.com/user-attachments/assets/82d740ae-6fee-462c-9b5a-12afae43a4c4" />
 
 - user_data : Stores the login user details in below format:
- 
-<img width="400" height="200" alt="image" src="https://github.com/user-attachments/assets/7500abc0-852a-4a90-a75f-d871b3ad38de" />
+<img width="500" height="200" alt="image" src="https://github.com/user-attachments/assets/7500abc0-852a-4a90-a75f-d871b3ad38de" />
+
+- Page_Log : Trace application errors from the page, and store with error type code
+<img width="500" height="200" alt="image" src="https://github.com/user-attachments/assets/31b71e5d-8b64-4092-ada5-d3db5dab05ad" />
 
 ### Triggers
 
