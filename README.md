@@ -140,9 +140,9 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 
 ## Database and Storage
 
-### Collections:
+### Collections And Fields:
 - sensor_hourly : This collection fetch the snsor data and store it in below fields:
-- _id : Uniue ids of record
+- _id : Uniue ids of record 
 - date : Date for stored data
 - hour : From how many hours sensor has capture the values from last off
 - sensor_id : We have two sensors: it shows name of each sesnors 
