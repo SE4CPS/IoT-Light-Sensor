@@ -13,8 +13,9 @@ import logging
 import traceback
 from functools import wraps
 from datetime import datetime, timedelta
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 from pymongo.errors import ConnectionFailure
+from bson import ObjectId
 import pytz
 from dotenv import load_dotenv
 import uuid
@@ -208,6 +209,8 @@ users_collection = None
 feedback_collection = None
 api_collection = None
 page_log_collection = None  # NEW: Exception / page-event logging
+sensor_command_collection = None
+COMMAND_DELIVERY_TIMEOUT_SECONDS = int(os.getenv("COMMAND_DELIVERY_TIMEOUT_SECONDS", "45"))
 
 
 def _init_mongo():
@@ -216,7 +219,7 @@ def _init_mongo():
     global sensor_hourly_collection, sensor_5min_collection, room_collections, admin_collection
     global organization_collection, alert_collection, device_collection
     global user_data_collection, users_collection, feedback_collection
-    global api_collection, page_log_collection
+    global api_collection, page_log_collection, sensor_command_collection
 
     if not MONGO_URI:
         logger.warning("MONGO_URI not found in .env file")
@@ -247,6 +250,7 @@ def _init_mongo():
         feedback_collection = db["Feedback"]
         api_collection = db[API_COLLECTION_NAME]
         page_log_collection = db["Page_Log"]  # NEW
+        sensor_command_collection = db["sensor_commands"]
 
         logger.info("Connected to MongoDB Atlas")
         logger.info("Collections: %s", ", ".join(db.list_collection_names()))
@@ -1064,13 +1068,181 @@ def get_sensor_badges():
     return jsonify({"success": True, "data": data})
 
 
+@app.route("/api/v1/sensors/<room_name>/command", methods=["POST"])
+@rate_limit()
+@_safe_route
+@validate_room
+@require_mongo("sensor_latest_collection")
+def send_sensor_command(room_name: str):
+    """
+    Queue a real sensor ON/OFF command for the selected room.
+    UI should update only after sensor reports new state via sensor_latest.
+    """
+    data = request.get_json(silent=True) or {}
+    action = str(data.get("action") or "").strip().lower()
+    if action not in {"on", "off"}:
+        return jsonify({"success": False, "message": "action must be 'on' or 'off'"}), 400
+
+    sensor_id = ROOM_PRIMARY_SENSOR_ID.get(room_name, "")
+    if not sensor_id:
+        return jsonify({"success": False, "message": f"No primary sensor mapped for room '{room_name}'"}), 400
+
+    latest = sensor_latest_collection.find_one({"sensor_id": sensor_id}) if sensor_latest_collection is not None else None
+    if not latest:
+        return jsonify({"success": False, "message": "Sensor not found / never reported"}), 404
+
+    ts = _parse_lux_timestamp(latest.get("luxUpdatedAt", ""))
+    is_connected = ts is not None and (datetime.now(pytz.utc) - ts).total_seconds() <= 180
+    if not is_connected:
+        return jsonify({"success": False, "message": "Sensor offline (Wi-Fi not connected)"}), 409
+
+    now_iso = datetime.now(pytz.utc).isoformat()
+    command_doc = {
+        "sensor_id": sensor_id,
+        "room": room_name,
+        "action": action,
+        "source": "dashboard_room_card",
+        "status": "queued",
+        "createdAt": now_iso,
+        "requestedByIp": request.remote_addr or "",
+    }
+    if sensor_command_collection is not None:
+        sensor_command_collection.insert_one(command_doc)
+
+    return jsonify({
+        "success": True,
+        "message": f"{room_name} command queued",
+        "data": {
+            "sensor_id": sensor_id,
+            "room": room_name,
+            "action": action,
+            "queuedAt": now_iso,
+            "connected": True,
+        },
+    })
+
+
+@app.route("/api/v1/sensors/<sensor_id>/commands/next", methods=["GET"])
+@rate_limit()
+@_safe_route
+@require_mongo("sensor_command_collection")
+def get_next_sensor_command(sensor_id: str):
+    """Device endpoint: fetch the next queued command for this sensor."""
+    sid = (sensor_id or "").strip()
+    if not sid:
+        return jsonify({"success": False, "message": "Missing sensor_id"}), 400
+
+    now_utc = datetime.now(pytz.utc)
+    now_iso = now_utc.isoformat()
+
+    # Recover stale delivered commands (device may have crashed before ACK).
+    stale_cutoff_iso = (now_utc - timedelta(seconds=COMMAND_DELIVERY_TIMEOUT_SECONDS)).isoformat()
+    sensor_command_collection.update_many(
+        {
+            "sensor_id": sid,
+            "status": "delivered",
+            "deliveredAt": {"$lt": stale_cutoff_iso},
+        },
+        {
+            "$set": {
+                "status": "queued",
+                "requeuedAt": now_iso,
+                "updatedAt": now_iso,
+            }
+        },
+    )
+
+    command = sensor_command_collection.find_one_and_update(
+        {"sensor_id": sid, "status": "queued"},
+        {
+            "$set": {
+                "status": "delivered",
+                "deliveredAt": now_iso,
+                "updatedAt": now_iso,
+            },
+            "$inc": {"deliveryCount": 1},
+        },
+        sort=[("createdAt", 1)],
+        return_document=ReturnDocument.AFTER,
+    )
+
+    if not command:
+        return jsonify({"success": True, "data": None})
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "command_id": str(command.get("_id")),
+            "sensor_id": command.get("sensor_id", sid),
+            "room": command.get("room", ""),
+            "action": command.get("action", ""),
+            "createdAt": command.get("createdAt", ""),
+            "deliveredAt": command.get("deliveredAt", ""),
+            "deliveryCount": int(command.get("deliveryCount") or 0),
+            "source": command.get("source", ""),
+        },
+    })
+
+
+@app.route("/api/v1/sensors/<sensor_id>/commands/<command_id>/ack", methods=["POST"])
+@rate_limit()
+@_safe_route
+@require_mongo("sensor_command_collection")
+def ack_sensor_command(sensor_id: str, command_id: str):
+    """Device endpoint: acknowledge command execution result."""
+    sid = (sensor_id or "").strip()
+    if not sid:
+        return jsonify({"success": False, "message": "Missing sensor_id"}), 400
+
+    try:
+        oid = ObjectId(command_id)
+    except Exception:
+        return jsonify({"success": False, "message": "Invalid command_id"}), 400
+
+    data = request.get_json(silent=True) or {}
+    result = str(data.get("result") or "acked").strip().lower()
+    if result not in {"acked", "failed"}:
+        return jsonify({"success": False, "message": "result must be 'acked' or 'failed'"}), 400
+
+    status = "acked" if result == "acked" else "failed"
+    now_iso = datetime.now(pytz.utc).isoformat()
+    update_doc = {
+        "$set": {
+            "status": status,
+            "ackedAt": now_iso,
+            "updatedAt": now_iso,
+            "deviceMessage": str(data.get("message") or "").strip(),
+            "deviceLux": _coerce_lux_scalar(data.get("lux")),
+            "deviceMeta": data.get("meta") if isinstance(data.get("meta"), dict) else {},
+        }
+    }
+
+    command = sensor_command_collection.find_one_and_update(
+        {"_id": oid, "sensor_id": sid, "status": {"$in": ["queued", "delivered", "acked", "failed"]}},
+        update_doc,
+        return_document=ReturnDocument.AFTER,
+    )
+    if not command:
+        return jsonify({"success": False, "message": "Command not found for sensor"}), 404
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "command_id": str(command.get("_id")),
+            "sensor_id": command.get("sensor_id", sid),
+            "status": command.get("status", status),
+            "ackedAt": command.get("ackedAt", now_iso),
+        },
+    })
+
+
 @app.route("/api/v1/sensors/hourly_graph", methods=["GET"])  # backward-compatible alias
 @app.route("/api/v1/sensors/5min_graph", methods=["GET"])
 @rate_limit()
 @_safe_route
 @require_mongo("sensor_hourly_collection")
 def get_hourly_sensor_graph():
-    """288-point series derived from sensor_hourly per logical sensor."""
+    """288-point lux series derived from sensor_hourly per logical sensor."""
     date_str = (request.args.get("date") or "").strip()
     if not date_str or not re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
         return jsonify({"success": False, "message": "Missing or invalid date (YYYY-MM-DD)"}), 400
@@ -1078,6 +1250,7 @@ def get_hourly_sensor_graph():
     # Ensure graph source collection has rows, converting from daily_usage/room_* when needed.
     _backfill_sensor_hourly_from_daily_usage(date_str)
 
+    graph_max_lux = 20000.0
     points_per_day = 288  # 24h * 12 buckets/hour
     out = {
         "sensor1": [0.0] * points_per_day,
@@ -1086,6 +1259,7 @@ def get_hourly_sensor_graph():
             "sensor1": {"samples": 0, "brightSamples": 0},
             "sensor2": {"samples": 0, "brightSamples": 0},
         },
+        "luxRange": {"min": 0, "max": int(graph_max_lux)},
         "granularityMinutes": 5,
     }
 
@@ -1093,12 +1267,17 @@ def get_hourly_sensor_graph():
     for group_key, ids in SENSOR_BADGE_GROUPS:
         tk = "sensor1" if group_key == "sensor1" else "sensor2"
         arr = out[tk]
-        hourly_ratio = [None] * 24
+        hourly_lux = [None] * 24
 
-        # Read hourly rows, then expand each hour ratio into 12 five-minute slots.
+        # Read hourly rows, then expand/interpolate lux into five-minute slots.
         for row in sensor_hourly_collection.aggregate([
             {"$match": {"date": date_str, "sensor_id": {"$in": list(ids)}}},
-            {"$group": {"_id": "$hour", "samples": {"$sum": "$samples"}, "bright": {"$sum": "$bright_samples"}}},
+            {"$group": {
+                "_id": "$hour",
+                "samples": {"$sum": "$samples"},
+                "bright": {"$sum": "$bright_samples"},
+                "luxAvg": {"$avg": "$luxLast"},
+            }},
         ]):
             h = row.get("_id")
             try:
@@ -1108,85 +1287,37 @@ def get_hourly_sensor_graph():
             if 0 <= hi < 24:
                 s = int(row.get("samples") or 0)
                 br = int(row.get("bright") or 0)
-                ratio = round(min(1.0, br / s), 4) if s > 0 else 0.0
-                hourly_ratio[hi] = ratio
+                lux_raw = _coerce_lux_scalar(row.get("luxAvg"))
+                lux_val = max(0.0, min(graph_max_lux, float(lux_raw or 0.0)))
+                hourly_lux[hi] = lux_val
 
-        # Interpolate hourly ratios into 5-minute points for a smoother wave-like curve.
-        known_hours = [i for i, v in enumerate(hourly_ratio) if v is not None]
+        # Interpolate hourly lux into 5-minute points; if sensor goes OFF/missing, hold last value.
+        known_hours = [i for i, v in enumerate(hourly_lux) if v is not None]
         if known_hours:
-            first_known = known_hours[0]
-            last_known = known_hours[-1]
-
+            last_known_value = 0.0
             for i in range(points_per_day):
                 h_float = i / buckets_per_hour
                 left_h = int(h_float)
                 frac = h_float - left_h
                 right_h = min(23, left_h + 1)
 
-                def _nearest_value(hour_idx):
-                    if hourly_ratio[hour_idx] is not None:
-                        return hourly_ratio[hour_idx]
-                    # Outside observed activity window, decay to baseline zero.
-                    if hour_idx < first_known or hour_idx > last_known:
-                        return 0.0
-                    prev_known = [h for h in known_hours if h < hour_idx]
-                    next_known = [h for h in known_hours if h > hour_idx]
-                    if prev_known and next_known:
-                        p = prev_known[-1]
-                        n = next_known[0]
-                        span = max(1, n - p)
-                        w = (hour_idx - p) / span
-                        return (1 - w) * hourly_ratio[p] + w * hourly_ratio[n]
-                    return 0.0
+                lv = hourly_lux[left_h]
+                rv = hourly_lux[right_h]
 
-                v0 = _nearest_value(left_h)
-                v1 = _nearest_value(right_h)
-                arr[i] = round(max(0.0, min(1.0, (1 - frac) * v0 + frac * v1)), 4)
+                if lv is not None and rv is not None:
+                    val = (1 - frac) * lv + frac * rv
+                elif lv is not None:
+                    val = lv
+                elif rv is not None:
+                    val = rv
+                else:
+                    # Sensor OFF/no sample window -> stick at last value.
+                    val = last_known_value
 
-            # Light Gaussian-like smoothing pass to avoid jagged corners.
-            kernel = [1, 4, 6, 4, 1]
-            denom = float(sum(kernel))
-            smoothed = [0.0] * points_per_day
-            for i in range(points_per_day):
-                acc = 0.0
-                for k, w in enumerate(kernel):
-                    j = i + (k - 2)
-                    if j < 0 or j >= points_per_day:
-                        continue
-                    acc += arr[j] * w
-                smoothed[i] = round(max(0.0, min(1.0, acc / denom)), 4)
-            arr[:] = smoothed
-
-            # Convert active region into a bell-like wave profile (no boxy plateau).
-            active_idx = [i for i, v in enumerate(arr) if v > 0.001]
-            if active_idx:
-                start = active_idx[0]
-                end = active_idx[-1]
-                span = max(1, end - start)
-                peak = max(arr[start:end + 1]) if end >= start else 0.0
-                if peak > 0:
-                    bell = [0.0] * points_per_day
-                    # Sigma tuned for a single smooth hump similar to the target screenshot.
-                    sigma = 0.23
-                    # Build normalized Gaussian over [start, end]
-                    max_env = 0.0
-                    env_vals = []
-                    for i in range(start, end + 1):
-                        x = (i - start) / span
-                        env = pow(2.718281828, -0.5 * ((x - 0.5) / sigma) ** 2)
-                        env_vals.append(env)
-                        if env > max_env:
-                            max_env = env
-                    max_env = max_env or 1.0
-                    for off, i in enumerate(range(start, end + 1)):
-                        bell[i] = peak * (env_vals[off] / max_env)
-
-                    # Keep shape wave-like while still influenced by source data.
-                    for i in range(points_per_day):
-                        if i < start or i > end:
-                            arr[i] = 0.0
-                        else:
-                            arr[i] = round(max(0.0, min(1.0, 0.82 * bell[i] + 0.18 * arr[i])), 4)
+                val = max(0.0, min(graph_max_lux, float(val)))
+                arr[i] = round(val, 2)
+                if arr[i] > 0 or last_known_value > 0:
+                    last_known_value = arr[i]
 
         # Daily totals
         for tot in sensor_hourly_collection.aggregate([
@@ -1671,6 +1802,8 @@ DOCUMENTED_APIS = [
     ("GET", "/api/v1/sensors/{sensor_id}/status", "Sensor status by ID"),
     ("GET", "/api/v1/sensors/latest", "Latest lux from daily_usage"),
     ("GET", "/api/v1/sensors/badges", "Per-sensor status for dashboard pills"),
+    ("GET", "/api/v1/sensors/{sensor_id}/commands/next", "Device fetches next queued ON/OFF command"),
+    ("POST", "/api/v1/sensors/{sensor_id}/commands/{command_id}/ack", "Device acknowledges command execution"),
     ("GET", "/api/v1/sensors/5min_graph", "Daily usage graph (288 x 5-minute points expanded from sensor_hourly)"),
     ("GET", "/api/v1/sensors/hourly_graph", "Legacy alias for the sensor_hourly-backed 5-minute dashboard graph endpoint"),
     ("POST", "/api/usage/save", "Save daily usage"),
