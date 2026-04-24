@@ -26,6 +26,8 @@ This repository contains a small, end to end indoor monitoring system that track
 ---
 
 ## 📡 Embedded System (ESP32 Light Sensor)
+## 📡 Embedded Hardware
+***ESP32 Microcontroller w/ BH1750 Light Sensor***
 
 This embedded system collects ambient light data using a sensor connected to an ESP32 and sends it to a backend server over Wi-Fi.
 
@@ -93,6 +95,77 @@ _(Tools → Serial Monitor)_
 ArduinoOTA.begin();
 ArduinoOTA.handle();
 ```
+***Sensor Type***
+
+Of the 4 sensor types (Photodiode, Phototransistor, LDR, Digital Lux), we chose Digital Lux for the following benefits:
+- High accuracy w/ calibrated, noise resistant digital measurements
+- Fairly low power consumption
+- Minimal circuit complexity out of all sensor types for easy integration, maintenance, and long-term operation
+- Measures lux for analyzing light in a room
+
+Click on the following link to learn more about the differences between sensor types: [Light Sensor Types & Characteristics](https://docs.google.com/document/d/1zIgJxN_gNXGTvkLemSUc5l2nPyyrzfW7cB-apdO-95M/edit?usp=sharing)
+
+***WiFi Setup***
+
+To set up the WiFi for the ESP32 microcontroller, the following was required:
+- MAC Address
+- SSID
+- Password
+
+```C++
+#include <WiFi.h>
+
+void setup() {
+  Serial.begin(115200);
+  delay(2000);
+
+  uint8_t mac[6];
+  WiFi.macAddress(mac);
+
+  Serial.print("WiFi MAC: ");
+  for (int i = 0; i < 6; i++) {
+    if (mac[i] < 16) Serial.print("0");
+    Serial.print(mac[i], HEX);
+    if (i < 5) Serial.print(":");
+  }
+  Serial.println();
+
+  int n = WiFi.scanNetworks();
+  bool found = false;
+
+  for (int i = 0; i < n; i++) {
+    if (WiFi.SSID(i) == "PacDeviceReg") {
+      found = true;
+      Serial.println("PacDeviceReg FOUND");
+      Serial.print("RSSI: ");
+      Serial.println(WiFi.RSSI(i));
+      Serial.print("Channel: ");
+      Serial.println(WiFi.channel(i));
+      Serial.print("Encryption type: ");
+      Serial.println(WiFi.encryptionType(i));
+    }
+  }
+
+  if (!found) {
+    Serial.println("PacDeviceReg NOT FOUND");
+  }
+}
+
+void loop() {}
+```
+The team had worked with the University of the Pacific's IT team to be given the permission and information needed to successfully.
+
+***[WIP] Over-The-Air (OTA) Functionality***
+
+The ESP32 supports over-the-air capabilities, allowing the embedded device to update wirelessly using an internet connection. This is not currently implemented, but we have the necessary tools researched and ready should the project be continued in the future:
+- [Arduino IDE Software](https://www.arduino.cc/en/software/)
+- OpenSSL Library
+- .pem Certificate (File in repository)
+- USB Drive to install initial code to ESP32
+
+This webpage goes through setting up OTA step-by-step: [Setting Up ESP32 OTA](https://coolplaydev.com/esp32-ota-update)
+
+---
 
 ### Example Payload
 ```
