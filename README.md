@@ -216,12 +216,10 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 - **API Documentation**: Swagger/OpenAPI 3.0
 - **CI/CD**: GitHub Actions
 
----
+## 📝 QR Code
 <a href="https://iot-light-sensoruop.onrender.com">
   <img src="qr.png" alt="QR Code" width="200">
 </a>
----
 
 ## 📝 License
-
-This project is part of the SE4CPS coursework.
+This project is licensed under the MIT License, see the [LICENSE](LICENSE) file for details.
