@@ -208,6 +208,46 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 
 ---
 
+## Database and Storage
+The system use MongoDB database, MongoDB allows low cost storage with transactional triggers on INSERT and UPDATE operations. We set triggers on sensor_hourly and user_data collections.
+
+### Collections And Fields:
+- sensor_hourly : This collection fetch the lux value from the room and store it in below formats:
+<img width="500" height="200" alt="image" src="https://github.com/user-attachments/assets/82d740ae-6fee-462c-9b5a-12afae43a4c4" />
+
+- user_data : Stores the login user details in below format:
+<img width="500" height="200" alt="image" src="https://github.com/user-attachments/assets/7500abc0-852a-4a90-a75f-d871b3ad38de" />
+
+- Page_Log : Trace application errors from the page, and store with error type code
+<img width="500" height="200" alt="image" src="https://github.com/user-attachments/assets/31b71e5d-8b64-4092-ada5-d3db5dab05ad" />
+
+### Triggers
+
+- trg_INS_daily_usage : This trigger fires when new insert goes to daily_usage collection  
+- User_Data_Trg_INS : This trigger fires when new user login to the system
+
+---
+## Object-Oriented Programming OOPs Design Approach
+Used OOPs approach to ensure relevent code are placed in classes for reuse in the same code file. Eliminiate duplicity through define attributes. The fucntions below ensure the system modularity and extensibility.
+
+- _init_mongo() : This function initialize MongoDB objects
+- log_to_page_log() : This function stores error to Page_Log collection
+- page_log_collection : Attribute to invoke Page_Log table
+- bad_request() : Push Bad request error 400 to Page_Log table
+- not_found() : Push Resource not found error 404 to Page_Log table
+- internal_error() : Push Internal server error 500 to Page_Log table
+- require_json() : Validate that the request body is JSON and contains required fields
+- require_mongo() : Return 503 early if the named collection is None
+- _pst_now() : Set current datetime in PST
+- _today_str() : Set today's date string (YYYY-MM-DD) in PST.
+- _daily_usage_aggregate_match() : MongoDB filter for whole-dashboard aggregate timer docs
+- _safe_route() : Wrap a route so any exception is logged to Page_Log and returned as 500.
+- get_room_statistics() : Weekly and monthly statistics for a specific room.
+- get_room_usage() : Get usage for a specific room on a specific date.
+- log_admin_access() : Log admin access details to MongoDB.
+  
+---
+
 ## 🏗️ Tech Stack
 
 - **Backend**: Flask 3.1.3, Python 3.9+
