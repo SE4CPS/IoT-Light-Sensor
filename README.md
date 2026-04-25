@@ -217,7 +217,9 @@ curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
 - **CI/CD**: GitHub Actions
 
 ---
-[![QR Code](qr.png)](https://iot-light-sensoruop.onrender.com)
+<a href="https://iot-light-sensoruop.onrender.com">
+  <img src="qr.png" alt="QR Code" width="200">
+</a>
 ---
 
 ## 📝 License
