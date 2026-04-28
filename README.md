@@ -5,78 +5,104 @@
 [![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.1.3-black?logo=flask)](https://flask.palletsprojects.com/)
 
-This repository contains a small, end to end indoor monitoring system that tracks room light usage, visualizes the current state, and notifies users when lights are left on for too long.
+## Project Overview
 
----
+This project is an end-to-end indoor light monitoring prototype using ESP32 + BH1750 sensors, a Flask backend, MongoDB storage, and a live dashboard UI.
 
-## 🚀 Quick Links
+Core capabilities:
+- Collect lux readings from IoT sensors.
+- Track daily room ON duration (`onSeconds`).
+- Visualize current and historical usage in dashboard charts.
+- Persist usage and sensor snapshots in MongoDB.
 
-- **[Live API Documentation](https://iot-light-sensor-zumx.onrender.com/api/docs)** - Interactive Swagger UI
-- **[Production API](https://iot-light-sensor-zumx.onrender.com)** - Live endpoint
-- **[GitHub Pages](https://se4cps.github.io/IoT-Light-Sensor/)** - Project website
+## Prototype (Dashboard) and Quick How-To
 
----
+Use the dashboard as the prototype interface for real-time monitoring and usage analytics:
+- Open the app at `https://iot-light-sensor.onrender.com/`.
+- Watch live sensor badges and room cards for ON/OFF status.
+- Use room/date selectors to inspect stored MongoDB usage rows.
+- Use the Today and monthly cards to inspect current and aggregate behavior.
 
-## Project Goals
+Prototype preview:
 
-- Upstream indoor light sensor data to a backend service  
-- Display the light status of a room on a dashboard  
-- Notify the user if a light remains **ON for more than 12 hours**
+![Dashboard prototype preview](documentation/images/dashboard-prototype.png)
 
----
+Prototype references:
+- Interactive system diagram page: `dashboard/diagram.html`
+- Dashboard template source: `dashboard/templates/dashboard.html`
 
-## 📡 Embedded Hardware
+## Architecture Diagram
 
-ESP32 (SparkFun Thing) on a half-size breadboard connected via I²C to a BH1750 ambient light sensor (V322). Measures lux at 16-bit resolution over VCC, GND, SDA, SCL.
+High-level data flow:
 
-| | | |
-|:---:|:---:|:---:|
-| ![BH1750 sensor](embedded-1.jpg) | ![Single node](embedded-2.jpg) | ![Dual node](embedded-3.jpg) |
-| BH1750 module with I²C header pins and color-coded jumper wires. | ESP32 on breadboard wired to BH1750, ready for USB firmware upload. | Two-sensor deployment powered from a single USB wall adapter — used for weekend long-run tests. |
-
----
-
-## 📡 API Documentation
-
-### Base URLs
-- **Production**: `https://iot-light-sensor-zumx.onrender.com`
-- **Swagger UI**: https://iot-light-sensor-zumx.onrender.com/api/docs
-
-### Quick Test
-```bash
-curl https://iot-light-sensor-zumx.onrender.com/api/usage/statistics
+```mermaid
+flowchart LR
+  A[ESP32 + BH1750 Sensors] -->|lux readings| B[Flask Backend API]
+  B --> C[(MongoDB Atlas)]
+  C --> B
+  B --> D[Dashboard Frontend]
+  D -->|room/date/user actions| B
 ```
 
----
+Supporting architecture docs:
+- `app/architect/diagrams/readme.md`
+- `app/architect/system/readme.md`
+- `app/architect/data/database-schema.md`
 
-## Core Data Model
-```json
-{
-  "meta": {
-    "entity": "room_light_event",
-    "version": "1.0",
-    "source": "indoor light sensor"
-  },
-  "data": {
-    "room_id": "string | integer",
-    "light_state": "ON | OFF",
-    "timestamp": "ISO-8601"
-  }
-}
-```
+## Run the Application (Step-by-Step)
 
----
+1. **Clone and enter project**
+   ```bash
+   git clone <repo-url>
+   cd IoT-Light-Sensor
+   ```
 
-## 🏗️ Tech Stack
+2. **Create environment and install dependencies**
+   ```bash
+   cd dashboard
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-- **Backend**: Flask 3.1.3, Python 3.9+
+3. **Configure environment**
+   Create/update `dashboard/.env`:
+   ```env
+   MONGO_URI=<your-mongodb-uri>
+   DB_NAME=light_sensor_db
+   ```
+
+4. **Run backend**
+   ```bash
+   python app.py
+   ```
+
+5. **Open dashboard**
+   Visit:
+   - `https://iot-light-sensor.onrender.com/` (dashboard)
+   - `http://127.0.0.1:5001/api/docs` (Swagger)
+
+6. **Optional API check**
+   ```bash
+   curl http://127.0.0.1:5001/api/usage/statistics
+   ```
+
+## Known Limitations
+
+- Dashboard behavior depends on MongoDB connectivity; if DB is unavailable, several live widgets show empty/default values.
+- The Flask app is currently run with development server settings (`python app.py`), not production WSGI deployment.
+- Command delivery to physical devices requires device-side polling/ack handling to fully guarantee ON/OFF command execution.
+- Some counters rely on mixed client/server update timing and may briefly lag during network or API throttling events.
+- Browser local state can affect display continuity across sessions unless explicitly reset.
+
+## Tech Stack
+
+- **Backend**: Flask (Python 3.9+)
 - **Database**: MongoDB Atlas
-- **Deployment**: Render.com
-- **API Documentation**: Swagger/OpenAPI 3.0
-- **CI/CD**: GitHub Actions
+- **Frontend**: HTML/CSS/JS (Chart.js)
+- **Deployment**: Render
+- **API Docs**: Swagger / OpenAPI
 
----
+## License
 
-## 📝 License
-
-This project is part of the SE4CPS coursework.
+This project is part of SE4CPS coursework.
