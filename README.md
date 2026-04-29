@@ -236,16 +236,6 @@ void loop() {}
 ```
 The team had worked with the University of the Pacific's IT team to be given the permission and information needed to successfully.
 
-***[WIP] Over-The-Air (OTA) Functionality***
-
-The ESP32 supports over-the-air capabilities, allowing the embedded device to update wirelessly using an internet connection. This is not currently implemented, but we have the necessary tools researched and ready should the project be continued in the future:
-- [Arduino IDE Software](https://www.arduino.cc/en/software/)
-- OpenSSL Library
-- .pem Certificate (File in repository)
-- USB Drive to install initial code to ESP32
-
-This webpage goes through setting up OTA step-by-step: [Setting Up ESP32 OTA](https://coolplaydev.com/esp32-ota-update)
-
 ---
 
 ### Example Payload
