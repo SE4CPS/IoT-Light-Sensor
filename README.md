@@ -256,6 +256,83 @@ Used OOPs approach to ensure relevent code are placed in classes for reuse in th
 - **API Documentation**: Swagger/OpenAPI 3.0
 - **CI/CD**: GitHub Actions
 
+---
+
+## ⚙️ DevOps & Deployment
+
+### Branch Strategy
+- `production` → Default branch, stable, used for deployment (Render)
+- All new work must be done in **feature branches**
+- No direct commits to `production` allowed
+
+### Development Workflow
+```bash
+# 1. Start from production
+git checkout production
+git pull origin production
+
+# 2. Create a feature branch
+git checkout -b feature/short-description
+
+# 3. Make changes and test locally
+python dashboard/app.py
+
+# 4. Run tests
+pytest dashboard/tests/
+pytest twin/test_twin_sim.py
+
+# 5. Stage and commit
+git add .
+git commit -m "Describe your changes clearly"
+
+# 6. Push feature branch
+git push -u origin feature/short-description
+```
+
+### Pull Request
+- Base branch: `production`
+- Compare branch: `feature/short-description`
+- CI pipeline runs automatically once PR is created
+- All tests must pass before merge is allowed
+
+### CI/CD Pipeline
+- Pipeline located at `.github/workflows/tests.yml`
+- Runs automatically on push and PRs targeting `production`
+- Installs dependencies, runs dashboard tests and twin tests
+
+### Branch Protection
+- Pull Request required before merging into `production`
+- CI checks must pass
+- Direct pushes to `production` are blocked
+
+### Deployment
+- Hosted on **Render**, deploys from the `production` branch
+- Deployment is **manual** — triggered by the DevOps team after every merge
+- Live API: https://iot-light-sensor-zumx.onrender.com
+
+### How to Deploy
+1. Merge PR into `production`
+2. Go to [Render Dashboard](https://dashboard.render.com)
+3. Select the `IoT-Light-Sensor` service
+4. Click **Manual Deploy** → **Deploy latest commit**
+5. Verify the live API is up after deployment
+
+### Team Communication
+After creating a PR, notify the team on Slack:
+> "Hi team, I created a PR into production for [feature name]. CI passed. Please review and approve."
+- Slack channel: `#all-iot-light-sensor`
+
+### Release
+- Current version: **v2.0**
+- View all releases: [GitHub Releases](../../releases)
+
+### Summary
+```
+Feature Branch → Pull Request → CI Check → Merge → Manual Deploy
+```
+
+> Full DevOps workflow details: [app/devOps/readme.md](app/devOps/readme.md)
+
 ## 📝 QR Code
 <a href="https://iot-light-sensoruop.onrender.com">
   <img src="qr.png" alt="QR Code" width="200">
