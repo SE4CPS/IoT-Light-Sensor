@@ -418,6 +418,3 @@ Feature Branch → Pull Request → CI Check → Merge → Manual Deploy
 <a href="https://iot-light-sensoruop.onrender.com">
   <img src="qr.png" alt="QR Code" width="200">
 </a>
-
-## 📝 License
-This project is part of SE4CPS coursework.
